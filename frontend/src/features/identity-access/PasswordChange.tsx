@@ -1,0 +1,7 @@
+import {useState} from 'react';
+import {Alert,Button,Paper,Stack,TextField,Typography} from '@mui/material';
+import {request,message} from '../common-reference/api';
+export function PasswordChange({onChanged}:{onChanged:()=>void}){
+ const [current,setCurrent]=useState(''),[next,setNext]=useState(''),[mfa,setMfa]=useState(''),[failure,setFailure]=useState(''),[busy,setBusy]=useState(false);
+ return <Paper sx={{p:3,m:3}}><Stack component="form" spacing={2} onSubmit={async e=>{e.preventDefault();setBusy(true);try{await request('/auth/password/change/',{method:'POST',body:JSON.stringify({current_password:current,new_password:next,...(mfa?{mfa}:{})})});onChanged();}catch(error){setFailure(message(error));}finally{setCurrent('');setNext('');setMfa('');setBusy(false);}}}><Typography variant="h5">Change your password</Typography><Typography>A password change is required before continuing. Sign in again after saving.</Typography>{failure&&<Alert severity="error">{failure}</Alert>}<TextField required label="Current password" type="password" autoComplete="current-password" value={current} onChange={e=>setCurrent(e.target.value)}/><TextField required label="New password" type="password" autoComplete="new-password" value={next} onChange={e=>setNext(e.target.value)}/><TextField label="MFA proof, if enabled" type="password" autoComplete="one-time-code" value={mfa} onChange={e=>setMfa(e.target.value)}/><Button type="submit" disabled={busy||!navigator.onLine}>Save password</Button></Stack></Paper>;
+}

@@ -1,0 +1,33 @@
+.env
+.env.*
+!.env.example
+!.env.dev.example
+.venv/
+__pycache__/
+*.py[cod]
+node_modules/
+dist/
+staticfiles/
+.tmp/
+*.sqlite3
+
+.pytest_cache/
+.coverage
+htmlcov/
+coverage/
+
+backend/private_documents/
+
+# local tooling / generated artefacts
+backend/.coverage*
+backend/htmlcov/
+frontend/coverage/
+*.log
+*.stale-*/
+.claude/
+.codex/
+Thumbs.db
+.DS_Store
+
+# unrelated to SIMS (another mini-project document)
+Manuals/Prompts/Mini_Project_Gate_0_*

@@ -1,0 +1,470 @@
+SIMS MODULE 32
+ACADEMIC AND PROFESSIONAL CONTRIBUTIONS
+Enterprise Django / MySQL / Progressive Web App Implementation Prompt Pack
+
+Purpose: A sequenced set of implementation prompts that can be given to an AI coding assistant or development team to design, build, test, secure, optimize, and deploy Module 32 within the Staff Information Management System (SIMS).
+
+Module
+32 - Academic and Professional Contributions
+Primary table
+staff_professional_contribution
+Backend
+Python / Django / Django REST Framework
+Database
+MySQL 8.x / InnoDB / utf8mb4
+Frontend
+Responsive Django UI + PWA service worker / installability
+
+1. Source Database Definition
+Use the following SQL definition as the authoritative starting point. Do not silently change column nullability, data types, foreign keys, or date-check semantics without documenting the reason and producing a migration strategy.
+CREATE TABLE staff_professional_contribution (    staff_activity_id BIGINT UNSIGNED PRIMARY KEY,    professional_contribution_type_id SMALLINT UNSIGNED NOT NULL,    organization_id BIGINT UNSIGNED NULL,    journal_id BIGINT UNSIGNED NULL,    conference_event_id BIGINT UNSIGNED NULL,    programme_id SMALLINT UNSIGNED NULL,    course_id INT UNSIGNED NULL,    student_id BIGINT UNSIGNED NULL,    title_topic VARCHAR(500) NULL,    appointment_reference_number VARCHAR(150) NULL,    contribution_date DATE NULL,    start_date DATE NULL,    end_date DATE NULL,    number_of_reviews SMALLINT UNSIGNED NULL,    number_of_candidates SMALLINT UNSIGNED NULL,    contribution_details TEXT NULL,    outcome_details TEXT NULL,    CONSTRAINT chk_prof_contribution_dates CHECK (        end_date IS NULL OR start_date IS NULL OR end_date >= start_date    ),    CONSTRAINT fk_prof_contribution_activity FOREIGN KEY (staff_activity_id)        REFERENCES staff_activity(staff_activity_id),    CONSTRAINT fk_prof_contribution_type FOREIGN KEY (professional_contribution_type_id)        REFERENCES professional_contribution_type(professional_contribution_type_id),    CONSTRAINT fk_prof_contribution_org FOREIGN KEY (organization_id)        REFERENCES external_organization(organization_id),    CONSTRAINT fk_prof_contribution_journal FOREIGN KEY (journal_id) REFERENCES journal(journal_id),    CONSTRAINT fk_prof_contribution_conference FOREIGN KEY (conference_event_id)        REFERENCES conference_event(conference_event_id),    CONSTRAINT fk_prof_contribution_programme FOREIGN KEY (programme_id) REFERENCES programme(programme_id),    CONSTRAINT fk_prof_contribution_course FOREIGN KEY (course_id) REFERENCES course_catalog(course_id),    CONSTRAINT fk_prof_contribution_student FOREIGN KEY (student_id) REFERENCES student(student_id)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+2. Architectural Interpretation and Guardrails
+This table is a subtype/extension of staff_activity: staff_activity_id is both the primary key and a foreign key. Creation and deletion must therefore respect the parent activity lifecycle.
+professional_contribution_type_id determines the semantic category of the contribution. Field requirements should be driven by configurable type metadata or a centralized validation policy, not scattered conditional code.
+organization_id, journal_id, conference_event_id, programme_id, course_id, and student_id are optional contextual relationships. The SQL does not state that only one may be populated. Do not introduce an exclusivity constraint unless the business owner approves it.
+The database enforces end_date >= start_date when both dates are supplied. The same rule must be repeated at Django form/serializer/service validation level to provide friendly errors before database rejection.
+Unsigned numeric counts must never be negative. Django validators and serializer validation should explicitly reject negative values even if database column semantics also protect the data.
+Use transaction.atomic() when creating or updating staff_activity and staff_professional_contribution together. Never leave orphaned parent activities after a child-validation failure.
+All lookup/reference choices should use searchable selectors appropriate to dataset size. Avoid loading very large student/course/journal lists into a single unfiltered HTML select.
+Apply institutional authorization: staff can manage their own records as permitted; designated reviewers/HoDs/administrators can verify, review, or manage records according to existing SIMS RBAC.
+3. Suggested Contribution-Type Examples
+The lookup table professional_contribution_type should remain configurable. The following are examples for seed data or requirements discussion, not hard-coded enums unless explicitly approved:
+Journal reviewer / peer reviewer
+Conference paper reviewer
+Editorial board member
+Journal editor / associate editor
+Technical programme committee member
+Conference session chair
+Resource person / invited expert
+Board of Studies member
+Board of Examiners member
+Question-paper setter
+External examiner / viva examiner
+Thesis / dissertation reviewer
+PhD advisory committee member
+Curriculum design / syllabus revision contributor
+Academic audit / accreditation expert
+Selection committee / interview panel member
+Student project / research external evaluator
+Professional body committee contribution
+Other approved academic/professional contribution
+4. Sequenced Implementation Prompts
+Prompt 1: Requirements decomposition and domain model
+Objective: Translate the SQL into a precise, implementation-ready functional and technical specification.
+Prompt to use:
+You are implementing Module 32 - Academic and Professional Contributions in an existing enterprise Staff Information Management System (SIMS). Technology stack: Python 3.12+, Django 5.x, Django REST Framework, MySQL 8.x/InnoDB, server-rendered responsive UI enhanced as a Progressive Web App. Follow the project's existing conventions for apps, base models, staff_activity lifecycle, authentication, RBAC, audit logging, organization/journal/conference/programme/course/student lookups, API envelopes, pagination, error handling, tests, and deployment. Preserve the provided SQL semantics. Prefer maintainable service-layer logic, database-efficient queries, accessible forms, secure defaults, and production-grade tests. Do not invent destructive schema changes.Analyze the provided staff_professional_contribution schema and produce a requirements specification. Explain the parent-child relation with staff_activity; each field's meaning; nullable versus required behavior; cross-field date rule; reference-data dependencies; likely contribution-type-specific field requirements; lifecycle states inherited from staff_activity; expected CRUD, list, detail, search, filter, verification and reporting operations; permissions; audit requirements; edge cases; and unresolved business questions. Clearly separate constraints explicitly present in SQL from recommended application-level rules. Do not assume that the six nullable context foreign keys are mutually exclusive.
+Expected deliverables:
+Field-by-field data dictionary
+Functional use cases
+Business-rule matrix
+Open questions / assumptions
+Dependency map
+Acceptance checks:
+Every SQL column and FK is covered
+No undocumented exclusivity rule is introduced
+
+Prompt 2: Django application integration plan
+Objective: Decide where the module belongs and define its boundaries before writing code.
+Prompt to use:
+You are implementing Module 32 - Academic and Professional Contributions in an existing enterprise Staff Information Management System (SIMS). Technology stack: Python 3.12+, Django 5.x, Django REST Framework, MySQL 8.x/InnoDB, server-rendered responsive UI enhanced as a Progressive Web App. Follow the project's existing conventions for apps, base models, staff_activity lifecycle, authentication, RBAC, audit logging, organization/journal/conference/programme/course/student lookups, API envelopes, pagination, error handling, tests, and deployment. Preserve the provided SQL semantics. Prefer maintainable service-layer logic, database-efficient queries, accessible forms, secure defaults, and production-grade tests. Do not invent destructive schema changes.Inspect the existing SIMS architecture conceptually and propose the clean integration plan for Module 32. Specify app/module placement, model ownership, service layer, selectors/query services, forms, serializers, viewsets/views, URLs, templates, static assets, PWA interactions, permissions, audit hooks, and tests. Reuse existing staff_activity and master/reference models instead of duplicating them. Describe the create/update/delete transaction boundaries and how generic staff activity metadata is synchronized with the contribution subtype.
+Expected deliverables:
+Component map
+Request/data flow
+Transaction strategy
+Folder/file plan
+
+Prompt 3: Reference master: professional contribution types
+Objective: Implement the contribution-type master as configurable reference data.
+Prompt to use:
+You are implementing Module 32 - Academic and Professional Contributions in an existing enterprise Staff Information Management System (SIMS). Technology stack: Python 3.12+, Django 5.x, Django REST Framework, MySQL 8.x/InnoDB, server-rendered responsive UI enhanced as a Progressive Web App. Follow the project's existing conventions for apps, base models, staff_activity lifecycle, authentication, RBAC, audit logging, organization/journal/conference/programme/course/student lookups, API envelopes, pagination, error handling, tests, and deployment. Preserve the provided SQL semantics. Prefer maintainable service-layer logic, database-efficient queries, accessible forms, secure defaults, and production-grade tests. Do not invent destructive schema changes.Implement or integrate the professional_contribution_type reference model/table used by professional_contribution_type_id. If the table already exists, do not recreate it; instead map to the existing model. Provide code/label/display_order/is_active fields only if they are part of the established master-table convention. Add admin/reference-data management if consistent with SIMS. Supply safe seed-data examples for common academic/professional contribution categories. Never hard-code type IDs in business logic; use stable codes or metadata.
+Expected deliverables:
+Model/integration code
+Seed/fixture strategy
+Admin configuration
+Tests for active/inactive lookup behavior
+
+Prompt 4: Django ORM model mapping
+Objective: Create an accurate ORM representation without changing database meaning.
+Prompt to use:
+You are implementing Module 32 - Academic and Professional Contributions in an existing enterprise Staff Information Management System (SIMS). Technology stack: Python 3.12+, Django 5.x, Django REST Framework, MySQL 8.x/InnoDB, server-rendered responsive UI enhanced as a Progressive Web App. Follow the project's existing conventions for apps, base models, staff_activity lifecycle, authentication, RBAC, audit logging, organization/journal/conference/programme/course/student lookups, API envelopes, pagination, error handling, tests, and deployment. Preserve the provided SQL semantics. Prefer maintainable service-layer logic, database-efficient queries, accessible forms, secure defaults, and production-grade tests. Do not invent destructive schema changes.Write the Django model for staff_professional_contribution. Use the staff_activity relation as the primary key (OneToOneField with db_column="staff_activity_id", primary_key=True, on_delete behavior matching the database/project convention). Map all foreign keys with exact db_column names and appropriate related_name values. Map varchar lengths, date fields, PositiveSmallIntegerField counts where appropriate, and TextField values. Add Meta db_table and a CheckConstraint equivalent to end_date IS NULL OR start_date IS NULL OR end_date >= start_date. Consider managed=False only if the project owns schema externally; otherwise use managed migrations. Explain choices. Add __str__ that avoids extra database queries where possible.
+Expected deliverables:
+Complete model code
+Meta constraints/index notes
+Explanation of on_delete choices
+Model unit tests
+
+Prompt 5: Database migration and compatibility
+Objective: Produce safe migrations for MySQL 8 and an existing production database.
+Prompt to use:
+You are implementing Module 32 - Academic and Professional Contributions in an existing enterprise Staff Information Management System (SIMS). Technology stack: Python 3.12+, Django 5.x, Django REST Framework, MySQL 8.x/InnoDB, server-rendered responsive UI enhanced as a Progressive Web App. Follow the project's existing conventions for apps, base models, staff_activity lifecycle, authentication, RBAC, audit logging, organization/journal/conference/programme/course/student lookups, API envelopes, pagination, error handling, tests, and deployment. Preserve the provided SQL semantics. Prefer maintainable service-layer logic, database-efficient queries, accessible forms, secure defaults, and production-grade tests. Do not invent destructive schema changes.Generate the migration strategy for staff_professional_contribution. If the table does not exist, create it with equivalent constraints and indexes. If it already exists from SQL, use SeparateDatabaseAndState or the project's established legacy-table integration pattern so Django state matches MySQL without recreating the table. Validate unsigned ranges, FK compatibility, collation, engine, and constraint naming. Include forward/rollback considerations and SQL verification queries. Do not drop or rewrite production data.
+Expected deliverables:
+Migration code/plan
+Preflight SQL checks
+Post-migration verification
+Rollback strategy
+
+Prompt 6: Type-driven validation policy
+Objective: Centralize business validation so different contribution types can require different contextual fields.
+Prompt to use:
+You are implementing Module 32 - Academic and Professional Contributions in an existing enterprise Staff Information Management System (SIMS). Technology stack: Python 3.12+, Django 5.x, Django REST Framework, MySQL 8.x/InnoDB, server-rendered responsive UI enhanced as a Progressive Web App. Follow the project's existing conventions for apps, base models, staff_activity lifecycle, authentication, RBAC, audit logging, organization/journal/conference/programme/course/student lookups, API envelopes, pagination, error handling, tests, and deployment. Preserve the provided SQL semantics. Prefer maintainable service-layer logic, database-efficient queries, accessible forms, secure defaults, and production-grade tests. Do not invent destructive schema changes.Design a centralized validation policy for professional contributions. The base schema allows nullable organization, journal, conference_event, programme, course and student links. Create a maintainable rule mechanism keyed by professional_contribution_type code or configuration metadata so, for example, JOURNAL_REVIEW may require journal_id and number_of_reviews, EXTERNAL_EXAMINER may require programme/course and number_of_candidates, and SESSION_CHAIR may require conference_event_id. These examples are illustrative: make requirements configurable and do not impose rules not approved by requirements. Implement reusable validation callable/service used by model clean(), forms and DRF serializers without duplicating logic.
+Expected deliverables:
+Validation policy design
+Reusable validator code
+Example rule configuration
+Tests for several type scenarios
+
+Prompt 7: Date and numeric validation
+Objective: Implement friendly validation for dates and counters.
+Prompt to use:
+You are implementing Module 32 - Academic and Professional Contributions in an existing enterprise Staff Information Management System (SIMS). Technology stack: Python 3.12+, Django 5.x, Django REST Framework, MySQL 8.x/InnoDB, server-rendered responsive UI enhanced as a Progressive Web App. Follow the project's existing conventions for apps, base models, staff_activity lifecycle, authentication, RBAC, audit logging, organization/journal/conference/programme/course/student lookups, API envelopes, pagination, error handling, tests, and deployment. Preserve the provided SQL semantics. Prefer maintainable service-layer logic, database-efficient queries, accessible forms, secure defaults, and production-grade tests. Do not invent destructive schema changes.Implement cross-field validation for contribution_date, start_date, end_date, number_of_reviews and number_of_candidates. Enforce end_date >= start_date only when both are supplied; reject negative counts; optionally validate obviously impossible future dates only if SIMS has a global policy. Return field-specific, user-friendly messages. Ensure the API, HTML form and service layer behave consistently and database IntegrityError is still safely handled as a final guard.
+Expected deliverables:
+Validator code
+Form/serializer integration
+Boundary tests
+
+Prompt 8: Transactional create service
+Objective: Create parent staff_activity and subtype atomically.
+Prompt to use:
+You are implementing Module 32 - Academic and Professional Contributions in an existing enterprise Staff Information Management System (SIMS). Technology stack: Python 3.12+, Django 5.x, Django REST Framework, MySQL 8.x/InnoDB, server-rendered responsive UI enhanced as a Progressive Web App. Follow the project's existing conventions for apps, base models, staff_activity lifecycle, authentication, RBAC, audit logging, organization/journal/conference/programme/course/student lookups, API envelopes, pagination, error handling, tests, and deployment. Preserve the provided SQL semantics. Prefer maintainable service-layer logic, database-efficient queries, accessible forms, secure defaults, and production-grade tests. Do not invent destructive schema changes.Implement a service method create_professional_contribution(actor, staff_member, activity_payload, contribution_payload). Validate authorization, normalize input, create the staff_activity parent with the correct activity-category/type reference according to the existing SIMS architecture, create staff_professional_contribution using the same primary key, write audit data, and return the aggregate object. Wrap the entire operation in transaction.atomic(). Demonstrate failure behavior proving no orphan staff_activity remains if subtype validation or FK creation fails.
+Expected deliverables:
+Service code
+Transaction handling
+Audit integration
+Atomicity tests
+
+Prompt 9: Transactional update and delete services
+Objective: Safely update or remove the aggregate without inconsistent data.
+Prompt to use:
+You are implementing Module 32 - Academic and Professional Contributions in an existing enterprise Staff Information Management System (SIMS). Technology stack: Python 3.12+, Django 5.x, Django REST Framework, MySQL 8.x/InnoDB, server-rendered responsive UI enhanced as a Progressive Web App. Follow the project's existing conventions for apps, base models, staff_activity lifecycle, authentication, RBAC, audit logging, organization/journal/conference/programme/course/student lookups, API envelopes, pagination, error handling, tests, and deployment. Preserve the provided SQL semantics. Prefer maintainable service-layer logic, database-efficient queries, accessible forms, secure defaults, and production-grade tests. Do not invent destructive schema changes.Implement update and delete/archive services for professional contributions. Lock rows when needed using select_for_update for concurrent edits, validate ownership/RBAC, update parent activity metadata and subtype fields atomically, and follow the existing SIMS policy for hard delete versus soft delete/archive. If hard deletion is allowed, delete in an order compatible with foreign keys/cascades. Record who changed what. Include optimistic/concurrency handling if the project has version fields.
+Expected deliverables:
+Update service
+Delete/archive service
+Concurrency strategy
+Tests
+
+Prompt 10: Efficient query/selectors layer
+Objective: Build reusable, N+1-safe queryset logic for list and detail views.
+Prompt to use:
+You are implementing Module 32 - Academic and Professional Contributions in an existing enterprise Staff Information Management System (SIMS). Technology stack: Python 3.12+, Django 5.x, Django REST Framework, MySQL 8.x/InnoDB, server-rendered responsive UI enhanced as a Progressive Web App. Follow the project's existing conventions for apps, base models, staff_activity lifecycle, authentication, RBAC, audit logging, organization/journal/conference/programme/course/student lookups, API envelopes, pagination, error handling, tests, and deployment. Preserve the provided SQL semantics. Prefer maintainable service-layer logic, database-efficient queries, accessible forms, secure defaults, and production-grade tests. Do not invent destructive schema changes.Create selector/queryset functions for professional contributions. Use select_related for staff_activity, professional_contribution_type, organization, journal, conference_event, programme, course and student as appropriate. Support staff-specific list, institutional list for authorized roles, date ranges, type, organization, journal, conference, programme/course, student, appointment reference, and free-text title/topic search. Add deterministic ordering and pagination. Propose only indexes justified by actual query patterns, recognizing that MySQL foreign-key columns are typically indexed.
+Expected deliverables:
+QuerySet/selector code
+Filter specification
+Query-count tests
+Index recommendations
+
+Prompt 11: Django ModelForm and server-side UI validation
+Objective: Build a robust form for create/edit screens.
+Prompt to use:
+You are implementing Module 32 - Academic and Professional Contributions in an existing enterprise Staff Information Management System (SIMS). Technology stack: Python 3.12+, Django 5.x, Django REST Framework, MySQL 8.x/InnoDB, server-rendered responsive UI enhanced as a Progressive Web App. Follow the project's existing conventions for apps, base models, staff_activity lifecycle, authentication, RBAC, audit logging, organization/journal/conference/programme/course/student lookups, API envelopes, pagination, error handling, tests, and deployment. Preserve the provided SQL semantics. Prefer maintainable service-layer logic, database-efficient queries, accessible forms, secure defaults, and production-grade tests. Do not invent destructive schema changes.Implement a Django ModelForm (and any composite form needed for staff_activity fields) for Module 32. Use accessible labels, help text, placeholders, date inputs, integer min=0 controls and searchable/autocomplete widgets for large reference tables. Dynamically show/hide contextual fields based on contribution type in JavaScript, but never rely on client-side hiding for validation. Preserve entered values after errors. Add clean() integration with the centralized type-driven validator and date rule.
+Expected deliverables:
+Form code
+Widget configuration
+Accessibility considerations
+Form tests
+
+Prompt 12: Create/edit PWA screen
+Objective: Design a responsive, accessible, offline-aware contribution form.
+Prompt to use:
+You are implementing Module 32 - Academic and Professional Contributions in an existing enterprise Staff Information Management System (SIMS). Technology stack: Python 3.12+, Django 5.x, Django REST Framework, MySQL 8.x/InnoDB, server-rendered responsive UI enhanced as a Progressive Web App. Follow the project's existing conventions for apps, base models, staff_activity lifecycle, authentication, RBAC, audit logging, organization/journal/conference/programme/course/student lookups, API envelopes, pagination, error handling, tests, and deployment. Preserve the provided SQL semantics. Prefer maintainable service-layer logic, database-efficient queries, accessible forms, secure defaults, and production-grade tests. Do not invent destructive schema changes.Create the responsive template and progressive enhancement for Add/Edit Academic and Professional Contribution. Group fields into: Contribution Type; Context/Association; Topic and Appointment; Dates; Quantitative Details; Contribution Details; Outcomes. Use Bootstrap or the project's existing design system. Add conditional field visibility by type, searchable remote selectors for journal/conference/student when datasets are large, inline validation, unsaved-change warning, loading state, success/error toast, and mobile-friendly controls. If offline, allow safe draft retention only if the existing PWA architecture supports it; never claim a record is saved to the server while offline.
+Expected deliverables:
+HTML template
+JavaScript behavior
+Accessibility checklist
+PWA/offline behavior
+
+Prompt 13: List/search/filter screen
+Objective: Create a scalable staff-facing and authorized administrative listing.
+Prompt to use:
+You are implementing Module 32 - Academic and Professional Contributions in an existing enterprise Staff Information Management System (SIMS). Technology stack: Python 3.12+, Django 5.x, Django REST Framework, MySQL 8.x/InnoDB, server-rendered responsive UI enhanced as a Progressive Web App. Follow the project's existing conventions for apps, base models, staff_activity lifecycle, authentication, RBAC, audit logging, organization/journal/conference/programme/course/student lookups, API envelopes, pagination, error handling, tests, and deployment. Preserve the provided SQL semantics. Prefer maintainable service-layer logic, database-efficient queries, accessible forms, secure defaults, and production-grade tests. Do not invent destructive schema changes.Implement a professional contributions list page with server-side pagination and filters. Columns should adapt to available context: type, title/topic, organization/context summary, relevant date/date range, appointment reference, reviews/candidates when present, activity status, and actions. Add filters for contribution type, date range, organization, journal, conference, programme/course and status, plus keyword search. Preserve filters in pagination links. Include empty state, reset filters, mobile card layout, and export trigger only for authorized roles.
+Expected deliverables:
+List template/view
+Filter form
+Efficient queryset
+Responsive behavior tests
+
+Prompt 14: Detail view and context summary
+Objective: Present one contribution clearly without exposing irrelevant blank fields.
+Prompt to use:
+You are implementing Module 32 - Academic and Professional Contributions in an existing enterprise Staff Information Management System (SIMS). Technology stack: Python 3.12+, Django 5.x, Django REST Framework, MySQL 8.x/InnoDB, server-rendered responsive UI enhanced as a Progressive Web App. Follow the project's existing conventions for apps, base models, staff_activity lifecycle, authentication, RBAC, audit logging, organization/journal/conference/programme/course/student lookups, API envelopes, pagination, error handling, tests, and deployment. Preserve the provided SQL semantics. Prefer maintainable service-layer logic, database-efficient queries, accessible forms, secure defaults, and production-grade tests. Do not invent destructive schema changes.Implement a detail page/API representation that displays only relevant populated fields while preserving all data. Build a context_summary helper/serializer output that can describe associations such as journal, conference, organization, programme, course or student without additional queries. Show parent staff_activity metadata, verification/status history if supported, contribution details, outcomes, dates and counts. Include Edit/Delete/Verify actions according to permissions.
+Expected deliverables:
+Detail view/template
+Context summary helper
+Permission-aware actions
+Tests
+
+Prompt 15: DRF serializer layer
+Objective: Expose clean API contracts for mobile/PWA integrations.
+Prompt to use:
+You are implementing Module 32 - Academic and Professional Contributions in an existing enterprise Staff Information Management System (SIMS). Technology stack: Python 3.12+, Django 5.x, Django REST Framework, MySQL 8.x/InnoDB, server-rendered responsive UI enhanced as a Progressive Web App. Follow the project's existing conventions for apps, base models, staff_activity lifecycle, authentication, RBAC, audit logging, organization/journal/conference/programme/course/student lookups, API envelopes, pagination, error handling, tests, and deployment. Preserve the provided SQL semantics. Prefer maintainable service-layer logic, database-efficient queries, accessible forms, secure defaults, and production-grade tests. Do not invent destructive schema changes.Implement DRF serializers for read and write operations. Write serializer accepts foreign-key IDs and validates they refer to allowed/active records; read serializer returns compact nested display objects or normalized labels according to the project's API standard. Reuse the centralized domain validator. Protect server-managed fields. Return stable validation errors, ISO dates, nulls consistently, and avoid recursive/oversized nested objects.
+Expected deliverables:
+Write serializer
+Read serializer
+Validation tests
+Example request/response payloads
+
+Prompt 16: REST API endpoints
+Objective: Implement secure CRUD and filtering endpoints.
+Prompt to use:
+You are implementing Module 32 - Academic and Professional Contributions in an existing enterprise Staff Information Management System (SIMS). Technology stack: Python 3.12+, Django 5.x, Django REST Framework, MySQL 8.x/InnoDB, server-rendered responsive UI enhanced as a Progressive Web App. Follow the project's existing conventions for apps, base models, staff_activity lifecycle, authentication, RBAC, audit logging, organization/journal/conference/programme/course/student lookups, API envelopes, pagination, error handling, tests, and deployment. Preserve the provided SQL semantics. Prefer maintainable service-layer logic, database-efficient queries, accessible forms, secure defaults, and production-grade tests. Do not invent destructive schema changes.Implement DRF endpoints for Module 32 using the project's viewset/router pattern. Support list, retrieve, create, update/partial_update, and permitted delete/archive actions. Apply authentication, object-level permissions, throttling if standard, server-side filtering/search/ordering, pagination, select_related optimization, and consistent error envelopes. Add an endpoint or metadata mechanism to return field-requirement hints for the selected contribution type if useful to the PWA.
+Expected deliverables:
+ViewSet/API views
+Routes
+Filter backend
+Permission tests
+API tests
+
+Prompt 17: Autocomplete/reference APIs
+Objective: Avoid huge dropdown payloads for journals, conferences, students and courses.
+Prompt to use:
+You are implementing Module 32 - Academic and Professional Contributions in an existing enterprise Staff Information Management System (SIMS). Technology stack: Python 3.12+, Django 5.x, Django REST Framework, MySQL 8.x/InnoDB, server-rendered responsive UI enhanced as a Progressive Web App. Follow the project's existing conventions for apps, base models, staff_activity lifecycle, authentication, RBAC, audit logging, organization/journal/conference/programme/course/student lookups, API envelopes, pagination, error handling, tests, and deployment. Preserve the provided SQL semantics. Prefer maintainable service-layer logic, database-efficient queries, accessible forms, secure defaults, and production-grade tests. Do not invent destructive schema changes.Implement secure autocomplete endpoints or integrate existing selectors for external_organization, journal, conference_event, programme, course_catalog and student. Require a minimum search length where appropriate, return limited results, apply tenant/institution scope and active-record filters, and expose only fields needed for display. Prevent data leakage through student search by applying role-based scope. Add caching only for safe reference data and invalidate according to the project standard.
+Expected deliverables:
+Autocomplete endpoints
+Query limits
+Authorization rules
+Performance tests
+
+Prompt 18: Authorization and RBAC
+Objective: Apply least-privilege permissions for staff and institutional roles.
+Prompt to use:
+You are implementing Module 32 - Academic and Professional Contributions in an existing enterprise Staff Information Management System (SIMS). Technology stack: Python 3.12+, Django 5.x, Django REST Framework, MySQL 8.x/InnoDB, server-rendered responsive UI enhanced as a Progressive Web App. Follow the project's existing conventions for apps, base models, staff_activity lifecycle, authentication, RBAC, audit logging, organization/journal/conference/programme/course/student lookups, API envelopes, pagination, error handling, tests, and deployment. Preserve the provided SQL semantics. Prefer maintainable service-layer logic, database-efficient queries, accessible forms, secure defaults, and production-grade tests. Do not invent destructive schema changes.Define and implement the RBAC matrix for Module 32 using existing SIMS roles. Cover who can view own contributions, create, edit, delete/archive, submit/verify, view department-wide records, view institution-wide records, export and manage contribution types. Enforce permissions in service layer and API/views, not only templates. Prevent changing staff_member ownership by tampering with request payloads. Add object-level permission tests for allowed and denied cases.
+Expected deliverables:
+RBAC matrix
+Permission classes/decorators
+Service-level checks
+Security tests
+
+Prompt 19: Audit trail and verification workflow
+Objective: Make changes traceable and compatible with staff-activity review workflows.
+Prompt to use:
+You are implementing Module 32 - Academic and Professional Contributions in an existing enterprise Staff Information Management System (SIMS). Technology stack: Python 3.12+, Django 5.x, Django REST Framework, MySQL 8.x/InnoDB, server-rendered responsive UI enhanced as a Progressive Web App. Follow the project's existing conventions for apps, base models, staff_activity lifecycle, authentication, RBAC, audit logging, organization/journal/conference/programme/course/student lookups, API envelopes, pagination, error handling, tests, and deployment. Preserve the provided SQL semantics. Prefer maintainable service-layer logic, database-efficient queries, accessible forms, secure defaults, and production-grade tests. Do not invent destructive schema changes.Integrate Module 32 with the existing SIMS audit and verification mechanisms. Capture create/update/delete/archive/verify/reject events, actor, timestamp and changed fields without storing secrets. If staff_activity already has workflow/status, reuse it rather than creating a parallel status column. Show verification history to authorized users. Implement structured audit tests and ensure bulk/export operations are also logged if project policy requires it.
+Expected deliverables:
+Audit integration
+Workflow hooks
+History UI/API
+Tests
+
+Prompt 20: Admin interface
+Objective: Provide safe administrative management without bypassing domain rules.
+Prompt to use:
+You are implementing Module 32 - Academic and Professional Contributions in an existing enterprise Staff Information Management System (SIMS). Technology stack: Python 3.12+, Django 5.x, Django REST Framework, MySQL 8.x/InnoDB, server-rendered responsive UI enhanced as a Progressive Web App. Follow the project's existing conventions for apps, base models, staff_activity lifecycle, authentication, RBAC, audit logging, organization/journal/conference/programme/course/student lookups, API envelopes, pagination, error handling, tests, and deployment. Preserve the provided SQL semantics. Prefer maintainable service-layer logic, database-efficient queries, accessible forms, secure defaults, and production-grade tests. Do not invent destructive schema changes.Configure Django admin for staff_professional_contribution only if project practice permits. Use list_display, search_fields, list_filter, autocomplete_fields/raw_id_fields, readonly audit fields, select_related optimization, and permission restrictions. Ensure admin save uses the same validation rules and cannot create an invalid subtype detached from staff_activity. Prefer custom admin form/service integration rather than duplicating business logic.
+Expected deliverables:
+ModelAdmin code
+Admin form
+Permission rules
+Admin tests
+
+Prompt 21: Reporting and export
+Objective: Support institutional reporting without inefficient row-by-row queries.
+Prompt to use:
+You are implementing Module 32 - Academic and Professional Contributions in an existing enterprise Staff Information Management System (SIMS). Technology stack: Python 3.12+, Django 5.x, Django REST Framework, MySQL 8.x/InnoDB, server-rendered responsive UI enhanced as a Progressive Web App. Follow the project's existing conventions for apps, base models, staff_activity lifecycle, authentication, RBAC, audit logging, organization/journal/conference/programme/course/student lookups, API envelopes, pagination, error handling, tests, and deployment. Preserve the provided SQL semantics. Prefer maintainable service-layer logic, database-efficient queries, accessible forms, secure defaults, and production-grade tests. Do not invent destructive schema changes.Implement report/query services for academic and professional contributions by academic year/date range, staff, department, contribution type, organization, journal/conference, programme/course and verification status. Provide counts and optional sums of number_of_reviews / number_of_candidates where meaningful. Add CSV/XLSX export only using the project's approved export framework, UTF-8-safe values, stable column headings, streaming/chunking for large datasets, and authorization. Do not interpret missing counts as zero unless the report explicitly defines that behavior.
+Expected deliverables:
+Report query layer
+Export schema
+Performance strategy
+Authorization tests
+
+Prompt 22: Dashboard metrics
+Objective: Create concise metrics for staff profile and management dashboards.
+Prompt to use:
+You are implementing Module 32 - Academic and Professional Contributions in an existing enterprise Staff Information Management System (SIMS). Technology stack: Python 3.12+, Django 5.x, Django REST Framework, MySQL 8.x/InnoDB, server-rendered responsive UI enhanced as a Progressive Web App. Follow the project's existing conventions for apps, base models, staff_activity lifecycle, authentication, RBAC, audit logging, organization/journal/conference/programme/course/student lookups, API envelopes, pagination, error handling, tests, and deployment. Preserve the provided SQL semantics. Prefer maintainable service-layer logic, database-efficient queries, accessible forms, secure defaults, and production-grade tests. Do not invent destructive schema changes.Add efficient aggregate metrics for Module 32: total contributions, contributions by type, recent contributions, review counts and candidate counts where recorded, and verified/pending counts if workflow exists. Define time window explicitly. Use database aggregation rather than Python loops and avoid double-counting. Cache only where appropriate and scope cache keys by tenant/institution/user permissions.
+Expected deliverables:
+Aggregate queries
+Dashboard serializer/context
+Query-count tests
+
+Prompt 23: PWA caching and offline policy
+Objective: Integrate Module 32 with the service worker without caching sensitive data incorrectly.
+Prompt to use:
+You are implementing Module 32 - Academic and Professional Contributions in an existing enterprise Staff Information Management System (SIMS). Technology stack: Python 3.12+, Django 5.x, Django REST Framework, MySQL 8.x/InnoDB, server-rendered responsive UI enhanced as a Progressive Web App. Follow the project's existing conventions for apps, base models, staff_activity lifecycle, authentication, RBAC, audit logging, organization/journal/conference/programme/course/student lookups, API envelopes, pagination, error handling, tests, and deployment. Preserve the provided SQL semantics. Prefer maintainable service-layer logic, database-efficient queries, accessible forms, secure defaults, and production-grade tests. Do not invent destructive schema changes.Review the existing SIMS PWA service-worker strategy and add Module 32 safely. Cache static assets with versioning. Do not indiscriminately cache authenticated API responses or staff/student personal data. Use network-first for fresh authenticated lists/details unless project policy provides an encrypted/offline-safe mechanism. If draft form recovery is supported, store only minimal user-entered draft data locally and clear it after successful submission/sign-out. Document cache invalidation and offline UX.
+Expected deliverables:
+Service-worker changes
+Caching matrix
+Offline UX rules
+Security notes
+
+Prompt 24: Security hardening
+Objective: Threat-model the module and apply secure defaults.
+Prompt to use:
+You are implementing Module 32 - Academic and Professional Contributions in an existing enterprise Staff Information Management System (SIMS). Technology stack: Python 3.12+, Django 5.x, Django REST Framework, MySQL 8.x/InnoDB, server-rendered responsive UI enhanced as a Progressive Web App. Follow the project's existing conventions for apps, base models, staff_activity lifecycle, authentication, RBAC, audit logging, organization/journal/conference/programme/course/student lookups, API envelopes, pagination, error handling, tests, and deployment. Preserve the provided SQL semantics. Prefer maintainable service-layer logic, database-efficient queries, accessible forms, secure defaults, and production-grade tests. Do not invent destructive schema changes.Perform a security review of Module 32 covering IDOR/BOLA, CSRF, XSS in text fields, SQL injection, mass assignment, unauthorized staff ownership changes, data leakage from autocomplete, export abuse, forged foreign keys, race conditions, audit manipulation, and excessive API responses. Use Django ORM, CSRF protection for session-auth forms, DRF authentication/permissions, server-side ownership checks, output escaping, length limits, safe logging and secure headers. Provide concrete tests for high-risk cases.
+Expected deliverables:
+Threat model
+Mitigations
+Security tests
+Residual risks
+
+Prompt 25: Database and application performance
+Objective: Optimize realistic list/report workloads while preserving correctness.
+Prompt to use:
+You are implementing Module 32 - Academic and Professional Contributions in an existing enterprise Staff Information Management System (SIMS). Technology stack: Python 3.12+, Django 5.x, Django REST Framework, MySQL 8.x/InnoDB, server-rendered responsive UI enhanced as a Progressive Web App. Follow the project's existing conventions for apps, base models, staff_activity lifecycle, authentication, RBAC, audit logging, organization/journal/conference/programme/course/student lookups, API envelopes, pagination, error handling, tests, and deployment. Preserve the provided SQL semantics. Prefer maintainable service-layer logic, database-efficient queries, accessible forms, secure defaults, and production-grade tests. Do not invent destructive schema changes.Profile and optimize Module 32 for MySQL. Check execution plans for common filtered lists and reports. Verify FK indexes, consider composite indexes only for demonstrated query patterns, use select_related, pagination and values/annotations for reports, and avoid unbounded exports. Add performance tests or query-count assertions. Explain why each proposed index is needed and its write/storage tradeoff. Do not add speculative indexes to every nullable column combination.
+Expected deliverables:
+EXPLAIN review plan
+Query optimizations
+Index proposal
+Benchmarks/query-count checks
+
+Prompt 26: Automated test suite
+Objective: Build comprehensive unit, integration and API regression coverage.
+Prompt to use:
+You are implementing Module 32 - Academic and Professional Contributions in an existing enterprise Staff Information Management System (SIMS). Technology stack: Python 3.12+, Django 5.x, Django REST Framework, MySQL 8.x/InnoDB, server-rendered responsive UI enhanced as a Progressive Web App. Follow the project's existing conventions for apps, base models, staff_activity lifecycle, authentication, RBAC, audit logging, organization/journal/conference/programme/course/student lookups, API envelopes, pagination, error handling, tests, and deployment. Preserve the provided SQL semantics. Prefer maintainable service-layer logic, database-efficient queries, accessible forms, secure defaults, and production-grade tests. Do not invent destructive schema changes.Create the full automated test suite for Module 32 using pytest-django or the project's test framework. Cover model constraints, valid/invalid date ranges, counts, type-driven rules, parent-child atomicity, all FK contexts, CRUD services, permissions, API status codes and payloads, filtering/search/pagination, N+1 prevention, admin behavior, concurrency-sensitive updates where practical, and deletion/archive semantics. Use factories/fixtures for staff_activity and all reference entities. Include regression tests for null combinations allowed by the schema.
+Expected deliverables:
+Factories/fixtures
+Model tests
+Service tests
+API tests
+Permission tests
+Query-count tests
+
+Prompt 27: Frontend E2E and accessibility testing
+Objective: Verify real user flows on desktop and mobile.
+Prompt to use:
+You are implementing Module 32 - Academic and Professional Contributions in an existing enterprise Staff Information Management System (SIMS). Technology stack: Python 3.12+, Django 5.x, Django REST Framework, MySQL 8.x/InnoDB, server-rendered responsive UI enhanced as a Progressive Web App. Follow the project's existing conventions for apps, base models, staff_activity lifecycle, authentication, RBAC, audit logging, organization/journal/conference/programme/course/student lookups, API envelopes, pagination, error handling, tests, and deployment. Preserve the provided SQL semantics. Prefer maintainable service-layer logic, database-efficient queries, accessible forms, secure defaults, and production-grade tests. Do not invent destructive schema changes.Write Playwright/Selenium/Cypress tests according to the existing stack for create, edit, validation error, list/filter/search, detail, permission-denied and delete/archive flows. Cover conditional context fields, keyboard navigation, labels, focus on errors, date inputs, autocomplete behavior, mobile viewport, and offline indicator behavior. Include accessibility checks (WCAG-oriented) with the project's preferred tooling where available.
+Expected deliverables:
+E2E scenarios
+Accessibility checks
+Mobile scenarios
+
+Prompt 28: Observability and operational diagnostics
+Objective: Make production failures diagnosable without leaking sensitive data.
+Prompt to use:
+You are implementing Module 32 - Academic and Professional Contributions in an existing enterprise Staff Information Management System (SIMS). Technology stack: Python 3.12+, Django 5.x, Django REST Framework, MySQL 8.x/InnoDB, server-rendered responsive UI enhanced as a Progressive Web App. Follow the project's existing conventions for apps, base models, staff_activity lifecycle, authentication, RBAC, audit logging, organization/journal/conference/programme/course/student lookups, API envelopes, pagination, error handling, tests, and deployment. Preserve the provided SQL semantics. Prefer maintainable service-layer logic, database-efficient queries, accessible forms, secure defaults, and production-grade tests. Do not invent destructive schema changes.Add structured logging and metrics for Module 32 consistent with SIMS. Log service/API failures with request correlation ID, actor ID and record ID where safe, but not full contribution text or student PII. Track API latency/error rate and DB slow-query signals through existing observability tooling. Add health/dependency checks only through existing system mechanisms. Define useful alerts for repeated 5xx or database-constraint failures.
+Expected deliverables:
+Logging events
+Metrics
+Alert suggestions
+Privacy considerations
+
+Prompt 29: Data quality and duplicate detection
+Objective: Reduce accidental duplicate entries without blocking legitimate repeated contributions.
+Prompt to use:
+You are implementing Module 32 - Academic and Professional Contributions in an existing enterprise Staff Information Management System (SIMS). Technology stack: Python 3.12+, Django 5.x, Django REST Framework, MySQL 8.x/InnoDB, server-rendered responsive UI enhanced as a Progressive Web App. Follow the project's existing conventions for apps, base models, staff_activity lifecycle, authentication, RBAC, audit logging, organization/journal/conference/programme/course/student lookups, API envelopes, pagination, error handling, tests, and deployment. Preserve the provided SQL semantics. Prefer maintainable service-layer logic, database-efficient queries, accessible forms, secure defaults, and production-grade tests. Do not invent destructive schema changes.Design non-destructive duplicate-detection assistance for Module 32. Since the schema has no uniqueness constraint, do not create one automatically. Before create, optionally warn when the same staff member has a contribution with the same type, title/topic, key context reference and date/reference number. Treat it as a warning unless requirements define an actual uniqueness rule. Normalize whitespace and reference-number comparison carefully. Add tests ensuring repeated legitimate reviewer assignments remain possible.
+Expected deliverables:
+Duplicate-candidate query
+Warning UX/API design
+Tests
+
+Prompt 30: Production migration and rollout plan
+Objective: Deploy Module 32 safely into an active SIMS environment.
+Prompt to use:
+You are implementing Module 32 - Academic and Professional Contributions in an existing enterprise Staff Information Management System (SIMS). Technology stack: Python 3.12+, Django 5.x, Django REST Framework, MySQL 8.x/InnoDB, server-rendered responsive UI enhanced as a Progressive Web App. Follow the project's existing conventions for apps, base models, staff_activity lifecycle, authentication, RBAC, audit logging, organization/journal/conference/programme/course/student lookups, API envelopes, pagination, error handling, tests, and deployment. Preserve the provided SQL semantics. Prefer maintainable service-layer logic, database-efficient queries, accessible forms, secure defaults, and production-grade tests. Do not invent destructive schema changes.Prepare a production rollout checklist: schema preflight, migration/legacy mapping, backup, reference-type seed data, permission setup, static assets, service-worker version bump, collectstatic, application restart, health check, smoke tests, rollback, monitoring, and user acceptance validation. Include checks for MySQL CHECK constraint enforcement and FK integrity. Plan a feature flag only if the project already uses one. Avoid downtime where possible.
+Expected deliverables:
+Deployment checklist
+Smoke tests
+Rollback plan
+Post-deployment verification
+
+Prompt 31: Developer documentation
+Objective: Create maintainable technical documentation for future teams.
+Prompt to use:
+You are implementing Module 32 - Academic and Professional Contributions in an existing enterprise Staff Information Management System (SIMS). Technology stack: Python 3.12+, Django 5.x, Django REST Framework, MySQL 8.x/InnoDB, server-rendered responsive UI enhanced as a Progressive Web App. Follow the project's existing conventions for apps, base models, staff_activity lifecycle, authentication, RBAC, audit logging, organization/journal/conference/programme/course/student lookups, API envelopes, pagination, error handling, tests, and deployment. Preserve the provided SQL semantics. Prefer maintainable service-layer logic, database-efficient queries, accessible forms, secure defaults, and production-grade tests. Do not invent destructive schema changes.Write Module 32 developer documentation covering purpose, schema, data model, dependencies, staff_activity integration, contribution-type validation policy, services, URLs/API endpoints, permission model, UI/PWA behavior, reporting, testing, deployment, troubleshooting and extension points. Include examples of how to add a new professional contribution type without changing core code when possible.
+Expected deliverables:
+README/module docs
+API examples
+Extension guide
+Troubleshooting notes
+
+Prompt 32: Final code review and release gate
+Objective: Perform a release-readiness review of the complete implementation.
+Prompt to use:
+You are implementing Module 32 - Academic and Professional Contributions in an existing enterprise Staff Information Management System (SIMS). Technology stack: Python 3.12+, Django 5.x, Django REST Framework, MySQL 8.x/InnoDB, server-rendered responsive UI enhanced as a Progressive Web App. Follow the project's existing conventions for apps, base models, staff_activity lifecycle, authentication, RBAC, audit logging, organization/journal/conference/programme/course/student lookups, API envelopes, pagination, error handling, tests, and deployment. Preserve the provided SQL semantics. Prefer maintainable service-layer logic, database-efficient queries, accessible forms, secure defaults, and production-grade tests. Do not invent destructive schema changes.Act as a senior reviewer. Review the completed Module 32 implementation for schema fidelity, architecture consistency, transaction safety, validation correctness, RBAC, auditability, API design, accessibility, PWA security, MySQL efficiency, tests, migration safety, and code quality. Identify defects by severity, propose concrete fixes, and provide a release checklist. Do not approve the release if there are orphan-risk transactions, broken object permissions, missing date validation, N+1 list queries, unsafe authenticated caching, or untested migration behavior.
+Expected deliverables:
+Review findings
+Required fixes
+Release checklist
+Go-live evidence list
+
+5. Recommended Data-Entry Layout
+Section
+Field
+Required by SQL
+UI / Validation Notes
+Contribution
+professional_contribution_type_id
+Yes
+Searchable/active type; drives conditional guidance.
+Context
+organization_id
+No
+Optional organization; may be required by selected type policy.
+Context
+journal_id
+No
+Optional journal; autocomplete for large journal master.
+Context
+conference_event_id
+No
+Optional conference/event selector.
+Context
+programme_id
+No
+Optional programme context.
+Context
+course_id
+No
+Optional course context; filter by programme/term if project supports it.
+Context
+student_id
+No
+Optional student context; permission-scoped search.
+Description
+title_topic
+No
+Up to 500 characters.
+Appointment
+appointment_reference_number
+No
+Up to 150 characters; preserve original institutional reference.
+Dates
+contribution_date
+No
+Single-date contribution when applicable.
+Dates
+start_date / end_date
+No
+Range; end must not precede start.
+Counts
+number_of_reviews
+No
+Non-negative integer; meaningful only for relevant types.
+Counts
+number_of_candidates
+No
+Non-negative integer; meaningful only for relevant types.
+Narrative
+contribution_details
+No
+Describe nature/scope of contribution.
+Narrative
+outcome_details
+No
+Record outcomes, decisions, impact or completion notes.
+6. API Payload Example
+POST /api/staff/professional-contributions/{  "professional_contribution_type_id": 7,  "organization_id": 145,  "journal_id": null,  "conference_event_id": 82,  "programme_id": null,  "course_id": null,  "student_id": null,  "title_topic": "Session Chair - Data Science Track",  "appointment_reference_number": "CONF/SC/2026/118",  "contribution_date": "2026-09-15",  "start_date": null,  "end_date": null,  "number_of_reviews": null,  "number_of_candidates": null,  "contribution_details": "Chaired the technical session and coordinated paper presentations.",  "outcome_details": "Session completed; reviewer observations submitted to the programme committee."}
+Note: The example IDs are illustrative. The real implementation must use existing records and must never trust client-supplied ownership or staff identity fields.
+7. Definition of Done
+Django model/state accurately represents the MySQL table and parent staff_activity relationship.
+Create/update/delete-or-archive operations are transactionally safe and cannot leave orphan parent records.
+Date and numeric validation is implemented consistently in form, serializer, service and database layers.
+Contribution-type-specific requirements are centralized/configurable rather than hard-coded across views.
+All contextual foreign keys use secure and performant selectors; large master lists are not loaded blindly.
+RBAC and object-level authorization prevent cross-staff data manipulation and data leakage.
+List/detail/API queries are N+1-safe and paginated; reporting queries are aggregation-efficient.
+PWA behavior does not cache sensitive authenticated responses unsafely and handles offline status truthfully.
+Automated model, service, API, permission, migration, query-count, E2E and accessibility tests pass.
+Deployment has rollback, smoke-test and post-release monitoring steps documented.
+8. Suggested Execution Order
+1. Requirements/domain analysis
+2. Architecture integration plan
+3. Reference type integration
+4. ORM model and migration strategy
+5. Centralized validation policy
+6. Service layer and transactions
+7. Selectors/query optimization
+8. Forms and UI/PWA
+9. Serializers and REST API
+10. Autocomplete/reference endpoints
+11. RBAC + audit workflow
+12. Reporting/dashboard
+13. Security + performance hardening
+14. Automated + E2E/accessibility tests
+15. Deployment + documentation + final review
+End of Module 32 Prompt Pack

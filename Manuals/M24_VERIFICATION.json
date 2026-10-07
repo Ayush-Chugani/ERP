@@ -1,0 +1,47 @@
+{
+  "module": "M24 Industry / Faculty Internship",
+  "date": "2026-09-25",
+  "status": "Application implementation verified locally; operational release acceptance pending",
+  "backend": {
+    "module_tests": 16,
+    "combined_passed": 47,
+    "command": "backend/.venv/Scripts/python.exe -m pytest backend/apps/faculty_internships/tests backend/apps/conferences/tests backend/apps/research_publications/tests backend/apps/identity_access/tests/test_foundation.py -q --reuse-db --disable-warnings",
+    "database_engine": "8.4.11",
+    "concurrent_creation": "Two real threads returned the same parent; one receipt and one subtype",
+    "clean_test_migrations": "Passed during isolated database creation",
+    "development_upgrade": "All three migrations applied",
+    "django_check": "Passed",
+    "migration_drift": "None",
+    "migration_pending": "None",
+    "openapi": "Validated with zero warnings/errors",
+    "ruff": "Passed"
+  },
+  "frontend": {
+    "module_tests": 5,
+    "combined_passed": 9,
+    "command": "npm run test:ui -- tests/internships.test.tsx tests/conferences.test.tsx",
+    "production_build": "TypeScript, Vite and PWA generation passed",
+    "real_browser_QA": "Not performed"
+  },
+  "runtime_flags": {
+    "faculty_internships": false,
+    "identity_access": false,
+    "identity_access_security": false
+  },
+  "seeds": "Applied idempotent module catalogue/status/type configuration; no role grants or organization/sector rows added",
+  "known_shared_warning": "Existing mysql.W003 on documents_exit.FileObject.storage_key; no new M24 system-check issues",
+  "remaining_release_acceptance": [
+    "Institutional scoped grants and master-data review",
+    "M13 institution/storage/scanner configuration",
+    "Real-browser mobile and keyboard QA",
+    "Representative-volume staging validation",
+    "Coordinated flag activation and post-deploy smoke checks"
+  ],
+  "limitations": [
+    "Existing communication infrastructure has no workflow notification dispatcher; no outbound messages sent",
+    "Evidence uses shared PDF/PNG/JPEG support",
+    "CSV export only",
+    "Parent dates and ownership immutable after creation; withdraw/recreate corrections",
+    "Broader evidence_document source catalogue remains outside this module"
+  ]
+}

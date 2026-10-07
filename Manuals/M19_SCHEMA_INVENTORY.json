@@ -1,0 +1,293 @@
+{
+  "stage": "Preliminary read-only discovery; implementation queued after M18",
+  "auth_user_model": "accounts.User",
+  "tables": [
+    {
+      "table": "publication_type",
+      "source_line": 3650,
+      "owners": [
+        "staff_profile.PublicationType"
+      ],
+      "installed": true,
+      "references": [],
+      "ddl": "CREATE TABLE publication_type (\n    publication_type_id SMALLINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,\n    publication_type_code VARCHAR(40) NOT NULL UNIQUE,\n    publication_type_name VARCHAR(120) NOT NULL UNIQUE,\n    description VARCHAR(500) NULL,\n    is_active BOOLEAN NOT NULL DEFAULT TRUE,\n    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,\n    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP\n) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;",
+      "disposition": "REVIEW_EXISTING"
+    },
+    {
+      "table": "journal_type",
+      "source_line": 3660,
+      "owners": [
+        "staff_profile.JournalType"
+      ],
+      "installed": true,
+      "references": [],
+      "ddl": "CREATE TABLE journal_type (\n    journal_type_id TINYINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,\n    journal_type_code VARCHAR(30) NOT NULL UNIQUE,\n    journal_type_name VARCHAR(80) NOT NULL UNIQUE,\n    description VARCHAR(300) NULL,\n    is_active BOOLEAN NOT NULL DEFAULT TRUE\n) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;",
+      "disposition": "REVIEW_EXISTING"
+    },
+    {
+      "table": "indexing_agency",
+      "source_line": 3668,
+      "owners": [
+        "staff_profile.IndexingAgency"
+      ],
+      "installed": true,
+      "references": [],
+      "ddl": "CREATE TABLE indexing_agency (\n    indexing_agency_id SMALLINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,\n    agency_code VARCHAR(40) NOT NULL UNIQUE,\n    agency_name VARCHAR(150) NOT NULL UNIQUE,\n    website_url VARCHAR(500) NULL,\n    description VARCHAR(500) NULL,\n    is_active BOOLEAN NOT NULL DEFAULT TRUE\n) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;",
+      "disposition": "REVIEW_EXISTING"
+    },
+    {
+      "table": "metric_type",
+      "source_line": 3677,
+      "owners": [
+        "staff_profile.MetricType"
+      ],
+      "installed": true,
+      "references": [],
+      "ddl": "CREATE TABLE metric_type (\n    metric_type_id TINYINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,\n    metric_code VARCHAR(30) NOT NULL UNIQUE,\n    metric_name VARCHAR(100) NOT NULL UNIQUE,\n    description VARCHAR(300) NULL,\n    is_active BOOLEAN NOT NULL DEFAULT TRUE\n) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;",
+      "disposition": "REVIEW_EXISTING"
+    },
+    {
+      "table": "organization_type",
+      "source_line": 3685,
+      "owners": [],
+      "installed": false,
+      "references": [],
+      "ddl": "CREATE TABLE organization_type (\n    organization_type_id SMALLINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,\n    organization_type_code VARCHAR(40) NOT NULL UNIQUE,\n    organization_type_name VARCHAR(120) NOT NULL UNIQUE,\n    is_active BOOLEAN NOT NULL DEFAULT TRUE\n) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;",
+      "disposition": "CREATE_AFTER_PREDECESSORS"
+    },
+    {
+      "table": "external_organization",
+      "source_line": 3692,
+      "owners": [
+        "staff_profile.ExternalOrganization"
+      ],
+      "installed": true,
+      "references": [
+        "state",
+        "country"
+      ],
+      "ddl": "CREATE TABLE external_organization (\n    organization_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,\n    organization_code VARCHAR(60) NULL UNIQUE,\n    organization_name VARCHAR(250) NOT NULL,\n    short_name VARCHAR(100) NULL,\n    website_url VARCHAR(500) NULL,\n    email VARCHAR(254) NULL,\n    phone VARCHAR(30) NULL,\n    address_line_1 VARCHAR(250) NULL,\n    address_line_2 VARCHAR(250) NULL,\n    city VARCHAR(120) NULL,\n    state_id SMALLINT UNSIGNED NULL,\n    country_id SMALLINT UNSIGNED NULL,\n    postal_code VARCHAR(20) NULL,\n    is_active BOOLEAN NOT NULL DEFAULT TRUE,\n    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,\n    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,\n    CONSTRAINT uq_external_organization_name UNIQUE (organization_name, city, country_id),\n    CONSTRAINT fk_external_organization_state FOREIGN KEY (state_id) REFERENCES state(state_id),\n    CONSTRAINT fk_external_organization_country FOREIGN KEY (country_id) REFERENCES country(country_id)\n) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;",
+      "disposition": "REVIEW_EXISTING"
+    },
+    {
+      "table": "external_organization_type",
+      "source_line": 3714,
+      "owners": [],
+      "installed": false,
+      "references": [
+        "external_organization",
+        "organization_type"
+      ],
+      "ddl": "CREATE TABLE external_organization_type (\n    organization_id BIGINT UNSIGNED NOT NULL,\n    organization_type_id SMALLINT UNSIGNED NOT NULL,\n    PRIMARY KEY (organization_id, organization_type_id),\n    CONSTRAINT fk_external_org_type_org FOREIGN KEY (organization_id)\n        REFERENCES external_organization(organization_id),\n    CONSTRAINT fk_external_org_type_type FOREIGN KEY (organization_type_id)\n        REFERENCES organization_type(organization_type_id)\n) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;",
+      "disposition": "CREATE_AFTER_PREDECESSORS"
+    },
+    {
+      "table": "organizer",
+      "source_line": 3725,
+      "owners": [],
+      "installed": false,
+      "references": [
+        "external_organization"
+      ],
+      "ddl": "CREATE TABLE organizer (\n    organizer_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,\n    organization_id BIGINT UNSIGNED NOT NULL UNIQUE,\n    is_active BOOLEAN NOT NULL DEFAULT TRUE,\n    CONSTRAINT fk_organizer_organization FOREIGN KEY (organization_id)\n        REFERENCES external_organization(organization_id)\n) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;",
+      "disposition": "CREATE_AFTER_PREDECESSORS"
+    },
+    {
+      "table": "publisher",
+      "source_line": 3733,
+      "owners": [
+        "staff_profile.Publisher"
+      ],
+      "installed": true,
+      "references": [
+        "external_organization"
+      ],
+      "ddl": "CREATE TABLE publisher (\n    publisher_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,\n    organization_id BIGINT UNSIGNED NOT NULL UNIQUE,\n    is_active BOOLEAN NOT NULL DEFAULT TRUE,\n    CONSTRAINT fk_publisher_organization FOREIGN KEY (organization_id)\n        REFERENCES external_organization(organization_id)\n) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;",
+      "disposition": "REVIEW_EXISTING"
+    },
+    {
+      "table": "funding_type",
+      "source_line": 3741,
+      "owners": [],
+      "installed": false,
+      "references": [],
+      "ddl": "CREATE TABLE funding_type (\n    funding_type_id TINYINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,\n    funding_type_code VARCHAR(30) NOT NULL UNIQUE,\n    funding_type_name VARCHAR(100) NOT NULL UNIQUE,\n    is_external BOOLEAN NOT NULL DEFAULT FALSE,\n    description VARCHAR(300) NULL,\n    is_active BOOLEAN NOT NULL DEFAULT TRUE\n) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;",
+      "disposition": "CREATE_AFTER_PREDECESSORS"
+    },
+    {
+      "table": "funding_agency",
+      "source_line": 3750,
+      "owners": [],
+      "installed": false,
+      "references": [
+        "external_organization",
+        "funding_type"
+      ],
+      "ddl": "CREATE TABLE funding_agency (\n    funding_agency_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,\n    organization_id BIGINT UNSIGNED NOT NULL UNIQUE,\n    funding_type_id TINYINT UNSIGNED NOT NULL,\n    agency_category VARCHAR(100) NULL,\n    is_active BOOLEAN NOT NULL DEFAULT TRUE,\n    CONSTRAINT fk_funding_agency_org FOREIGN KEY (organization_id)\n        REFERENCES external_organization(organization_id),\n    CONSTRAINT fk_funding_agency_type FOREIGN KEY (funding_type_id)\n        REFERENCES funding_type(funding_type_id)\n) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;",
+      "disposition": "CREATE_AFTER_PREDECESSORS"
+    },
+    {
+      "table": "activity_type",
+      "source_line": 3762,
+      "owners": [
+        "staff_profile.ActivityType"
+      ],
+      "installed": true,
+      "references": [],
+      "ddl": "CREATE TABLE activity_type (\n    activity_type_id SMALLINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,\n    activity_type_code VARCHAR(50) NOT NULL UNIQUE,\n    activity_type_name VARCHAR(150) NOT NULL UNIQUE,\n    activity_group ENUM(\n        'PUBLICATION','CONFERENCE','PROFESSIONAL_DEVELOPMENT','INTERNSHIP',\n        'RESEARCH','CONSULTANCY','CO_CURRICULAR','EXTRA_CURRICULAR',\n        'AWARD','MEMBERSHIP','ACADEMIC_PROFESSIONAL_CONTRIBUTION','OTHER'\n    ) NOT NULL,\n    description VARCHAR(500) NULL,\n    is_active BOOLEAN NOT NULL DEFAULT TRUE\n) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;",
+      "disposition": "REVIEW_EXISTING"
+    },
+    {
+      "table": "participation_level",
+      "source_line": 3775,
+      "owners": [
+        "staff_profile.ParticipationLevel"
+      ],
+      "installed": true,
+      "references": [],
+      "ddl": "CREATE TABLE participation_level (\n    participation_level_id TINYINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,\n    level_code VARCHAR(30) NOT NULL UNIQUE,\n    level_name VARCHAR(100) NOT NULL UNIQUE,\n    display_order TINYINT UNSIGNED NOT NULL DEFAULT 0,\n    is_active BOOLEAN NOT NULL DEFAULT TRUE\n) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;",
+      "disposition": "REVIEW_EXISTING"
+    },
+    {
+      "table": "role_type",
+      "source_line": 3783,
+      "owners": [
+        "staff_profile.RoleType"
+      ],
+      "installed": true,
+      "references": [],
+      "ddl": "CREATE TABLE role_type (\n    role_type_id SMALLINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,\n    role_code VARCHAR(50) NOT NULL UNIQUE,\n    role_name VARCHAR(150) NOT NULL UNIQUE,\n    description VARCHAR(500) NULL,\n    is_active BOOLEAN NOT NULL DEFAULT TRUE\n) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;",
+      "disposition": "REVIEW_EXISTING"
+    },
+    {
+      "table": "research_status",
+      "source_line": 3791,
+      "owners": [],
+      "installed": false,
+      "references": [],
+      "ddl": "CREATE TABLE research_status (\n    research_status_id TINYINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,\n    status_code VARCHAR(30) NOT NULL UNIQUE,\n    status_name VARCHAR(100) NOT NULL UNIQUE,\n    display_order TINYINT UNSIGNED NOT NULL DEFAULT 0,\n    is_terminal BOOLEAN NOT NULL DEFAULT FALSE,\n    is_active BOOLEAN NOT NULL DEFAULT TRUE\n) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;",
+      "disposition": "CREATE_AFTER_PREDECESSORS"
+    },
+    {
+      "table": "event_mode",
+      "source_line": 3800,
+      "owners": [],
+      "installed": false,
+      "references": [],
+      "ddl": "CREATE TABLE event_mode (\n    event_mode_id TINYINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,\n    mode_code VARCHAR(20) NOT NULL UNIQUE,\n    mode_name VARCHAR(60) NOT NULL UNIQUE,\n    is_active BOOLEAN NOT NULL DEFAULT TRUE\n) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;",
+      "disposition": "CREATE_AFTER_PREDECESSORS"
+    },
+    {
+      "table": "evidence_type",
+      "source_line": 3807,
+      "owners": [],
+      "installed": false,
+      "references": [],
+      "ddl": "CREATE TABLE evidence_type (\n    evidence_type_id SMALLINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,\n    evidence_type_code VARCHAR(60) NOT NULL UNIQUE,\n    evidence_type_name VARCHAR(180) NOT NULL UNIQUE,\n    description VARCHAR(500) NULL,\n    is_active BOOLEAN NOT NULL DEFAULT TRUE\n) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;",
+      "disposition": "CREATE_AFTER_PREDECESSORS"
+    },
+    {
+      "table": "verification_status",
+      "source_line": 3815,
+      "owners": [
+        "staff_profile.VerificationStatus"
+      ],
+      "installed": true,
+      "references": [],
+      "ddl": "CREATE TABLE verification_status (\n    verification_status_id TINYINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,\n    status_code VARCHAR(30) NOT NULL UNIQUE,\n    status_name VARCHAR(80) NOT NULL UNIQUE,\n    is_terminal BOOLEAN NOT NULL DEFAULT FALSE,\n    is_active BOOLEAN NOT NULL DEFAULT TRUE\n) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;",
+      "disposition": "REVIEW_EXISTING"
+    },
+    {
+      "table": "approval_status",
+      "source_line": 3823,
+      "owners": [
+        "staff_profile.ApprovalStatus"
+      ],
+      "installed": true,
+      "references": [],
+      "ddl": "CREATE TABLE approval_status (\n    approval_status_id TINYINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,\n    status_code VARCHAR(30) NOT NULL UNIQUE,\n    status_name VARCHAR(80) NOT NULL UNIQUE,\n    is_terminal BOOLEAN NOT NULL DEFAULT FALSE,\n    is_active BOOLEAN NOT NULL DEFAULT TRUE\n) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;",
+      "disposition": "REVIEW_EXISTING"
+    },
+    {
+      "table": "training_program_type",
+      "source_line": 3831,
+      "owners": [],
+      "installed": false,
+      "references": [],
+      "ddl": "CREATE TABLE training_program_type (\n    training_program_type_id SMALLINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,\n    type_code VARCHAR(40) NOT NULL UNIQUE,\n    type_name VARCHAR(120) NOT NULL UNIQUE,\n    description VARCHAR(500) NULL,\n    is_active BOOLEAN NOT NULL DEFAULT TRUE\n) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;",
+      "disposition": "CREATE_AFTER_PREDECESSORS"
+    },
+    {
+      "table": "conference_contribution_type",
+      "source_line": 3839,
+      "owners": [],
+      "installed": false,
+      "references": [],
+      "ddl": "CREATE TABLE conference_contribution_type (\n    conference_contribution_type_id TINYINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,\n    type_code VARCHAR(40) NOT NULL UNIQUE,\n    type_name VARCHAR(120) NOT NULL UNIQUE,\n    is_active BOOLEAN NOT NULL DEFAULT TRUE\n) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;",
+      "disposition": "CREATE_AFTER_PREDECESSORS"
+    },
+    {
+      "table": "industry_sector",
+      "source_line": 3846,
+      "owners": [],
+      "installed": false,
+      "references": [],
+      "ddl": "CREATE TABLE industry_sector (\n    industry_sector_id SMALLINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,\n    sector_code VARCHAR(50) NOT NULL UNIQUE,\n    sector_name VARCHAR(150) NOT NULL UNIQUE,\n    description VARCHAR(500) NULL,\n    is_active BOOLEAN NOT NULL DEFAULT TRUE\n) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;",
+      "disposition": "CREATE_AFTER_PREDECESSORS"
+    },
+    {
+      "table": "cocurricular_category",
+      "source_line": 3854,
+      "owners": [],
+      "installed": false,
+      "references": [],
+      "ddl": "CREATE TABLE cocurricular_category (\n    cocurricular_category_id SMALLINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,\n    category_code VARCHAR(50) NOT NULL UNIQUE,\n    category_name VARCHAR(150) NOT NULL UNIQUE,\n    is_active BOOLEAN NOT NULL DEFAULT TRUE\n) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;",
+      "disposition": "CREATE_AFTER_PREDECESSORS"
+    },
+    {
+      "table": "extracurricular_category",
+      "source_line": 3861,
+      "owners": [],
+      "installed": false,
+      "references": [],
+      "ddl": "CREATE TABLE extracurricular_category (\n    extracurricular_category_id SMALLINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,\n    category_code VARCHAR(50) NOT NULL UNIQUE,\n    category_name VARCHAR(150) NOT NULL UNIQUE,\n    is_active BOOLEAN NOT NULL DEFAULT TRUE\n) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;",
+      "disposition": "CREATE_AFTER_PREDECESSORS"
+    },
+    {
+      "table": "award_category",
+      "source_line": 3868,
+      "owners": [],
+      "installed": false,
+      "references": [],
+      "ddl": "CREATE TABLE award_category (\n    award_category_id SMALLINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,\n    category_code VARCHAR(50) NOT NULL UNIQUE,\n    category_name VARCHAR(150) NOT NULL UNIQUE,\n    is_active BOOLEAN NOT NULL DEFAULT TRUE\n) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;",
+      "disposition": "CREATE_AFTER_PREDECESSORS"
+    },
+    {
+      "table": "membership_type",
+      "source_line": 3875,
+      "owners": [],
+      "installed": false,
+      "references": [],
+      "ddl": "CREATE TABLE membership_type (\n    membership_type_id SMALLINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,\n    type_code VARCHAR(50) NOT NULL UNIQUE,\n    type_name VARCHAR(150) NOT NULL UNIQUE,\n    is_active BOOLEAN NOT NULL DEFAULT TRUE\n) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;",
+      "disposition": "CREATE_AFTER_PREDECESSORS"
+    },
+    {
+      "table": "professional_contribution_type",
+      "source_line": 3882,
+      "owners": [],
+      "installed": false,
+      "references": [],
+      "ddl": "CREATE TABLE professional_contribution_type (\n    professional_contribution_type_id SMALLINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,\n    contribution_code VARCHAR(60) NOT NULL UNIQUE,\n    contribution_name VARCHAR(180) NOT NULL UNIQUE,\n    description VARCHAR(500) NULL,\n    is_active BOOLEAN NOT NULL DEFAULT TRUE\n) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;",
+      "disposition": "CREATE_AFTER_PREDECESSORS"
+    },
+    {
+      "table": "confidentiality_level",
+      "source_line": 3890,
+      "owners": [],
+      "installed": false,
+      "references": [],
+      "ddl": "CREATE TABLE confidentiality_level (\n    confidentiality_level_id TINYINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,\n    level_code VARCHAR(30) NOT NULL UNIQUE,\n    level_name VARCHAR(80) NOT NULL UNIQUE,\n    display_order TINYINT UNSIGNED NOT NULL DEFAULT 0,\n    is_active BOOLEAN NOT NULL DEFAULT TRUE\n) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;",
+      "disposition": "CREATE_AFTER_PREDECESSORS"
+    }
+  ]
+}

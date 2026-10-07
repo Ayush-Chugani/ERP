@@ -1,0 +1,167 @@
+[
+  {
+    "path": "backend/.env.example",
+    "bytes": 2188,
+    "sha256": "5df36b053de49449b02004890d36f19d6d50e02615cc384c03ce2ea24c920ff9"
+  },
+  {
+    "path": "backend/apps/cocurricular/__init__.py",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "backend/apps/cocurricular/admin.py",
+    "bytes": 1631,
+    "sha256": "68977c949f8938ec56f1f0585cae02a95b280c345528a9ad0a2a6125206d92d4"
+  },
+  {
+    "path": "backend/apps/cocurricular/api.py",
+    "bytes": 29283,
+    "sha256": "3523ef038846b996de37165cda833ceffd4a4ba42224cd63da5908d991d804bf"
+  },
+  {
+    "path": "backend/apps/cocurricular/apps.py",
+    "bytes": 167,
+    "sha256": "2eb00e22e9e026279fbf0ff42d4758c4065ff9934447b6d51e7861626b239481"
+  },
+  {
+    "path": "backend/apps/cocurricular/events.py",
+    "bytes": 1333,
+    "sha256": "dfbff92c0599b8faebec10ba3e2b40b42677cace13f10d5e4bec7f203f873c88"
+  },
+  {
+    "path": "backend/apps/cocurricular/management/__init__.py",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "backend/apps/cocurricular/management/commands/__init__.py",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "backend/apps/cocurricular/management/commands/seed_cocurricular.py",
+    "bytes": 4255,
+    "sha256": "f4d50bf6cac0a77262e18307610c7434b35b930a4bea91ba24f5bb2d2fad28a4"
+  },
+  {
+    "path": "backend/apps/cocurricular/migrations/0001_initial.py",
+    "bytes": 7937,
+    "sha256": "d3afa5d920ed05bc7656df785e210adc967555f48ae72b406214de69dcf377f4"
+  },
+  {
+    "path": "backend/apps/cocurricular/migrations/0002_retain_status_history.py",
+    "bytes": 1119,
+    "sha256": "f098f6dcd06053dc304b39346f87968651eab8808aaaf72abcf14305b6025627"
+  },
+  {
+    "path": "backend/apps/cocurricular/migrations/__init__.py",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "backend/apps/cocurricular/migrations/_ddl.py",
+    "bytes": 1385,
+    "sha256": "f8b426dbff5c11f74d4ff29a1d63ec3398365587817701aa604db4c1f6cc9696"
+  },
+  {
+    "path": "backend/apps/cocurricular/migrations/_install.py",
+    "bytes": 1329,
+    "sha256": "d7842bba39592ccbf6a9880db98216b733abd4ffddb8261fc9a9aa79144cbab0"
+  },
+  {
+    "path": "backend/apps/cocurricular/models.py",
+    "bytes": 3155,
+    "sha256": "e8154f56a0c3126cad4af25e23cfbc2cb12175cd55f5ce18fdde26867ecc9c0f"
+  },
+  {
+    "path": "backend/apps/cocurricular/permissions.py",
+    "bytes": 2968,
+    "sha256": "d0e8e3e21fe66f8e3ed8f4fd777644b5d27238f9993be1134b1ad53a83b6ac63"
+  },
+  {
+    "path": "backend/apps/cocurricular/services.py",
+    "bytes": 15918,
+    "sha256": "1e17604ec0d05b067a506969780637e2619e6ce2f84340ee84b3cf41fe31f55f"
+  },
+  {
+    "path": "backend/apps/cocurricular/tests/__init__.py",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "backend/apps/cocurricular/tests/test_concurrency.py",
+    "bytes": 3174,
+    "sha256": "6ef9fa996ff18f48712d651a2ca406aeacb25cba7a82968410a11e37e9d61e3a"
+  },
+  {
+    "path": "backend/apps/cocurricular/tests/test_module.py",
+    "bytes": 26436,
+    "sha256": "92d2bc4763f923e939aa8c3555992dc6be5511a7e6751946e51835b15e72decb"
+  },
+  {
+    "path": "backend/apps/cocurricular/urls.py",
+    "bytes": 439,
+    "sha256": "896426fd781e8eb1659b44d4c0fa8998ff6e34f9060365183adb1dd9273fd06f"
+  },
+  {
+    "path": "backend/apps/staff_profile/migrations/0005_cocurricularcategory.py",
+    "bytes": 1706,
+    "sha256": "4456bce6809387d8a80278f133338adf9e7bf26b2b596e95409cf642ae22c49f"
+  },
+  {
+    "path": "backend/apps/staff_profile/migrations/_ddl_m28.py",
+    "bytes": 343,
+    "sha256": "552753a16c2ae4d91c62cd70a29c81deeb499f7b1ceed6e43a9892eb73643bd9"
+  },
+  {
+    "path": "backend/apps/staff_profile/migrations/_install_m28.py",
+    "bytes": 1333,
+    "sha256": "c255c99a937a6b95800acf3d6cf8d714c805184bef36a57d6bb9a82625199d39"
+  },
+  {
+    "path": "backend/apps/staff_profile/models.py",
+    "bytes": 14934,
+    "sha256": "d6b668a22794e2efe94886fb0089533827f86b2b942093971e219d107a293a50"
+  },
+  {
+    "path": "backend/config/settings/base.py",
+    "bytes": 12402,
+    "sha256": "723845772d01daafba2cdd5f26ed8d6f62eb9ec70b32c19bbf3e3323dd812527"
+  },
+  {
+    "path": "backend/config/urls.py",
+    "bytes": 2466,
+    "sha256": "1d26bcaf27c74de94420dc19416451ead0879651c6047ea7d690de7f24e27f3a"
+  },
+  {
+    "path": "deploy/.env.example",
+    "bytes": 916,
+    "sha256": "9b1bf36c9c9ee87840d4af2a085cc745cba53e02fb50dd01b97171735ac4761b"
+  },
+  {
+    "path": "frontend/src/app/App.tsx",
+    "bytes": 13026,
+    "sha256": "2760239bb1756fc161dd0a4a4daf7b88eda401ee19fda6c05486cd6a5613d175"
+  },
+  {
+    "path": "frontend/src/features/cocurricular/CocurricularApp.tsx",
+    "bytes": 20339,
+    "sha256": "87a81d0c422af2f434a509ad1b2370d28e2594f4f38974fa57345c191c46fff5"
+  },
+  {
+    "path": "frontend/tests/cocurricular.test.tsx",
+    "bytes": 6983,
+    "sha256": "9d816e6a1bf81b6ef643ee31f5fce8a7f188009d52ce0200d264c25f31d8a440"
+  },
+  {
+    "path": "frontend/vitest.config.ts",
+    "bytes": 768,
+    "sha256": "46235f7d30877569f916ccfab70e63d279288e47a765563d16d996682cc5b88d"
+  },
+  {
+    "path": "scripts/m28_verification.py",
+    "bytes": 3103,
+    "sha256": "184a438d06ff35997fbe0ad6051a32fd0d33f1974eecb8dd564f65f0c1c95e11"
+  }
+]

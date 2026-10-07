@@ -1,0 +1,3 @@
+-r requirements.lock
+gunicorn>=23,<24
+# Resolve a Linux production lock and audit before deployment.

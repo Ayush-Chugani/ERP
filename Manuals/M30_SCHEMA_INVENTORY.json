@@ -1,0 +1,245 @@
+[
+  {
+    "table": "staff_award",
+    "model": "awards.StaffAward",
+    "source_ddl": "CREATE TABLE staff_award (\n    staff_activity_id BIGINT UNSIGNED PRIMARY KEY,\n    award_category_id SMALLINT UNSIGNED NULL,\n    award_name VARCHAR(500) NOT NULL,\n    awarding_organization_id BIGINT UNSIGNED NULL,\n    award_date DATE NOT NULL,\n    citation_details TEXT NULL,\n    cash_prize_amount DECIMAL(14,2) NULL,\n    incentive_amount DECIMAL(14,2) NULL,\n    currency_code CHAR(3) NOT NULL DEFAULT 'INR',\n    award_reference_number VARCHAR(150) NULL,\n\n    CONSTRAINT chk_staff_award_amounts CHECK (\n        (cash_prize_amount IS NULL OR cash_prize_amount >= 0)\n        AND (incentive_amount IS NULL OR incentive_amount >= 0)\n    ),\n    CONSTRAINT fk_staff_award_activity FOREIGN KEY (staff_activity_id)\n        REFERENCES staff_activity(staff_activity_id),\n    CONSTRAINT fk_staff_award_category FOREIGN KEY (award_category_id)\n        REFERENCES award_category(award_category_id),\n    CONSTRAINT fk_staff_award_org FOREIGN KEY (awarding_organization_id)\n        REFERENCES external_organization(organization_id)\n) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;",
+    "source_line": 4475,
+    "installed_ddl": "CREATE TABLE `staff_award` (\n  `staff_activity_id` bigint unsigned NOT NULL,\n  `award_category_id` smallint unsigned DEFAULT NULL,\n  `award_name` varchar(500) COLLATE utf8mb4_unicode_ci NOT NULL,\n  `awarding_organization_id` bigint unsigned DEFAULT NULL,\n  `award_date` date NOT NULL,\n  `citation_details` text COLLATE utf8mb4_unicode_ci,\n  `cash_prize_amount` decimal(14,2) DEFAULT NULL,\n  `incentive_amount` decimal(14,2) DEFAULT NULL,\n  `currency_code` char(3) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'INR',\n  `award_reference_number` varchar(150) COLLATE utf8mb4_unicode_ci DEFAULT NULL,\n  PRIMARY KEY (`staff_activity_id`),\n  KEY `fk_staff_award_category` (`award_category_id`),\n  KEY `fk_staff_award_org` (`awarding_organization_id`),\n  CONSTRAINT `fk_staff_award_activity` FOREIGN KEY (`staff_activity_id`) REFERENCES `staff_activity` (`staff_activity_id`),\n  CONSTRAINT `fk_staff_award_category` FOREIGN KEY (`award_category_id`) REFERENCES `award_category` (`award_category_id`),\n  CONSTRAINT `fk_staff_award_org` FOREIGN KEY (`awarding_organization_id`) REFERENCES `external_organization` (`organization_id`),\n  CONSTRAINT `chk_staff_award_amounts` CHECK ((((`cash_prize_amount` is null) or (`cash_prize_amount` >= 0)) and ((`incentive_amount` is null) or (`incentive_amount` >= 0))))\n) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci",
+    "columns": [
+      [
+        "staff_activity_id",
+        "bigint unsigned",
+        "NO"
+      ],
+      [
+        "award_category_id",
+        "smallint unsigned",
+        "YES"
+      ],
+      [
+        "award_name",
+        "varchar(500)",
+        "NO"
+      ],
+      [
+        "awarding_organization_id",
+        "bigint unsigned",
+        "YES"
+      ],
+      [
+        "award_date",
+        "date",
+        "NO"
+      ],
+      [
+        "citation_details",
+        "text",
+        "YES"
+      ],
+      [
+        "cash_prize_amount",
+        "decimal(14,2)",
+        "YES"
+      ],
+      [
+        "incentive_amount",
+        "decimal(14,2)",
+        "YES"
+      ],
+      [
+        "currency_code",
+        "char(3)",
+        "NO"
+      ],
+      [
+        "award_reference_number",
+        "varchar(150)",
+        "YES"
+      ]
+    ],
+    "fields": [
+      {
+        "column": "staff_activity_id",
+        "name": "staff_activity",
+        "type": "bigint unsigned"
+      },
+      {
+        "column": "award_category_id",
+        "name": "award_category",
+        "type": "smallint unsigned"
+      },
+      {
+        "column": "awarding_organization_id",
+        "name": "awarding_organization",
+        "type": "bigint unsigned"
+      },
+      {
+        "column": "award_name",
+        "name": "award_name",
+        "type": "varchar(500)"
+      },
+      {
+        "column": "award_date",
+        "name": "award_date",
+        "type": "date"
+      },
+      {
+        "column": "citation_details",
+        "name": "citation_details",
+        "type": "text"
+      },
+      {
+        "column": "cash_prize_amount",
+        "name": "cash_prize_amount",
+        "type": "numeric(14, 2)"
+      },
+      {
+        "column": "incentive_amount",
+        "name": "incentive_amount",
+        "type": "numeric(14, 2)"
+      },
+      {
+        "column": "currency_code",
+        "name": "currency_code",
+        "type": "char(3)"
+      },
+      {
+        "column": "award_reference_number",
+        "name": "award_reference_number",
+        "type": "varchar(150)"
+      }
+    ]
+  },
+  {
+    "table": "platform_awards_status_history",
+    "model": "awards.AwardStatusHistory",
+    "source_ddl": null,
+    "source_line": null,
+    "installed_ddl": "CREATE TABLE `platform_awards_status_history` (\n  `id` bigint NOT NULL AUTO_INCREMENT,\n  `changed_at` datetime(6) NOT NULL,\n  `remarks` text NOT NULL,\n  `changed_by_id` bigint NOT NULL,\n  `from_status_id` tinyint unsigned DEFAULT NULL,\n  `to_status_id` tinyint unsigned NOT NULL,\n  `activity_id` bigint unsigned NOT NULL,\n  PRIMARY KEY (`id`),\n  KEY `platform_awards_stat_changed_by_id_1a69337e_fk_user_acco` (`changed_by_id`),\n  KEY `platform_awards_stat_from_status_id_43818ce3_fk_approval_` (`from_status_id`),\n  KEY `platform_awards_stat_to_status_id_a384579e_fk_approval_` (`to_status_id`),\n  KEY `platform_awards_stat_activity_id_c1a7432c_fk_staff_awa` (`activity_id`),\n  CONSTRAINT `platform_awards_stat_activity_id_c1a7432c_fk_staff_awa` FOREIGN KEY (`activity_id`) REFERENCES `staff_award` (`staff_activity_id`),\n  CONSTRAINT `platform_awards_stat_changed_by_id_1a69337e_fk_user_acco` FOREIGN KEY (`changed_by_id`) REFERENCES `user_account` (`user_id`),\n  CONSTRAINT `platform_awards_stat_from_status_id_43818ce3_fk_approval_` FOREIGN KEY (`from_status_id`) REFERENCES `approval_status` (`approval_status_id`),\n  CONSTRAINT `platform_awards_stat_to_status_id_a384579e_fk_approval_` FOREIGN KEY (`to_status_id`) REFERENCES `approval_status` (`approval_status_id`)\n) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci",
+    "columns": [
+      [
+        "id",
+        "bigint",
+        "NO"
+      ],
+      [
+        "changed_at",
+        "datetime(6)",
+        "NO"
+      ],
+      [
+        "remarks",
+        "text",
+        "NO"
+      ],
+      [
+        "changed_by_id",
+        "bigint",
+        "NO"
+      ],
+      [
+        "from_status_id",
+        "tinyint unsigned",
+        "YES"
+      ],
+      [
+        "to_status_id",
+        "tinyint unsigned",
+        "NO"
+      ],
+      [
+        "activity_id",
+        "bigint unsigned",
+        "NO"
+      ]
+    ],
+    "fields": [
+      {
+        "column": "id",
+        "name": "id",
+        "type": "bigint AUTO_INCREMENT"
+      },
+      {
+        "column": "activity_id",
+        "name": "activity",
+        "type": "bigint unsigned"
+      },
+      {
+        "column": "from_status_id",
+        "name": "from_status",
+        "type": "tinyint unsigned"
+      },
+      {
+        "column": "to_status_id",
+        "name": "to_status",
+        "type": "tinyint unsigned"
+      },
+      {
+        "column": "changed_by_id",
+        "name": "changed_by",
+        "type": "bigint"
+      },
+      {
+        "column": "changed_at",
+        "name": "changed_at",
+        "type": "datetime(6)"
+      },
+      {
+        "column": "remarks",
+        "name": "remarks",
+        "type": "text"
+      }
+    ]
+  },
+  {
+    "table": "award_category",
+    "model": "staff_profile.AwardCategory",
+    "source_ddl": "CREATE TABLE award_category (\n    award_category_id SMALLINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,\n    category_code VARCHAR(50) NOT NULL UNIQUE,\n    category_name VARCHAR(150) NOT NULL UNIQUE,\n    is_active BOOLEAN NOT NULL DEFAULT TRUE\n) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;",
+    "source_line": 3868,
+    "installed_ddl": "CREATE TABLE `award_category` (\n  `award_category_id` smallint unsigned NOT NULL AUTO_INCREMENT,\n  `category_code` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL,\n  `category_name` varchar(150) COLLATE utf8mb4_unicode_ci NOT NULL,\n  `is_active` tinyint(1) NOT NULL DEFAULT '1',\n  PRIMARY KEY (`award_category_id`),\n  UNIQUE KEY `category_code` (`category_code`),\n  UNIQUE KEY `category_name` (`category_name`)\n) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci",
+    "columns": [
+      [
+        "award_category_id",
+        "smallint unsigned",
+        "NO"
+      ],
+      [
+        "category_code",
+        "varchar(50)",
+        "NO"
+      ],
+      [
+        "category_name",
+        "varchar(150)",
+        "NO"
+      ],
+      [
+        "is_active",
+        "tinyint(1)",
+        "NO"
+      ]
+    ],
+    "fields": [
+      {
+        "column": "award_category_id",
+        "name": "award_category_id",
+        "type": "smallint unsigned"
+      },
+      {
+        "column": "category_code",
+        "name": "category_code",
+        "type": "varchar(50)"
+      },
+      {
+        "column": "category_name",
+        "name": "category_name",
+        "type": "varchar(150)"
+      },
+      {
+        "column": "is_active",
+        "name": "is_active",
+        "type": "bool"
+      }
+    ]
+  }
+]

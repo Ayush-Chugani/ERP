@@ -1,0 +1,283 @@
+[
+  {
+    "table": "qualification_level",
+    "source_line": 2045,
+    "constraints": [],
+    "references": [],
+    "ddl": "CREATE TABLE qualification_level (\n    qualification_level_id SMALLINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,\n    level_code VARCHAR(40) NOT NULL UNIQUE,\n    level_name VARCHAR(120) NOT NULL UNIQUE,\n    display_order SMALLINT UNSIGNED NOT NULL DEFAULT 0,\n    is_terminal_degree BOOLEAN NOT NULL DEFAULT FALSE,\n    description VARCHAR(500) NULL,\n    is_active BOOLEAN NOT NULL DEFAULT TRUE,\n    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,\n    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP\n) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;"
+  },
+  {
+    "table": "study_mode",
+    "source_line": 2057,
+    "constraints": [],
+    "references": [],
+    "ddl": "CREATE TABLE study_mode (\n    study_mode_id TINYINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,\n    mode_code VARCHAR(30) NOT NULL UNIQUE,\n    mode_name VARCHAR(100) NOT NULL UNIQUE,\n    is_active BOOLEAN NOT NULL DEFAULT TRUE\n) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;"
+  },
+  {
+    "table": "education_institution_type",
+    "source_line": 2064,
+    "constraints": [],
+    "references": [],
+    "ddl": "CREATE TABLE education_institution_type (\n    education_institution_type_id TINYINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,\n    type_code VARCHAR(30) NOT NULL UNIQUE,\n    type_name VARCHAR(100) NOT NULL UNIQUE,\n    is_active BOOLEAN NOT NULL DEFAULT TRUE\n) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;"
+  },
+  {
+    "table": "awarding_body_type",
+    "source_line": 2071,
+    "constraints": [],
+    "references": [],
+    "ddl": "CREATE TABLE awarding_body_type (\n    awarding_body_type_id TINYINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,\n    type_code VARCHAR(30) NOT NULL UNIQUE,\n    type_name VARCHAR(100) NOT NULL UNIQUE,\n    is_active BOOLEAN NOT NULL DEFAULT TRUE\n) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;"
+  },
+  {
+    "table": "education_institution",
+    "source_line": 2078,
+    "constraints": [
+      "uq_education_institution",
+      "fk_education_institution_type",
+      "fk_education_institution_state",
+      "fk_education_institution_country"
+    ],
+    "references": [
+      "education_institution_type",
+      "state",
+      "country"
+    ],
+    "ddl": "CREATE TABLE education_institution (\n    education_institution_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,\n    education_institution_type_id TINYINT UNSIGNED NULL,\n    institution_name VARCHAR(250) NOT NULL,\n    city VARCHAR(100) NULL,\n    state_id SMALLINT UNSIGNED NULL,\n    country_id SMALLINT UNSIGNED NULL,\n    website_url VARCHAR(255) NULL,\n    is_active BOOLEAN NOT NULL DEFAULT TRUE,\n    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,\n    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,\n    CONSTRAINT uq_education_institution UNIQUE (institution_name, city, country_id),\n    CONSTRAINT fk_education_institution_type FOREIGN KEY (education_institution_type_id) REFERENCES education_institution_type(education_institution_type_id),\n    CONSTRAINT fk_education_institution_state FOREIGN KEY (state_id) REFERENCES state(state_id),\n    CONSTRAINT fk_education_institution_country FOREIGN KEY (country_id) REFERENCES country(country_id)\n) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;"
+  },
+  {
+    "table": "awarding_body",
+    "source_line": 2095,
+    "constraints": [
+      "uq_awarding_body",
+      "fk_awarding_body_type",
+      "fk_awarding_body_state",
+      "fk_awarding_body_country"
+    ],
+    "references": [
+      "awarding_body_type",
+      "state",
+      "country"
+    ],
+    "ddl": "CREATE TABLE awarding_body (\n    awarding_body_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,\n    awarding_body_type_id TINYINT UNSIGNED NULL,\n    awarding_body_name VARCHAR(250) NOT NULL,\n    university_type ENUM('CENTRAL','STATE','PRIVATE','DEEMED','FOREIGN','AUTONOMOUS','OTHER') NULL,\n    city VARCHAR(100) NULL,\n    state_id SMALLINT UNSIGNED NULL,\n    country_id SMALLINT UNSIGNED NULL,\n    website_url VARCHAR(255) NULL,\n    is_active BOOLEAN NOT NULL DEFAULT TRUE,\n    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,\n    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,\n    CONSTRAINT uq_awarding_body UNIQUE (awarding_body_name, country_id),\n    CONSTRAINT fk_awarding_body_type FOREIGN KEY (awarding_body_type_id) REFERENCES awarding_body_type(awarding_body_type_id),\n    CONSTRAINT fk_awarding_body_state FOREIGN KEY (state_id) REFERENCES state(state_id),\n    CONSTRAINT fk_awarding_body_country FOREIGN KEY (country_id) REFERENCES country(country_id)\n) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;"
+  },
+  {
+    "table": "previous_organization_type",
+    "source_line": 2113,
+    "constraints": [],
+    "references": [],
+    "ddl": "CREATE TABLE previous_organization_type (\n    previous_organization_type_id TINYINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,\n    type_code VARCHAR(40) NOT NULL UNIQUE,\n    type_name VARCHAR(120) NOT NULL UNIQUE,\n    classification ENUM('INDUSTRY','ACADEMIC','GOVERNMENT','PRIVATE','PUBLIC_SECTOR','NGO','SELF_EMPLOYED','OTHER') NOT NULL DEFAULT 'OTHER',\n    is_active BOOLEAN NOT NULL DEFAULT TRUE\n) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;"
+  },
+  {
+    "table": "previous_organization",
+    "source_line": 2121,
+    "constraints": [
+      "uq_previous_organization",
+      "fk_previous_organization_type",
+      "fk_previous_organization_state",
+      "fk_previous_organization_country"
+    ],
+    "references": [
+      "previous_organization_type",
+      "state",
+      "country"
+    ],
+    "ddl": "CREATE TABLE previous_organization (\n    previous_organization_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,\n    previous_organization_type_id TINYINT UNSIGNED NULL,\n    organization_name VARCHAR(250) NOT NULL,\n    address_line_1 VARCHAR(200) NULL,\n    address_line_2 VARCHAR(200) NULL,\n    city VARCHAR(100) NULL,\n    state_id SMALLINT UNSIGNED NULL,\n    country_id SMALLINT UNSIGNED NULL,\n    postal_code VARCHAR(12) NULL,\n    phone VARCHAR(25) NULL,\n    email VARCHAR(254) NULL,\n    website_url VARCHAR(255) NULL,\n    is_active BOOLEAN NOT NULL DEFAULT TRUE,\n    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,\n    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,\n    CONSTRAINT uq_previous_organization UNIQUE (organization_name, city, country_id),\n    CONSTRAINT fk_previous_organization_type FOREIGN KEY (previous_organization_type_id) REFERENCES previous_organization_type(previous_organization_type_id),\n    CONSTRAINT fk_previous_organization_state FOREIGN KEY (state_id) REFERENCES state(state_id),\n    CONSTRAINT fk_previous_organization_country FOREIGN KEY (country_id) REFERENCES country(country_id)\n) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;"
+  },
+  {
+    "table": "employee_qualification",
+    "source_line": 2143,
+    "constraints": [
+      "uq_employee_qualification_owner",
+      "uq_employee_highest_qualification",
+      "chk_employee_qualification_dates",
+      "chk_employee_qualification_percentage",
+      "chk_employee_qualification_cgpa",
+      "chk_employee_qualification_cgpa_scale",
+      "chk_employee_qualification_cgpa_range",
+      "chk_employee_qualification_marks",
+      "fk_employee_qualification_employee",
+      "fk_employee_qualification_level",
+      "fk_employee_qualification_institution",
+      "fk_employee_qualification_awarding_body",
+      "fk_employee_qualification_study_mode",
+      "fk_employee_qualification_created_by",
+      "fk_employee_qualification_updated_by"
+    ],
+    "references": [
+      "employee",
+      "qualification_level",
+      "education_institution",
+      "awarding_body",
+      "study_mode",
+      "user_account",
+      "user_account"
+    ],
+    "ddl": "CREATE TABLE employee_qualification (\n    employee_qualification_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,\n    employee_id BIGINT UNSIGNED NOT NULL,\n    qualification_level_id SMALLINT UNSIGNED NOT NULL,\n    education_institution_id BIGINT UNSIGNED NULL,\n    awarding_body_id BIGINT UNSIGNED NULL,\n    study_mode_id TINYINT UNSIGNED NULL,\n    degree_certificate_name VARCHAR(250) NOT NULL,\n    specialization VARCHAR(200) NULL,\n    course_program_name VARCHAR(250) NULL,\n    start_date DATE NULL,\n    start_year YEAR NULL,\n    completion_date DATE NULL,\n    completion_year YEAR NULL,\n    passing_year YEAR NULL,\n    registration_roll_number VARCHAR(100) NULL,\n    result VARCHAR(100) NULL,\n    class_grade VARCHAR(100) NULL,\n    cgpa DECIMAL(6,3) NULL,\n    cgpa_scale DECIMAL(6,3) NULL,\n    percentage DECIMAL(5,2) NULL,\n    maximum_marks DECIMAL(10,2) NULL,\n    marks_obtained DECIMAL(10,2) NULL,\n    qualification_status ENUM('COMPLETED','PURSUING','AWAITING_RESULT','DISCONTINUED','OTHER') NOT NULL DEFAULT 'COMPLETED',\n    is_highest_qualification BOOLEAN NOT NULL DEFAULT FALSE,\n    active_highest_employee_id BIGINT UNSIGNED GENERATED ALWAYS AS (\n        CASE WHEN is_highest_qualification = TRUE AND deleted_at IS NULL THEN employee_id ELSE NULL END\n    ) STORED,\n    remarks VARCHAR(1000) NULL,\n    created_by_user_id BIGINT UNSIGNED NULL,\n    updated_by_user_id BIGINT UNSIGNED NULL,\n    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,\n    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,\n    deleted_at TIMESTAMP NULL,\n    CONSTRAINT uq_employee_qualification_owner UNIQUE (employee_qualification_id, employee_id),\n    CONSTRAINT uq_employee_highest_qualification UNIQUE (active_highest_employee_id),\n    CONSTRAINT chk_employee_qualification_dates CHECK (completion_date IS NULL OR start_date IS NULL OR completion_date >= start_date),\n    CONSTRAINT chk_employee_qualification_percentage CHECK (percentage IS NULL OR (percentage >= 0 AND percentage <= 100)),\n    CONSTRAINT chk_employee_qualification_cgpa CHECK (cgpa IS NULL OR cgpa >= 0),\n    CONSTRAINT chk_employee_qualification_cgpa_scale CHECK (cgpa_scale IS NULL OR cgpa_scale > 0),\n    CONSTRAINT chk_employee_qualification_cgpa_range CHECK (cgpa IS NULL OR cgpa_scale IS NULL OR cgpa <= cgpa_scale),\n    CONSTRAINT chk_employee_qualification_marks CHECK (marks_obtained IS NULL OR maximum_marks IS NULL OR (marks_obtained >= 0 AND maximum_marks >= 0 AND marks_obtained <= maximum_marks)),\n    CONSTRAINT fk_employee_qualification_employee FOREIGN KEY (employee_id) REFERENCES employee(employee_id),\n    CONSTRAINT fk_employee_qualification_level FOREIGN KEY (qualification_level_id) REFERENCES qualification_level(qualification_level_id),\n    CONSTRAINT fk_employee_qualification_institution FOREIGN KEY (education_institution_id) REFERENCES education_institution(education_institution_id),\n    CONSTRAINT fk_employee_qualification_awarding_body FOREIGN KEY (awarding_body_id) REFERENCES awarding_body(awarding_body_id),\n    CONSTRAINT fk_employee_qualification_study_mode FOREIGN KEY (study_mode_id) REFERENCES study_mode(study_mode_id),\n    CONSTRAINT fk_employee_qualification_created_by FOREIGN KEY (created_by_user_id) REFERENCES user_account(user_id),\n    CONSTRAINT fk_employee_qualification_updated_by FOREIGN KEY (updated_by_user_id) REFERENCES user_account(user_id)\n) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;"
+  },
+  {
+    "table": "employee_previous_employment",
+    "source_line": 2194,
+    "constraints": [
+      "uq_employee_previous_employment_owner",
+      "chk_previous_employment_dates",
+      "chk_previous_employment_salary",
+      "fk_previous_employment_employee",
+      "fk_previous_employment_organization",
+      "fk_previous_employment_created_by",
+      "fk_previous_employment_updated_by"
+    ],
+    "references": [
+      "employee",
+      "previous_organization",
+      "user_account",
+      "user_account"
+    ],
+    "ddl": "CREATE TABLE employee_previous_employment (\n    employee_previous_employment_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,\n    employee_id BIGINT UNSIGNED NOT NULL,\n    previous_organization_id BIGINT UNSIGNED NOT NULL,\n    department_division VARCHAR(200) NULL,\n    designation VARCHAR(150) NOT NULL,\n    employment_type ENUM('FULL_TIME','PART_TIME','CONTRACT','TEMPORARY','VISITING','CONSULTANT','TRAINEE','SELF_EMPLOYED','OTHER') NOT NULL,\n    nature_of_work VARCHAR(1000) NULL,\n    employment_start_date DATE NOT NULL,\n    employment_end_date DATE NULL,\n    experience_days INT UNSIGNED NULL,\n    last_drawn_salary DECIMAL(14,2) NULL,\n    salary_currency_code CHAR(3) NOT NULL DEFAULT 'INR',\n    reason_for_leaving VARCHAR(1000) NULL,\n    reporting_authority_name VARCHAR(200) NULL,\n    reporting_authority_designation VARCHAR(150) NULL,\n    reporting_authority_phone VARCHAR(25) NULL,\n    reporting_authority_email VARCHAR(254) NULL,\n    remarks VARCHAR(1000) NULL,\n    created_by_user_id BIGINT UNSIGNED NULL,\n    updated_by_user_id BIGINT UNSIGNED NULL,\n    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,\n    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,\n    deleted_at TIMESTAMP NULL,\n    CONSTRAINT uq_employee_previous_employment_owner UNIQUE (employee_previous_employment_id, employee_id),\n    CONSTRAINT chk_previous_employment_dates CHECK (employment_end_date IS NULL OR employment_end_date >= employment_start_date),\n    CONSTRAINT chk_previous_employment_salary CHECK (last_drawn_salary IS NULL OR last_drawn_salary >= 0),\n    CONSTRAINT fk_previous_employment_employee FOREIGN KEY (employee_id) REFERENCES employee(employee_id),\n    CONSTRAINT fk_previous_employment_organization FOREIGN KEY (previous_organization_id) REFERENCES previous_organization(previous_organization_id),\n    CONSTRAINT fk_previous_employment_created_by FOREIGN KEY (created_by_user_id) REFERENCES user_account(user_id),\n    CONSTRAINT fk_previous_employment_updated_by FOREIGN KEY (updated_by_user_id) REFERENCES user_account(user_id)\n) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;"
+  },
+  {
+    "table": "employee_bank_account",
+    "source_line": 2227,
+    "constraints": [
+      "uq_employee_bank_owner",
+      "uq_employee_primary_bank",
+      "chk_employee_bank_dates",
+      "chk_employee_bank_last4",
+      "chk_employee_bank_ifsc",
+      "fk_employee_bank_employee",
+      "fk_employee_bank_state",
+      "fk_employee_bank_country",
+      "fk_employee_bank_verified_by",
+      "fk_employee_bank_created_by",
+      "fk_employee_bank_updated_by"
+    ],
+    "references": [
+      "employee",
+      "state",
+      "country",
+      "user_account",
+      "user_account",
+      "user_account"
+    ],
+    "ddl": "CREATE TABLE employee_bank_account (\n    employee_bank_account_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,\n    employee_id BIGINT UNSIGNED NOT NULL,\n    account_holder_name VARCHAR(200) NOT NULL,\n    bank_name VARCHAR(200) NOT NULL,\n    branch_name VARCHAR(200) NULL,\n    account_number_ciphertext VARBINARY(1024) NOT NULL,\n    account_number_fingerprint CHAR(64) NOT NULL UNIQUE,\n    account_number_last4 CHAR(4) NOT NULL,\n    account_number_confirmed BOOLEAN NOT NULL DEFAULT FALSE,\n    account_type ENUM('SAVINGS','CURRENT','SALARY','NRE','NRO','OTHER') NOT NULL DEFAULT 'SAVINGS',\n    ifsc_code VARCHAR(11) NOT NULL,\n    micr_code VARCHAR(20) NULL,\n    branch_code VARCHAR(30) NULL,\n    bank_address VARCHAR(500) NULL,\n    city VARCHAR(100) NULL,\n    state_id SMALLINT UNSIGNED NULL,\n    country_id SMALLINT UNSIGNED NULL,\n    upi_id VARCHAR(150) NULL,\n    is_salary_account BOOLEAN NOT NULL DEFAULT FALSE,\n    is_primary BOOLEAN NOT NULL DEFAULT FALSE,\n    account_status ENUM('PENDING_VERIFICATION','ACTIVE','INACTIVE','CLOSED','REJECTED') NOT NULL DEFAULT 'PENDING_VERIFICATION',\n    verification_status ENUM('PENDING','VERIFIED','REJECTED','EXPIRED') NOT NULL DEFAULT 'PENDING',\n    verified_by_user_id BIGINT UNSIGNED NULL,\n    verified_at DATETIME NULL,\n    verification_remarks VARCHAR(1000) NULL,\n    effective_from DATE NULL,\n    effective_to DATE NULL,\n    remarks VARCHAR(1000) NULL,\n    created_by_user_id BIGINT UNSIGNED NULL,\n    updated_by_user_id BIGINT UNSIGNED NULL,\n    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,\n    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,\n    deleted_at TIMESTAMP NULL,\n    active_primary_employee_id BIGINT UNSIGNED GENERATED ALWAYS AS (CASE WHEN is_primary = TRUE AND deleted_at IS NULL THEN employee_id ELSE NULL END) STORED,\n    CONSTRAINT uq_employee_bank_owner UNIQUE (employee_bank_account_id, employee_id),\n    CONSTRAINT uq_employee_primary_bank UNIQUE (active_primary_employee_id),\n    CONSTRAINT chk_employee_bank_dates CHECK (effective_to IS NULL OR effective_from IS NULL OR effective_to >= effective_from),\n    CONSTRAINT chk_employee_bank_last4 CHECK (account_number_last4 REGEXP '^[0-9]{4}$'),\n    CONSTRAINT chk_employee_bank_ifsc CHECK (ifsc_code REGEXP '^[A-Za-z]{4}0[A-Za-z0-9]{6}$'),\n    CONSTRAINT fk_employee_bank_employee FOREIGN KEY (employee_id) REFERENCES employee(employee_id),\n    CONSTRAINT fk_employee_bank_state FOREIGN KEY (state_id) REFERENCES state(state_id),\n    CONSTRAINT fk_employee_bank_country FOREIGN KEY (country_id) REFERENCES country(country_id),\n    CONSTRAINT fk_employee_bank_verified_by FOREIGN KEY (verified_by_user_id) REFERENCES user_account(user_id),\n    CONSTRAINT fk_employee_bank_created_by FOREIGN KEY (created_by_user_id) REFERENCES user_account(user_id),\n    CONSTRAINT fk_employee_bank_updated_by FOREIGN KEY (updated_by_user_id) REFERENCES user_account(user_id)\n) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;"
+  },
+  {
+    "table": "employee_pan",
+    "source_line": 2275,
+    "constraints": [
+      "uq_employee_pan_owner",
+      "chk_employee_pan_masked",
+      "fk_employee_pan_employee",
+      "fk_employee_pan_verified_by",
+      "fk_employee_pan_created_by",
+      "fk_employee_pan_updated_by"
+    ],
+    "references": [
+      "employee",
+      "user_account",
+      "user_account",
+      "user_account"
+    ],
+    "ddl": "CREATE TABLE employee_pan (\n    employee_pan_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,\n    employee_id BIGINT UNSIGNED NOT NULL UNIQUE,\n    pan_number_ciphertext VARBINARY(1024) NOT NULL,\n    pan_number_fingerprint CHAR(64) NOT NULL UNIQUE,\n    pan_number_masked VARCHAR(15) NOT NULL,\n    name_as_per_pan VARCHAR(200) NOT NULL,\n    pan_issue_date DATE NULL,\n    pan_issue_details VARCHAR(500) NULL,\n    format_validated BOOLEAN NOT NULL DEFAULT FALSE,\n    verification_status ENUM('PENDING','VERIFIED','REJECTED','EXPIRED') NOT NULL DEFAULT 'PENDING',\n    verified_by_user_id BIGINT UNSIGNED NULL,\n    verified_at DATETIME NULL,\n    verification_remarks VARCHAR(1000) NULL,\n    remarks VARCHAR(1000) NULL,\n    created_by_user_id BIGINT UNSIGNED NULL,\n    updated_by_user_id BIGINT UNSIGNED NULL,\n    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,\n    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,\n    deleted_at TIMESTAMP NULL,\n    CONSTRAINT uq_employee_pan_owner UNIQUE (employee_pan_id, employee_id),\n    CONSTRAINT chk_employee_pan_masked CHECK (CHAR_LENGTH(pan_number_masked) BETWEEN 6 AND 15),\n    CONSTRAINT fk_employee_pan_employee FOREIGN KEY (employee_id) REFERENCES employee(employee_id),\n    CONSTRAINT fk_employee_pan_verified_by FOREIGN KEY (verified_by_user_id) REFERENCES user_account(user_id),\n    CONSTRAINT fk_employee_pan_created_by FOREIGN KEY (created_by_user_id) REFERENCES user_account(user_id),\n    CONSTRAINT fk_employee_pan_updated_by FOREIGN KEY (updated_by_user_id) REFERENCES user_account(user_id)\n) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;"
+  },
+  {
+    "table": "employee_aadhaar",
+    "source_line": 2303,
+    "constraints": [
+      "uq_employee_aadhaar_owner",
+      "chk_employee_aadhaar_last4",
+      "fk_employee_aadhaar_employee",
+      "fk_employee_aadhaar_verified_by",
+      "fk_employee_aadhaar_created_by",
+      "fk_employee_aadhaar_updated_by"
+    ],
+    "references": [
+      "employee",
+      "user_account",
+      "user_account",
+      "user_account"
+    ],
+    "ddl": "CREATE TABLE employee_aadhaar (\n    employee_aadhaar_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,\n    employee_id BIGINT UNSIGNED NOT NULL UNIQUE,\n    aadhaar_number_ciphertext VARBINARY(1024) NOT NULL,\n    aadhaar_number_fingerprint CHAR(64) NOT NULL UNIQUE,\n    aadhaar_number_last4 CHAR(4) NOT NULL,\n    aadhaar_number_masked VARCHAR(30) NOT NULL,\n    name_as_per_aadhaar VARCHAR(200) NOT NULL,\n    format_validated BOOLEAN NOT NULL DEFAULT FALSE,\n    verification_status ENUM('PENDING','VERIFIED','REJECTED','EXPIRED') NOT NULL DEFAULT 'PENDING',\n    verified_by_user_id BIGINT UNSIGNED NULL,\n    verified_at DATETIME NULL,\n    verification_remarks VARCHAR(1000) NULL,\n    collection_purpose VARCHAR(500) NULL,\n    remarks VARCHAR(1000) NULL,\n    created_by_user_id BIGINT UNSIGNED NULL,\n    updated_by_user_id BIGINT UNSIGNED NULL,\n    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,\n    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,\n    deleted_at TIMESTAMP NULL,\n    CONSTRAINT uq_employee_aadhaar_owner UNIQUE (employee_aadhaar_id, employee_id),\n    CONSTRAINT chk_employee_aadhaar_last4 CHECK (aadhaar_number_last4 REGEXP '^[0-9]{4}$'),\n    CONSTRAINT fk_employee_aadhaar_employee FOREIGN KEY (employee_id) REFERENCES employee(employee_id),\n    CONSTRAINT fk_employee_aadhaar_verified_by FOREIGN KEY (verified_by_user_id) REFERENCES user_account(user_id),\n    CONSTRAINT fk_employee_aadhaar_created_by FOREIGN KEY (created_by_user_id) REFERENCES user_account(user_id),\n    CONSTRAINT fk_employee_aadhaar_updated_by FOREIGN KEY (updated_by_user_id) REFERENCES user_account(user_id)\n) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;"
+  },
+  {
+    "table": "employee_document_category",
+    "source_line": 2331,
+    "constraints": [],
+    "references": [],
+    "ddl": "CREATE TABLE employee_document_category (\n    employee_document_category_id SMALLINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,\n    category_code VARCHAR(50) NOT NULL UNIQUE,\n    category_name VARCHAR(150) NOT NULL UNIQUE,\n    default_confidentiality ENUM('PUBLIC','INTERNAL','CONFIDENTIAL','RESTRICTED','HIGHLY_RESTRICTED') NOT NULL DEFAULT 'INTERNAL',\n    requires_verification BOOLEAN NOT NULL DEFAULT TRUE,\n    requires_approval BOOLEAN NOT NULL DEFAULT FALSE,\n    is_active BOOLEAN NOT NULL DEFAULT TRUE\n) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;"
+  },
+  {
+    "table": "employee_document",
+    "source_line": 2341,
+    "constraints": [
+      "chk_employee_document_expiry",
+      "chk_employee_document_version",
+      "chk_employee_document_scope",
+      "fk_employee_document_employee",
+      "fk_employee_document_qualification_owner",
+      "fk_employee_document_experience_owner",
+      "fk_employee_document_bank_owner",
+      "fk_employee_document_pan_owner",
+      "fk_employee_document_aadhaar_owner",
+      "fk_employee_document_category",
+      "fk_employee_document_type",
+      "fk_employee_document_file",
+      "fk_employee_document_supersedes",
+      "fk_employee_document_verified_by",
+      "fk_employee_document_approved_by",
+      "fk_employee_document_created_by",
+      "fk_employee_document_updated_by",
+      "fk_employee_document_deleted_by"
+    ],
+    "references": [
+      "employee",
+      "employee_qualification",
+      "employee_previous_employment",
+      "employee_bank_account",
+      "employee_pan",
+      "employee_aadhaar",
+      "employee_document_category",
+      "document_type",
+      "file_object",
+      "employee_document",
+      "user_account",
+      "user_account",
+      "user_account",
+      "user_account",
+      "user_account"
+    ],
+    "ddl": "CREATE TABLE employee_document (\n    employee_document_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,\n    employee_id BIGINT UNSIGNED NOT NULL,\n    document_scope ENUM('EMPLOYEE_GENERAL','QUALIFICATION','PREVIOUS_EMPLOYMENT','BANK_ACCOUNT','PAN','AADHAAR') NOT NULL,\n    employee_qualification_id BIGINT UNSIGNED NULL,\n    employee_previous_employment_id BIGINT UNSIGNED NULL,\n    employee_bank_account_id BIGINT UNSIGNED NULL,\n    employee_pan_id BIGINT UNSIGNED NULL,\n    employee_aadhaar_id BIGINT UNSIGNED NULL,\n    employee_document_category_id SMALLINT UNSIGNED NOT NULL,\n    document_type_id SMALLINT UNSIGNED NOT NULL,\n    file_object_id BIGINT UNSIGNED NOT NULL,\n    document_title VARCHAR(250) NOT NULL,\n    document_number VARCHAR(150) NULL,\n    issue_date DATE NULL,\n    expiry_date DATE NULL,\n    version_number SMALLINT UNSIGNED NOT NULL DEFAULT 1,\n    supersedes_employee_document_id BIGINT UNSIGNED NULL,\n    verification_status ENUM('PENDING','UNDER_REVIEW','VERIFIED','REJECTED','EXPIRED') NOT NULL DEFAULT 'PENDING',\n    verified_by_user_id BIGINT UNSIGNED NULL,\n    verified_at DATETIME NULL,\n    verification_remarks VARCHAR(1000) NULL,\n    approval_status ENUM('NOT_REQUIRED','PENDING','APPROVED','REJECTED') NOT NULL DEFAULT 'NOT_REQUIRED',\n    approved_by_user_id BIGINT UNSIGNED NULL,\n    approved_at DATETIME NULL,\n    approval_remarks VARCHAR(1000) NULL,\n    confidentiality_level ENUM('PUBLIC','INTERNAL','CONFIDENTIAL','RESTRICTED','HIGHLY_RESTRICTED') NOT NULL DEFAULT 'CONFIDENTIAL',\n    is_private BOOLEAN NOT NULL DEFAULT TRUE,\n    is_active BOOLEAN NOT NULL DEFAULT TRUE,\n    created_by_user_id BIGINT UNSIGNED NULL,\n    updated_by_user_id BIGINT UNSIGNED NULL,\n    deleted_by_user_id BIGINT UNSIGNED NULL,\n    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,\n    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,\n    deleted_at TIMESTAMP NULL,\n    CONSTRAINT chk_employee_document_expiry CHECK (expiry_date IS NULL OR issue_date IS NULL OR expiry_date >= issue_date),\n    CONSTRAINT chk_employee_document_version CHECK (version_number > 0),\n    CONSTRAINT chk_employee_document_scope CHECK (\n        (document_scope='EMPLOYEE_GENERAL' AND employee_qualification_id IS NULL AND employee_previous_employment_id IS NULL AND employee_bank_account_id IS NULL AND employee_pan_id IS NULL AND employee_aadhaar_id IS NULL) OR\n        (document_scope='QUALIFICATION' AND employee_qualification_id IS NOT NULL AND employee_previous_employment_id IS NULL AND employee_bank_account_id IS NULL AND employee_pan_id IS NULL AND employee_aadhaar_id IS NULL) OR\n        (document_scope='PREVIOUS_EMPLOYMENT' AND employee_qualification_id IS NULL AND employee_previous_employment_id IS NOT NULL AND employee_bank_account_id IS NULL AND employee_pan_id IS NULL AND employee_aadhaar_id IS NULL) OR\n        (document_scope='BANK_ACCOUNT' AND employee_qualification_id IS NULL AND employee_previous_employment_id IS NULL AND employee_bank_account_id IS NOT NULL AND employee_pan_id IS NULL AND employee_aadhaar_id IS NULL) OR\n        (document_scope='PAN' AND employee_qualification_id IS NULL AND employee_previous_employment_id IS NULL AND employee_bank_account_id IS NULL AND employee_pan_id IS NOT NULL AND employee_aadhaar_id IS NULL) OR\n        (document_scope='AADHAAR' AND employee_qualification_id IS NULL AND employee_previous_employment_id IS NULL AND employee_bank_account_id IS NULL AND employee_pan_id IS NULL AND employee_aadhaar_id IS NOT NULL)\n    ),\n    CONSTRAINT fk_employee_document_employee FOREIGN KEY (employee_id) REFERENCES employee(employee_id),\n    CONSTRAINT fk_employee_document_qualification_owner FOREIGN KEY (employee_qualification_id, employee_id) REFERENCES employee_qualification(employee_qualification_id, employee_id),\n    CONSTRAINT fk_employee_document_experience_owner FOREIGN KEY (employee_previous_employment_id, employee_id) REFERENCES employee_previous_employment(employee_previous_employment_id, employee_id),\n    CONSTRAINT fk_employee_document_bank_owner FOREIGN KEY (employee_bank_account_id, employee_id) REFERENCES employee_bank_account(employee_bank_account_id, employee_id),\n    CONSTRAINT fk_employee_document_pan_owner FOREIGN KEY (employee_pan_id, employee_id) REFERENCES employee_pan(employee_pan_id, employee_id),\n    CONSTRAINT fk_employee_document_aadhaar_owner FOREIGN KEY (employee_aadhaar_id, employee_id) REFERENCES employee_aadhaar(employee_aadhaar_id, employee_id),\n    CONSTRAINT fk_employee_document_category FOREIGN KEY (employee_document_category_id) REFERENCES employee_document_category(employee_document_category_id),\n    CONSTRAINT fk_employee_document_type FOREIGN KEY (document_type_id) REFERENCES document_type(document_type_id),\n    CONSTRAINT fk_employee_document_file FOREIGN KEY (file_object_id) REFERENCES file_object(file_object_id),\n    CONSTRAINT fk_employee_document_supersedes FOREIGN KEY (supersedes_employee_document_id) REFERENCES employee_document(employee_document_id),\n    CONSTRAINT fk_employee_document_verified_by FOREIGN KEY (verified_by_user_id) REFERENCES user_account(user_id),\n    CONSTRAINT fk_employee_document_approved_by FOREIGN KEY (approved_by_user_id) REFERENCES user_account(user_id),\n    CONSTRAINT fk_employee_document_created_by FOREIGN KEY (created_by_user_id) REFERENCES user_account(user_id),\n    CONSTRAINT fk_employee_document_updated_by FOREIGN KEY (updated_by_user_id) REFERENCES user_account(user_id),\n    CONSTRAINT fk_employee_document_deleted_by FOREIGN KEY (deleted_by_user_id) REFERENCES user_account(user_id)\n) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;"
+  },
+  {
+    "table": "employee_document_access_rule",
+    "source_line": 2403,
+    "constraints": [
+      "chk_employee_document_access_principal",
+      "chk_employee_document_access_dates",
+      "fk_employee_document_access_document",
+      "fk_employee_document_access_role",
+      "fk_employee_document_access_user",
+      "fk_employee_document_access_granted_by"
+    ],
+    "references": [
+      "employee_document",
+      "role",
+      "user_account",
+      "user_account"
+    ],
+    "ddl": "CREATE TABLE employee_document_access_rule (\n    employee_document_access_rule_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,\n    employee_document_id BIGINT UNSIGNED NOT NULL,\n    role_id SMALLINT UNSIGNED NULL,\n    user_id BIGINT UNSIGNED NULL,\n    can_view BOOLEAN NOT NULL DEFAULT TRUE,\n    can_download BOOLEAN NOT NULL DEFAULT FALSE,\n    can_update BOOLEAN NOT NULL DEFAULT FALSE,\n    can_verify BOOLEAN NOT NULL DEFAULT FALSE,\n    can_approve BOOLEAN NOT NULL DEFAULT FALSE,\n    valid_from DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,\n    valid_to DATETIME NULL,\n    granted_by_user_id BIGINT UNSIGNED NULL,\n    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,\n    CONSTRAINT chk_employee_document_access_principal CHECK ((role_id IS NOT NULL AND user_id IS NULL) OR (role_id IS NULL AND user_id IS NOT NULL)),\n    CONSTRAINT chk_employee_document_access_dates CHECK (valid_to IS NULL OR valid_to > valid_from),\n    CONSTRAINT fk_employee_document_access_document FOREIGN KEY (employee_document_id) REFERENCES employee_document(employee_document_id),\n    CONSTRAINT fk_employee_document_access_role FOREIGN KEY (role_id) REFERENCES role(role_id),\n    CONSTRAINT fk_employee_document_access_user FOREIGN KEY (user_id) REFERENCES user_account(user_id),\n    CONSTRAINT fk_employee_document_access_granted_by FOREIGN KEY (granted_by_user_id) REFERENCES user_account(user_id)\n) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;"
+  },
+  {
+    "table": "employee_sensitive_access_audit",
+    "source_line": 2425,
+    "constraints": [
+      "fk_employee_sensitive_audit_user",
+      "fk_employee_sensitive_audit_employee",
+      "fk_employee_sensitive_audit_document"
+    ],
+    "references": [
+      "user_account",
+      "employee",
+      "employee_document"
+    ],
+    "ddl": "CREATE TABLE employee_sensitive_access_audit (\n    employee_sensitive_access_audit_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,\n    user_id BIGINT UNSIGNED NULL,\n    employee_id BIGINT UNSIGNED NOT NULL,\n    action_code ENUM('READ','DOWNLOAD','EXPORT','CREATE','UPDATE','VERIFY','APPROVE','DELETE','RESTORE','DECRYPT') NOT NULL,\n    entity_type ENUM('QUALIFICATION','PREVIOUS_EMPLOYMENT','BANK_ACCOUNT','PAN','AADHAAR','EMPLOYEE_DOCUMENT') NOT NULL,\n    entity_id BIGINT UNSIGNED NOT NULL,\n    employee_document_id BIGINT UNSIGNED NULL,\n    access_purpose VARCHAR(500) NULL,\n    was_successful BOOLEAN NOT NULL DEFAULT TRUE,\n    failure_reason VARCHAR(500) NULL,\n    ip_address VARCHAR(45) NULL,\n    user_agent VARCHAR(500) NULL,\n    request_identifier VARCHAR(128) NULL,\n    accessed_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,\n    CONSTRAINT fk_employee_sensitive_audit_user FOREIGN KEY (user_id) REFERENCES user_account(user_id),\n    CONSTRAINT fk_employee_sensitive_audit_employee FOREIGN KEY (employee_id) REFERENCES employee(employee_id),\n    CONSTRAINT fk_employee_sensitive_audit_document FOREIGN KEY (employee_document_id) REFERENCES employee_document(employee_document_id)\n) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;"
+  }
+]

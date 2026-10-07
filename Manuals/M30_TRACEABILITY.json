@@ -1,0 +1,118 @@
+[
+  {
+    "prompt": 1,
+    "requirement": "Discovery/integration",
+    "files": [
+      "Manuals/M30_DESIGN.md"
+    ]
+  },
+  {
+    "prompt": 2,
+    "requirement": "Canonical models",
+    "files": [
+      "backend/apps/awards/models.py",
+      "backend/apps/staff_profile/models.py"
+    ]
+  },
+  {
+    "prompt": 3,
+    "requirement": "Native migrations and reversal guards",
+    "files": [
+      "backend/apps/awards/migrations",
+      "backend/apps/staff_profile/migrations/0007_awardcategory.py"
+    ]
+  },
+  {
+    "prompt": 4,
+    "requirement": "Atomic lifecycle and validation",
+    "files": [
+      "backend/apps/awards/services.py"
+    ]
+  },
+  {
+    "prompt": 5,
+    "requirement": "Strict serializers and exact decimals",
+    "files": [
+      "backend/apps/awards/api.py"
+    ]
+  },
+  {
+    "prompt": 6,
+    "requirement": "Scoped CRUD, filters and pagination",
+    "files": [
+      "backend/apps/awards/api.py",
+      "backend/apps/awards/urls.py"
+    ]
+  },
+  {
+    "prompt": 7,
+    "requirement": "M15 workflow and authorization",
+    "files": [
+      "backend/apps/awards/permissions.py",
+      "backend/apps/awards/services.py"
+    ]
+  },
+  {
+    "prompt": 8,
+    "requirement": "Award entry form",
+    "files": [
+      "frontend/src/features/awards/AwardApp.tsx"
+    ]
+  },
+  {
+    "prompt": 9,
+    "requirement": "List/detail/report and profile navigation",
+    "files": [
+      "frontend/src/features/awards/AwardApp.tsx",
+      "frontend/src/features/people/PeopleApp.tsx"
+    ]
+  },
+  {
+    "prompt": 10,
+    "requirement": "Existing PWA/private API and retry integration",
+    "files": [
+      "frontend/src/features/awards/AwardApp.tsx",
+      "frontend/tests/awards.test.tsx"
+    ]
+  },
+  {
+    "prompt": 11,
+    "requirement": "Shared private evidence",
+    "files": [
+      "backend/apps/awards/services.py",
+      "backend/apps/awards/tests/test_module.py"
+    ]
+  },
+  {
+    "prompt": 12,
+    "requirement": "Governed administration",
+    "files": [
+      "backend/apps/awards/admin.py",
+      "backend/apps/awards/api.py"
+    ]
+  },
+  {
+    "prompt": 13,
+    "requirement": "Backend/UI/concurrency tests",
+    "files": [
+      "backend/apps/awards/tests",
+      "frontend/tests/awards.test.tsx"
+    ]
+  },
+  {
+    "prompt": 14,
+    "requirement": "Scoped exact currency reporting",
+    "files": [
+      "backend/apps/awards/api.py"
+    ]
+  },
+  {
+    "prompt": 15,
+    "requirement": "Readiness and deployment evidence",
+    "files": [
+      "Manuals/M30_HANDOFF.md",
+      "Manuals/M30_VERIFICATION.json",
+      "scripts/m30_verification.py"
+    ]
+  }
+]

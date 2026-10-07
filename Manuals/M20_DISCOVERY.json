@@ -1,0 +1,17 @@
+{
+  "comparison": "Extracted Word paragraph text; not DOCX byte identity",
+  "same_paragraph_text": true,
+  "paragraph_text_sha256": {
+    "M19": "fe3f2f240a5ebef6e641944823f137e91ccba6dbf730711bdabc00c86f4a22d8",
+    "M20": "fe3f2f240a5ebef6e641944823f137e91ccba6dbf730711bdabc00c86f4a22d8"
+  },
+  "execution_order": [
+    "M16",
+    "M17",
+    "M18",
+    "M19",
+    "M19-18",
+    "M20"
+  ],
+  "m20_status": "Queued; repeat ordered requirements against completed M19, reuse existing owners"
+}

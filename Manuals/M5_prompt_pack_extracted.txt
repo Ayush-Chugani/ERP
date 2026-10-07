@@ -1,0 +1,968 @@
+﻿STUDENT INFORMATION MANAGEMENT SYSTEM
+Student and Staff Master Modules
+Structured Implementation Prompt Pack
+Django 5.x  •  Django REST Framework  •  MySQL 8.0.16+  •  React TypeScript PWA
+Module
+5 - Student and Staff Master Modules
+Architecture
+Plugin-ready modular monolith
+Authorization
+Django custom user with institution and scope extensions
+Database
+MySQL/InnoDB, utf8mb4, transactional integrity
+Copy-ready prompts for architecture, implementation, validation, APIs, UI, security, testing, and deployment
+
+How to Use This Prompt Pack
+Use the prompts in sequence. Each prompt assumes the common project context below and the supplied SQL schema in Appendix A. Paste the Common Context first, followed by the relevant numbered prompt. Require the implementation assistant to return complete files, migration-safe code, tests, and verification commands rather than fragments.
+Run Prompts 1-4 before generating application code; they validate boundaries, dependencies, and database semantics.
+Run Prompts 5-13 to build the backend, authorization, APIs, workflows, and administration features.
+Run Prompts 14-16 for the React PWA, offline-safe behavior, and accessibility.
+Run Prompts 17-20 for tests, performance, observability, documentation, and release readiness.
+Treat the SQL appendix as the authoritative baseline, but express database changes through reviewed Django migrations.
+Contents
+Module scope and architecture guardrails
+Shared common context
+Prompt sequence (1-20)
+Acceptance checklist
+Appendix A. Source SQL schema
+Module Scope
+This module maintains independent student and employee root entities. It reuses common demographic and institutional reference masters through foreign keys, while deliberately avoiding inheritance from a generic person table. Authentication identities remain separate from domain profiles and may be linked explicitly only when access is required.
+Domain area
+Primary tables
+Key concerns
+Student master
+student
+Identifiers, demographics, status, nullable uniqueness
+Student details
+student_address; student_parent_guardian; student_residence
+Effective dates, one current primary address, contacts
+Student history
+student_previous_education; student_entrance_exam
+Academic evidence, marks, ranks, uniqueness
+Staff taxonomy
+staff_type; staff_category; designation
+Stable codes, active flags, seed data
+Employment
+employment_source; external_agency; employee
+Institution ownership, agency consistency, employment lifecycle
+Assignments
+employee_address; employee_assignment
+Campus/department ownership, effective dates, current primary assignment
+Competencies
+employee_competency
+Course-linked expertise and validity
+Architecture Guardrails
+Keep student and employee as independent aggregate roots; do not introduce a generic Person superclass or shared database table.
+Use a custom Django User model from the first migration. Keep login credentials and authentication state outside student and employee tables.
+Use explicit optional one-to-one account links only for students or employees who require system access.
+Enforce institution, campus, department, role, workflow, confidentiality, and record-level scope at both service and API layers.
+Keep the module independently replaceable inside a plugin-ready modular monolith; expose stable service interfaces and avoid cross-app model imports where practical.
+Use database constraints for invariants, service-layer validation for business rules, and transactions for multi-record workflows.
+Never silently weaken supplied uniqueness, generated-column, composite foreign-key, or effective-date rules.
+Common Context to Paste Before Every Prompt
+Prompt 0: Reusable Common Project Context
+Purpose: Establishes the non-negotiable technical and architectural baseline.
+Act as a senior full-stack Python web developer and software architect. Build Module 5, Student and Staff Master Modules, for an enterprise Student Information Management System (SIMS).
+
+Technology: Django 5.x, Django REST Framework, MySQL 8.0.16+, React with TypeScript and Material UI, Vite PWA, Gunicorn, and Nginx.
+
+Architecture: plugin-ready modular monolith. Student and employee are independent root entities and must not inherit from a generic person table. Shared demographic and institutional masters are referenced by foreign keys. Use a custom Django User model from project inception, but keep authentication identities separate from student/employee domain records. Add explicit optional account links only when access is needed.
+
+Authorization: retain lightweight SIMS extensions for institution membership, institution-scoped roles, campus/department scope, module activation, workflow authority, confidentiality, and record-level access. Apply least privilege and prevent cross-institution data leakage.
+
+Engineering rules: use typed, production-quality code; atomic transactions; database constraints; idempotent seed migrations; consistent error envelopes; audit logging; pagination/filtering; OpenAPI documentation; pytest; factory-based test data; and deployment-safe migrations. Preserve the supplied schema intent and explain any necessary divergence before coding.
+
+For every implementation response, provide: assumptions, file tree, complete file contents, migration order, commands, tests, verification steps, and risks. Do not return pseudocode unless explicitly requested.
+
+Prompt 1: Schema Audit and Gap Analysis
+Purpose: Validate the SQL before implementation.
+Review the supplied Module 5 SQL schema table by table. Produce a severity-ranked audit covering correctness, redundant constraints, nullable unique behavior in MySQL, generated-column uniqueness, missing indexes, foreign-key type compatibility, delete/update actions, date-range validation, money/percentage checks, agency consistency, campus-department ownership, and temporal overlap risks.
+
+Return: (1) confirmed strengths, (2) defects or ambiguities, (3) recommended DDL changes with reasons, (4) indexes and constraints to add, (5) rules that require service-layer validation or triggers, and (6) a final migration-safe schema decision log. Do not rewrite the entire schema until the decision log is complete.
+
+Prompt 2: Bounded Context and Dependency Map
+Purpose: Define clean modular-monolith boundaries.
+Design the Django app boundary for this module. Identify owned models, referenced models, public service interfaces, domain events, forbidden dependency directions, and integration points with authentication, institution structure, course catalog, admissions, attendance, HR, finance, and document management.
+
+Return a dependency table and a recommended package tree. Keep student and employee as independent aggregates. Explain how other modules should reference them without tight coupling and how optional plugins can subscribe to events.
+
+Prompt 3: Domain Model and Invariants
+Purpose: Translate schema intent into explicit business rules.
+Create a domain specification for every table in Module 5. For each aggregate and child entity, list identifiers, lifecycle states, invariants, allowed transitions, effective-date rules, uniqueness semantics, ownership rules, and validation responsibilities (database, model, serializer, service, or workflow).
+
+Include special rules for exactly one current primary address, one current primary employee assignment, external-agency employees, department-campus consistency, previous-education marks, entrance-exam data, and competency validity.
+
+Prompt 4: Django App Scaffold and Settings
+Purpose: Create the module foundation.
+Generate the production-ready Django app scaffold for apps.people_master (or justify a clearer name) within the modular monolith. Include AppConfig, settings registration, URL routing, API versioning, exceptions, constants/enums, selectors, services, permissions, filters, tests, and admin modules.
+
+Show complete files and commands. Avoid business logic in views and signals. Document public imports and dependency rules.
+
+Prompt 5: Django Models and Database Constraints
+Purpose: Implement the relational model faithfully.
+Implement complete Django 5.x models for all supplied student and staff tables. Use TextChoices, correct unsigned-compatible field strategy, DecimalField precision, db_table/db_column where needed, indexes, CheckConstraint, UniqueConstraint, and generated-field or migration-level SQL where Django cannot express the MySQL design safely.
+
+Preserve independent student and employee roots. Include model clean methods only for local invariants; place cross-record and workflow rules in services. Explain all differences from the source DDL.
+
+Prompt 6: Migration Plan and Idempotent Seed Data
+Purpose: Build safe schema and reference-data migrations.
+Generate ordered Django migrations for the Module 5 models, constraints, indexes, generated columns if retained, and seed data for staff types, staff categories, employment sources, and designations.
+
+The seed migration must be idempotent, reversible where safe, code-keyed rather than primary-key dependent, and suitable for existing installations. Include MySQL preflight checks, forward/backward commands, and a rollback plan.
+
+Prompt 7: Custom User Linkage and Identity Provisioning
+Purpose: Connect domain people to authentication without merging them.
+Design optional account linkage between the custom Django User model and student/employee records. Support a person with no login, invitation-based provisioning, account activation/deactivation, email changes, duplicate detection, and safe unlinking.
+
+Specify models, constraints, services, permission checks, audit events, and APIs. Ensure an authentication account cannot accidentally expose records outside its institution or scope. Do not make student or employee inherit from User.
+
+Prompt 8: Service Layer and Transaction Workflows
+Purpose: Implement atomic business operations.
+Implement service functions for creating/updating students, changing student status, managing addresses, setting the current primary address, adding guardians, recording education/exams, onboarding employees, attaching an external agency, changing employment status, assigning employees, changing primary assignment, and recording competencies.
+
+Use transaction.atomic, select_for_update where races are possible, structured domain exceptions, audit events, and idempotency where appropriate. Include concurrency behavior and tests for conflicting primary records.
+
+Prompt 9: DRF Serializers and Validation
+Purpose: Create secure input/output contracts.
+Implement separate DRF read and write serializers for each aggregate. Add nested representations where useful but use service calls for writes. Validate identifiers, dates, marks/percentages, money fields, status transitions, agency fields, department-campus ownership, and effective periods.
+
+Prevent mass assignment of institution/scope fields. Return field-level validation errors using the project error envelope. Include examples of valid and invalid payloads.
+
+Prompt 10: REST API, Filtering, and OpenAPI
+Purpose: Expose versioned enterprise APIs.
+Implement versioned DRF endpoints for students, student sub-resources, staff reference masters, agencies, employees, assignments, and competencies. Use ViewSets or APIViews only where justified. Include pagination, search, ordering, django-filter filters, sparse/expanded representations if appropriate, optimistic concurrency strategy, and OpenAPI annotations.
+
+Return URL patterns, views, selectors, serializers used, example requests/responses, HTTP status rules, and error contracts. Avoid N+1 queries.
+
+Prompt 11: Scoped Authorization and Record Confidentiality
+Purpose: Enforce multi-institution access controls.
+Implement permissions and queryset scoping for institution membership, role, campus, department, module activation, workflow authority, confidentiality, and object-level access. Define access matrices for system admin, institution admin, registrar, department staff, HR, employee self-service, student self-service, and read-only auditor.
+
+Apply scope before object lookup to prevent existence leaks. Include tests proving cross-institution and cross-department isolation, restricted-field masking, and denied mutation paths.
+
+Prompt 12: Audit Trail and Domain Events
+Purpose: Make sensitive changes traceable.
+Design and implement immutable audit records and domain events for identifier changes, demographic updates, status transitions, primary address changes, employee assignment changes, agency changes, account linkage, and access to confidential records.
+
+Capture actor, institution, request/correlation ID, timestamp, source, before/after deltas with sensitive-field redaction, reason, and outcome. Define event names, payload versions, retention policy hooks, and plugin subscription contracts.
+
+Prompt 13: Django Admin and Bulk Operations
+Purpose: Provide safe operational administration.
+Implement Django Admin for all Module 5 models with optimized querysets, search, filters, readonly audit fields, useful inlines, guarded status actions, and institution-aware visibility. Add CSV import/export only through validated service workflows.
+
+Prevent unsafe raw bulk updates, cross-institution choices, accidental deletion of referenced data, and exposure of sensitive personal information. Include admin tests.
+
+Prompt 14: React TypeScript Feature Architecture
+Purpose: Build the frontend module structure.
+Design the React TypeScript + MUI feature architecture for student and staff masters. Provide routes, layouts, typed API client, TanStack Query hooks, forms, validation schemas, reusable reference selectors, permission gates, error handling, loading/empty states, and test structure.
+
+Include responsive list/detail/edit flows for students, employees, agencies, assignments, and competencies. Keep server authorization authoritative; client gates are usability aids only.
+
+Prompt 15: Accessible Forms and Data Grids
+Purpose: Implement high-quality user workflows.
+Create accessible MUI screens for student registration/profile, address timeline, guardian contacts, education and entrance exams, employee onboarding, assignment history, and competencies. Use React Hook Form and a typed validation library.
+
+Provide complete components with keyboard support, labels, error summaries, confirmation dialogs for sensitive changes, server-side DataGrid pagination/filtering, protected field display, and WCAG 2.2 AA considerations.
+
+Prompt 16: PWA and Offline-Safe Behavior
+Purpose: Add installability without unsafe offline writes.
+Configure Vite PWA for this module. Define cache strategies for static assets and safe reference data, network-only rules for confidential records and mutations, token/session handling, cache invalidation, offline indicators, update prompts, and logout cache clearing.
+
+Do not cache sensitive student or employee API responses unless an explicit encrypted and policy-approved design is provided. Include manifest, service-worker configuration, tests, and verification instructions.
+
+Prompt 17: Automated Test Suite
+Purpose: Prove correctness and isolation.
+Generate a comprehensive pytest and frontend test plan with representative code. Cover models, constraints, migrations, services, serializers, APIs, permissions, admin, concurrency, audit events, query counts, and PWA behavior.
+
+Include factories for institutions, campuses, departments, students, employees, agencies, assignments, users, memberships, and roles. Add negative tests for cross-tenant leakage, invalid temporal ranges, duplicate primary records, and inconsistent agency/department relationships.
+
+Prompt 18: Performance and MySQL Optimization
+Purpose: Tune realistic workloads.
+Analyze expected query patterns for student search, employee directory, assignment lookup, scope-filtered APIs, dashboards, and autocomplete. Recommend composite indexes, covering indexes where justified, select_related/prefetch_related plans, pagination strategy, and query-count budgets.
+
+Provide EXPLAIN-based verification steps, dataset volumes, load-test scenarios, slow-query thresholds, and warnings about low-selectivity indexes and nullable columns.
+
+Prompt 19: Security, Privacy, and Retention Review
+Purpose: Harden personal-data handling.
+Perform a threat and privacy review for Module 5. Address broken object-level authorization, mass assignment, enumeration, injection, malicious uploads/URLs, sensitive logs, cached PII, exports, insider misuse, account-link hijacking, and retention/deletion requirements.
+
+Return prioritized controls, field classification, masking rules, encryption considerations, audit requirements, incident evidence, secure defaults, and verification tests. Map controls to OWASP ASVS/API Security categories where appropriate.
+
+Prompt 20: Release Runbook and Definition of Done
+Purpose: Prepare the module for production.
+Create a deployment and release runbook covering environment configuration, MySQL compatibility checks, migration backup/rollback, seed verification, static build, PWA versioning, Gunicorn/Nginx deployment, health checks, smoke tests, observability, and post-release validation.
+
+Provide a final Definition of Done checklist that covers schema, code quality, tests, accessibility, security, privacy, performance, documentation, operational ownership, and rollback readiness.
+
+Acceptance Checklist
+☐ Student and employee remain independent root entities.
+☐ Custom User authentication is separate and optional linkage is explicit.
+☐ All querysets and object lookups are institution/scope constrained.
+☐ Primary-address and primary-assignment races are transaction-safe.
+☐ External-agency employment rules are consistently enforced.
+☐ Campus-department ownership and temporal rules are validated.
+☐ Seed migrations are idempotent and code-keyed.
+☐ Sensitive changes produce redacted, immutable audit evidence.
+☐ API documentation, examples, and error contracts are complete.
+☐ Tests cover permissions, isolation, concurrency, migrations, and query counts.
+☐ PWA caching does not expose confidential student or employee data.
+☐ Deployment includes backups, rollback, health checks, and smoke tests.
+Appendix A: Source SQL Schema
+The following SQL is the supplied baseline for Module 5. Review and approve changes identified through Prompt 1 before generating final migrations.
+-- 5. STUDENT AND STAFF MASTER MODULES (INDEPENDENT ROOT
+ENTITIES)
+ 
+-- Student and employee are intentionally NOT inherited from
+a generic person table.
+ 
+-- Shared demographic/reference masters remain reusable
+through foreign keys.
+ 
+--
+=============================================================
+ 
+CREATE TABLE student (
+ 
+    student_id BIGINT UNSIGNED AUTO_INCREMENT
+PRIMARY KEY,
+ 
+    student_number VARCHAR(30) NOT NULL UNIQUE,
+ 
+    university_seat_number VARCHAR(30) NULL
+UNIQUE,
+ 
+    first_name VARCHAR(100) NOT NULL,
+ 
+    middle_name VARCHAR(100) NULL,
+ 
+    last_name VARCHAR(100) NULL,
+ 
+    display_name VARCHAR(250) NOT NULL,
+ 
+    date_of_birth DATE NULL,
+ 
+    gender_id TINYINT UNSIGNED NULL,
+ 
+    blood_group_id TINYINT UNSIGNED NULL,
+ 
+    primary_email VARCHAR(254) NULL,
+ 
+    primary_phone VARCHAR(25) NULL,
+ 
+    nationality_country_id SMALLINT UNSIGNED NULL,
+ 
+    religion_id SMALLINT UNSIGNED NULL,
+ 
+    social_category_id SMALLINT UNSIGNED NULL,
+ 
+    caste_id INT UNSIGNED NULL,
+ 
+    sub_caste_id INT UNSIGNED NULL,
+ 
+    photo_url VARCHAR(500) NULL,
+ 
+    admission_date DATE NULL,
+ 
+    student_status
+ENUM('APPLICANT','ACTIVE','SUSPENDED','WITHDRAWN','COMPLETED','ALUMNUS','DECEASED')
+NOT NULL DEFAULT 'ACTIVE',
+ 
+    notes TEXT NULL,
+ 
+    created_at TIMESTAMP NOT NULL DEFAULT
+CURRENT_TIMESTAMP,
+ 
+    updated_at TIMESTAMP NOT NULL DEFAULT
+CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+ 
+    CONSTRAINT uq_student_primary_email UNIQUE
+(primary_email),
+ 
+    CONSTRAINT fk_student_gender FOREIGN KEY
+(gender_id) REFERENCES gender(gender_id),
+ 
+    CONSTRAINT fk_student_blood_group FOREIGN KEY
+(blood_group_id) REFERENCES blood_group(blood_group_id),
+ 
+    CONSTRAINT fk_student_nationality FOREIGN KEY
+(nationality_country_id) REFERENCES country(country_id),
+ 
+    CONSTRAINT fk_student_religion FOREIGN KEY
+(religion_id) REFERENCES religion(religion_id),
+ 
+    CONSTRAINT fk_student_social_category FOREIGN
+KEY (social_category_id) REFERENCES social_category(social_category_id),
+ 
+    CONSTRAINT fk_student_caste FOREIGN KEY
+(caste_id) REFERENCES caste(caste_id),
+ 
+    CONSTRAINT fk_student_sub_caste FOREIGN KEY
+(sub_caste_id) REFERENCES sub_caste(sub_caste_id)
+ 
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+COLLATE=utf8mb4_unicode_ci;
+ 
+CREATE TABLE student_address (
+ 
+    student_address_id BIGINT UNSIGNED
+AUTO_INCREMENT PRIMARY KEY,
+ 
+    student_id BIGINT UNSIGNED NOT NULL,
+ 
+    address_type
+ENUM('PERMANENT','CURRENT','CORRESPONDENCE','OTHER') NOT NULL,
+ 
+    address_line_1 VARCHAR(200) NOT NULL,
+ 
+    address_line_2 VARCHAR(200) NULL,
+ 
+    city VARCHAR(100) NOT NULL,
+ 
+    state_id SMALLINT UNSIGNED NULL,
+ 
+    country_id SMALLINT UNSIGNED NOT NULL,
+ 
+    postal_code VARCHAR(12) NULL,
+ 
+    valid_from DATE NULL,
+ 
+    valid_to DATE NULL,
+ 
+    is_primary BOOLEAN NOT NULL DEFAULT FALSE,
+ 
+    current_primary_student_id BIGINT UNSIGNED
+GENERATED ALWAYS AS (
+ 
+        CASE WHEN is_primary=TRUE AND
+valid_to IS NULL THEN student_id ELSE NULL END
+ 
+    ) STORED,
+ 
+    CONSTRAINT uq_student_current_primary_address
+UNIQUE (current_primary_student_id),
+ 
+    CONSTRAINT chk_student_address_dates CHECK
+(valid_to IS NULL OR valid_from IS NULL OR valid_to >= valid_from),
+ 
+    CONSTRAINT fk_student_address_student FOREIGN
+KEY (student_id) REFERENCES student(student_id),
+ 
+    CONSTRAINT fk_student_address_state FOREIGN
+KEY (state_id) REFERENCES state(state_id),
+ 
+    CONSTRAINT fk_student_address_country FOREIGN
+KEY (country_id) REFERENCES country(country_id)
+ 
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+COLLATE=utf8mb4_unicode_ci;
+ 
+CREATE TABLE student_parent_guardian (
+ 
+    student_parent_guardian_id BIGINT UNSIGNED
+AUTO_INCREMENT PRIMARY KEY,
+ 
+    student_id BIGINT UNSIGNED NOT NULL,
+ 
+    relationship_type
+ENUM('FATHER','MOTHER','GUARDIAN','OTHER') NOT NULL,
+ 
+    full_name VARCHAR(200) NOT NULL,
+ 
+    occupation VARCHAR(150) NULL,
+ 
+    annual_income DECIMAL(14,2) NULL,
+ 
+    email VARCHAR(254) NULL,
+ 
+    phone VARCHAR(25) NULL,
+ 
+    address_line_1 VARCHAR(200) NULL,
+ 
+    address_line_2 VARCHAR(200) NULL,
+ 
+    city VARCHAR(100) NULL,
+ 
+    state_id SMALLINT UNSIGNED NULL,
+ 
+    country_id SMALLINT UNSIGNED NULL,
+ 
+    postal_code VARCHAR(12) NULL,
+ 
+    is_primary_contact BOOLEAN NOT NULL DEFAULT
+FALSE,
+ 
+    CONSTRAINT fk_parent_student FOREIGN KEY
+(student_id) REFERENCES student(student_id),
+ 
+    CONSTRAINT fk_parent_state FOREIGN KEY
+(state_id) REFERENCES state(state_id),
+ 
+    CONSTRAINT fk_parent_country FOREIGN KEY
+(country_id) REFERENCES country(country_id)
+ 
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+COLLATE=utf8mb4_unicode_ci;
+ 
+CREATE TABLE student_residence (
+ 
+    student_residence_id BIGINT UNSIGNED
+AUTO_INCREMENT PRIMARY KEY,
+ 
+    student_id BIGINT UNSIGNED NOT NULL,
+ 
+    residence_type
+ENUM('HOSTEL','DAY_SCHOLAR','PG','RENTED','RELATIVE','OTHER') NOT NULL,
+ 
+    hostel_name VARCHAR(150) NULL,
+ 
+    room_number VARCHAR(30) NULL,
+ 
+    start_date DATE NOT NULL,
+ 
+    end_date DATE NULL,
+ 
+    is_current BOOLEAN NOT NULL DEFAULT TRUE,
+ 
+    CONSTRAINT fk_residence_student FOREIGN KEY
+(student_id) REFERENCES student(student_id)
+ 
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+COLLATE=utf8mb4_unicode_ci;
+ 
+CREATE TABLE student_previous_education (
+ 
+    previous_education_id BIGINT UNSIGNED
+AUTO_INCREMENT PRIMARY KEY,
+ 
+    student_id BIGINT UNSIGNED NOT NULL,
+ 
+    qualification_level
+ENUM('SSLC','PUC_I','PUC_II','DIPLOMA','UG','PG','OTHER') NOT NULL,
+ 
+    examination_name VARCHAR(150) NULL,
+ 
+    institution_name VARCHAR(250) NOT NULL,
+ 
+    board_university VARCHAR(200) NULL,
+ 
+    registration_number VARCHAR(50) NULL,
+ 
+    month_of_passing TINYINT UNSIGNED NULL,
+ 
+    year_of_passing YEAR NULL,
+ 
+    result_class VARCHAR(50) NULL,
+ 
+    marks_obtained DECIMAL(8,2) NULL,
+ 
+    maximum_marks DECIMAL(8,2) NULL,
+ 
+    percentage DECIMAL(5,2) NULL,
+ 
+    CONSTRAINT uq_previous_education UNIQUE
+(student_id, qualification_level, registration_number),
+ 
+    CONSTRAINT fk_previous_education_student
+FOREIGN KEY (student_id) REFERENCES student(student_id)
+ 
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+COLLATE=utf8mb4_unicode_ci;
+ 
+CREATE TABLE student_entrance_exam (
+ 
+    student_entrance_exam_id BIGINT UNSIGNED
+AUTO_INCREMENT PRIMARY KEY,
+ 
+    student_id BIGINT UNSIGNED NOT NULL,
+ 
+    exam_name VARCHAR(100) NOT NULL,
+ 
+    registration_number VARCHAR(50) NULL,
+ 
+    rank_number INT UNSIGNED NULL,
+ 
+    score DECIMAL(8,2) NULL,
+ 
+    exam_year YEAR NULL,
+ 
+    allotment_date DATE NULL,
+ 
+    registration_fee DECIMAL(12,2) NULL,
+ 
+    CONSTRAINT uq_student_exam UNIQUE (student_id,
+exam_name, exam_year),
+ 
+    CONSTRAINT fk_student_exam_student FOREIGN KEY
+(student_id) REFERENCES student(student_id)
+ 
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+COLLATE=utf8mb4_unicode_ci;
+ 
+CREATE TABLE staff_type (
+ 
+    staff_type_id TINYINT UNSIGNED AUTO_INCREMENT
+PRIMARY KEY,
+ 
+    type_code VARCHAR(30) NOT NULL UNIQUE,
+ 
+    type_name VARCHAR(100) NOT NULL UNIQUE,
+ 
+    description VARCHAR(500) NULL,
+ 
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,
+ 
+    created_at TIMESTAMP NOT NULL DEFAULT
+CURRENT_TIMESTAMP,
+ 
+    updated_at TIMESTAMP NOT NULL DEFAULT
+CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+ 
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+ 
+CREATE TABLE staff_category (
+ 
+    staff_category_id SMALLINT UNSIGNED
+AUTO_INCREMENT PRIMARY KEY,
+ 
+    staff_type_id TINYINT UNSIGNED NOT NULL,
+ 
+    category_code VARCHAR(50) NOT NULL UNIQUE,
+ 
+    category_name VARCHAR(150) NOT NULL,
+ 
+    description VARCHAR(500) NULL,
+ 
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,
+ 
+    created_at TIMESTAMP NOT NULL DEFAULT
+CURRENT_TIMESTAMP,
+ 
+    updated_at TIMESTAMP NOT NULL DEFAULT
+CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+ 
+    CONSTRAINT fk_staff_category_type FOREIGN KEY
+(staff_type_id) REFERENCES staff_type(staff_type_id)
+ 
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+COLLATE=utf8mb4_unicode_ci;
+ 
+CREATE TABLE employment_source (
+ 
+    employment_source_id TINYINT UNSIGNED
+AUTO_INCREMENT PRIMARY KEY,
+ 
+    source_code VARCHAR(30) NOT NULL UNIQUE,
+ 
+    source_name VARCHAR(100) NOT NULL UNIQUE,
+ 
+    is_external BOOLEAN NOT NULL DEFAULT FALSE,
+ 
+    description VARCHAR(500) NULL,
+ 
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,
+ 
+    created_at TIMESTAMP NOT NULL DEFAULT
+CURRENT_TIMESTAMP,
+ 
+    updated_at TIMESTAMP NOT NULL DEFAULT
+CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+ 
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+COLLATE=utf8mb4_unicode_ci;
+ 
+CREATE TABLE external_agency (
+ 
+    external_agency_id BIGINT UNSIGNED
+AUTO_INCREMENT PRIMARY KEY,
+ 
+    institution_id SMALLINT UNSIGNED NOT NULL,
+ 
+    agency_code VARCHAR(50) NOT NULL,
+ 
+    agency_name VARCHAR(200) NOT NULL,
+ 
+    service_type VARCHAR(100) NULL,
+ 
+    contact_person VARCHAR(150) NULL,
+ 
+    phone VARCHAR(25) NULL,
+ 
+    email VARCHAR(254) NULL,
+ 
+    contract_start_date DATE NULL,
+ 
+    contract_end_date DATE NULL,
+ 
+    address VARCHAR(500) NULL,
+ 
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,
+ 
+    created_at TIMESTAMP NOT NULL DEFAULT
+CURRENT_TIMESTAMP,
+ 
+    updated_at TIMESTAMP NOT NULL DEFAULT
+CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+ 
+    CONSTRAINT uq_external_agency UNIQUE
+(institution_id, agency_code),
+ 
+    CONSTRAINT chk_external_agency_contract_dates
+CHECK (contract_end_date IS NULL OR contract_start_date IS NULL OR
+contract_end_date >= contract_start_date),
+ 
+    CONSTRAINT fk_external_agency_institution
+FOREIGN KEY (institution_id) REFERENCES institution(institution_id)
+ 
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+COLLATE=utf8mb4_unicode_ci;
+ 
+CREATE TABLE designation (
+ 
+    designation_id SMALLINT UNSIGNED
+AUTO_INCREMENT PRIMARY KEY,
+ 
+    staff_category_id SMALLINT UNSIGNED NOT NULL,
+ 
+    designation_code VARCHAR(30) NOT NULL UNIQUE,
+ 
+    designation_name VARCHAR(100) NOT NULL,
+ 
+    description VARCHAR(500) NULL,
+ 
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,
+ 
+    CONSTRAINT uq_designation_category_name UNIQUE
+(staff_category_id, designation_name),
+ 
+    CONSTRAINT fk_designation_staff_category
+FOREIGN KEY (staff_category_id) REFERENCES staff_category(staff_category_id)
+ 
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+COLLATE=utf8mb4_unicode_ci;
+ 
+CREATE TABLE employee (
+ 
+    employee_id BIGINT UNSIGNED AUTO_INCREMENT
+PRIMARY KEY,
+ 
+    institution_id SMALLINT UNSIGNED NOT NULL,
+ 
+    employment_source_id TINYINT UNSIGNED NOT
+NULL,
+ 
+    external_agency_id BIGINT UNSIGNED NULL,
+ 
+    employee_number VARCHAR(30) NOT NULL UNIQUE,
+ 
+    agency_employee_number VARCHAR(50) NULL,
+ 
+    first_name VARCHAR(100) NOT NULL,
+ 
+    middle_name VARCHAR(100) NULL,
+ 
+    last_name VARCHAR(100) NULL,
+ 
+    display_name VARCHAR(250) NOT NULL,
+ 
+    date_of_birth DATE NULL,
+ 
+    gender_id TINYINT UNSIGNED NULL,
+ 
+    blood_group_id TINYINT UNSIGNED NULL,
+ 
+    primary_email VARCHAR(254) NULL,
+ 
+    primary_phone VARCHAR(25) NULL,
+ 
+    nationality_country_id SMALLINT UNSIGNED NULL,
+ 
+    religion_id SMALLINT UNSIGNED NULL,
+ 
+    social_category_id SMALLINT UNSIGNED NULL,
+ 
+    caste_id INT UNSIGNED NULL,
+ 
+    sub_caste_id INT UNSIGNED NULL,
+ 
+    photo_url VARCHAR(500) NULL,
+ 
+    joining_date DATE NOT NULL,
+ 
+    employment_type
+ENUM('REGULAR','CONTRACT','VISITING','ADJUNCT','TEMPORARY','OTHER') NOT NULL,
+ 
+    employment_status
+ENUM('ACTIVE','ON_LEAVE','SUSPENDED','RESIGNED','RETIRED','TERMINATED') NOT
+NULL DEFAULT 'ACTIVE',
+ 
+    created_at TIMESTAMP NOT NULL DEFAULT
+CURRENT_TIMESTAMP,
+ 
+    updated_at TIMESTAMP NOT NULL DEFAULT
+CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+ 
+    CONSTRAINT uq_employee_agency_number UNIQUE
+(external_agency_id, agency_employee_number),
+ 
+    CONSTRAINT uq_employee_primary_email UNIQUE
+(primary_email),
+ 
+    CONSTRAINT fk_employee_institution FOREIGN KEY
+(institution_id) REFERENCES institution(institution_id),
+ 
+    CONSTRAINT fk_employee_employment_source
+FOREIGN KEY (employment_source_id) REFERENCES
+employment_source(employment_source_id),
+ 
+    CONSTRAINT fk_employee_external_agency FOREIGN
+KEY (external_agency_id) REFERENCES external_agency(external_agency_id),
+ 
+    CONSTRAINT fk_employee_gender FOREIGN KEY
+(gender_id) REFERENCES gender(gender_id),
+ 
+    CONSTRAINT fk_employee_blood_group FOREIGN KEY
+(blood_group_id) REFERENCES blood_group(blood_group_id),
+ 
+    CONSTRAINT fk_employee_nationality FOREIGN KEY
+(nationality_country_id) REFERENCES country(country_id),
+ 
+    CONSTRAINT fk_employee_religion FOREIGN KEY
+(religion_id) REFERENCES religion(religion_id),
+ 
+    CONSTRAINT fk_employee_social_category FOREIGN
+KEY (social_category_id) REFERENCES social_category(social_category_id),
+ 
+    CONSTRAINT fk_employee_caste FOREIGN KEY
+(caste_id) REFERENCES caste(caste_id),
+ 
+    CONSTRAINT fk_employee_sub_caste FOREIGN KEY
+(sub_caste_id) REFERENCES sub_caste(sub_caste_id)
+ 
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+COLLATE=utf8mb4_unicode_ci;
+ 
+CREATE TABLE employee_address (
+ 
+    employee_address_id BIGINT UNSIGNED
+AUTO_INCREMENT PRIMARY KEY,
+ 
+    employee_id BIGINT UNSIGNED NOT NULL,
+ 
+    address_type
+ENUM('PERMANENT','CURRENT','CORRESPONDENCE','OTHER') NOT NULL,
+ 
+    address_line_1 VARCHAR(200) NOT NULL,
+ 
+    address_line_2 VARCHAR(200) NULL,
+ 
+    city VARCHAR(100) NOT NULL,
+ 
+    state_id SMALLINT UNSIGNED NULL,
+ 
+    country_id SMALLINT UNSIGNED NOT NULL,
+ 
+    postal_code VARCHAR(12) NULL,
+ 
+    valid_from DATE NULL,
+ 
+    valid_to DATE NULL,
+ 
+    is_primary BOOLEAN NOT NULL DEFAULT FALSE,
+ 
+    current_primary_employee_id BIGINT UNSIGNED
+GENERATED ALWAYS AS (
+ 
+        CASE WHEN is_primary=TRUE AND
+valid_to IS NULL THEN employee_id ELSE NULL END
+ 
+    ) STORED,
+ 
+    CONSTRAINT uq_employee_current_primary_address
+UNIQUE (current_primary_employee_id),
+ 
+    CONSTRAINT chk_employee_address_dates CHECK
+(valid_to IS NULL OR valid_from IS NULL OR valid_to >= valid_from),
+ 
+    CONSTRAINT fk_employee_address_employee
+FOREIGN KEY (employee_id) REFERENCES employee(employee_id),
+ 
+    CONSTRAINT fk_employee_address_state FOREIGN
+KEY (state_id) REFERENCES state(state_id),
+ 
+    CONSTRAINT fk_employee_address_country FOREIGN
+KEY (country_id) REFERENCES country(country_id)
+ 
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+COLLATE=utf8mb4_unicode_ci;
+ 
+CREATE TABLE employee_assignment (
+ 
+    employee_assignment_id BIGINT UNSIGNED
+AUTO_INCREMENT PRIMARY KEY,
+ 
+    employee_id BIGINT UNSIGNED NOT NULL,
+ 
+    campus_id SMALLINT UNSIGNED NOT NULL,
+ 
+    department_id SMALLINT UNSIGNED NULL,
+ 
+    designation_id SMALLINT UNSIGNED NOT NULL,
+ 
+    start_date DATE NOT NULL,
+ 
+    end_date DATE NULL,
+ 
+    is_primary BOOLEAN NOT NULL DEFAULT TRUE,
+ 
+    current_primary_employee_id BIGINT UNSIGNED
+GENERATED ALWAYS AS (
+ 
+        CASE WHEN is_primary = TRUE AND
+end_date IS NULL THEN employee_id ELSE NULL END
+ 
+    ) STORED,
+ 
+    CONSTRAINT uq_employee_current_primary UNIQUE
+(current_primary_employee_id),
+ 
+    CONSTRAINT chk_employee_assignment_dates CHECK
+(end_date IS NULL OR end_date >= start_date),
+ 
+    CONSTRAINT fk_employee_assignment_employee
+FOREIGN KEY (employee_id) REFERENCES employee(employee_id),
+ 
+    CONSTRAINT fk_employee_assignment_campus
+FOREIGN KEY (campus_id) REFERENCES campus(campus_id),
+ 
+    CONSTRAINT
+fk_employee_assignment_department_campus FOREIGN KEY (department_id, campus_id)
+REFERENCES department(department_id, campus_id),
+ 
+    CONSTRAINT fk_employee_assignment_designation
+FOREIGN KEY (designation_id) REFERENCES designation(designation_id)
+ 
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+COLLATE=utf8mb4_unicode_ci;
+ 
+CREATE TABLE employee_competency (
+ 
+    employee_id BIGINT UNSIGNED NOT NULL,
+ 
+    course_id INT UNSIGNED NOT NULL,
+ 
+    competency_level ENUM('BEGINNER','INTERMEDIATE','ADVANCED','EXPERT')
+NULL,
+ 
+    valid_from DATE NULL,
+ 
+    valid_to DATE NULL,
+ 
+    PRIMARY KEY (employee_id, course_id),
+ 
+    CONSTRAINT fk_competency_employee FOREIGN KEY
+(employee_id) REFERENCES employee(employee_id),
+ 
+    CONSTRAINT fk_competency_course FOREIGN KEY
+(course_id) REFERENCES course_catalog(course_id)
+ 
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+COLLATE=utf8mb4_unicode_ci;
+ 
+INSERT INTO staff_type (type_code, type_name, description)
+VALUES
+ 
+('TEACHING', 'Teaching', 'Academic and teaching personnel'),
+ 
+('NON_TEACHING', 'Non-Teaching', 'Administrative, technical,
+support and service personnel');
+ 
+INSERT INTO staff_category (staff_type_id, category_code,
+category_name, description) VALUES
+ 
+((SELECT staff_type_id FROM staff_type WHERE
+type_code='TEACHING'),'TEACHING_STAFF','Teaching Staff','Faculty and other
+personnel engaged in teaching'),
+ 
+((SELECT staff_type_id FROM staff_type WHERE
+type_code='NON_TEACHING'),'OFFICE_STAFF','Office Staff','Administrative and
+office personnel'),
+ 
+((SELECT staff_type_id FROM staff_type WHERE
+type_code='NON_TEACHING'),'EXAM_SECTION_STAFF','Examination Section
+Staff','Personnel working in the examination section'),
+ 
+((SELECT staff_type_id FROM staff_type WHERE
+type_code='NON_TEACHING'),'LIBRARY_STAFF','Library Staff','Library professional
+and support personnel'),
+ 
+((SELECT staff_type_id FROM staff_type WHERE
+type_code='NON_TEACHING'),'MENIAL_STAFF','Menial Staff','Institutional support
+and menial personnel'),
+ 
+((SELECT staff_type_id FROM staff_type WHERE
+type_code='NON_TEACHING'),'INTERNAL_SECURITY','Internal Security
+Staff','Security personnel directly engaged by the institution'),
+ 
+((SELECT staff_type_id FROM staff_type WHERE
+type_code='NON_TEACHING'),'AGENCY_SECURITY','Security Staff - External
+Agency','Security personnel supplied by an external agency'),
+ 
+((SELECT staff_type_id FROM staff_type WHERE
+type_code='NON_TEACHING'),'AGENCY_HOUSEKEEPING','Housekeeping Staff - External
+Agency','Housekeeping personnel supplied by an external agency');
+ 
+INSERT INTO employment_source (source_code, source_name,
+is_external, description) VALUES
+ 
+('INSTITUTION','Institution Employee',FALSE,'Person directly
+engaged by the institution'),
+ 
+('EXTERNAL_AGENCY','External Agency',TRUE,'Person supplied
+by a contracted external agency');
+ 
+INSERT INTO designation (staff_category_id,
+designation_code, designation_name) VALUES
+ 
+((SELECT staff_category_id FROM staff_category WHERE
+category_code='TEACHING_STAFF'),'PROFESSOR','Professor'),
+ 
+((SELECT staff_category_id FROM staff_category WHERE
+category_code='TEACHING_STAFF'),'ASSOC_PROFESSOR','Associate Professor'),
+ 
+((SELECT staff_category_id FROM staff_category WHERE
+category_code='TEACHING_STAFF'),'ASST_PROFESSOR','Assistant Professor'),
+ 
+((SELECT staff_category_id FROM staff_category WHERE
+category_code='OFFICE_STAFF'),'OFFICE_SUPERINTENDENT','Office Superintendent'),
+ 
+((SELECT staff_category_id FROM staff_category WHERE
+category_code='OFFICE_STAFF'),'OFFICE_ASSISTANT','Office Assistant'),
+ 
+((SELECT staff_category_id FROM staff_category WHERE
+category_code='EXAM_SECTION_STAFF'),'EXAM_SUPERINTENDENT','Examination
+Superintendent'),
+ 
+((SELECT staff_category_id FROM staff_category WHERE
+category_code='EXAM_SECTION_STAFF'),'EXAM_ASSISTANT','Examination Assistant'),
+ 
+((SELECT staff_category_id FROM staff_category WHERE
+category_code='LIBRARY_STAFF'),'LIBRARIAN','Librarian'),
+ 
+((SELECT staff_category_id FROM staff_category WHERE
+category_code='LIBRARY_STAFF'),'ASST_LIBRARIAN','Assistant Librarian'),
+ 
+((SELECT staff_category_id FROM staff_category WHERE
+category_code='MENIAL_STAFF'),'ATTENDER','Attender'),
+ 
+((SELECT staff_category_id FROM staff_category WHERE
+category_code='INTERNAL_SECURITY'),'INTERNAL_SECURITY_GUARD','Security Guard'),
+ 
+((SELECT staff_category_id FROM staff_category WHERE
+category_code='AGENCY_SECURITY'),'AGENCY_SECURITY_GUARD','Security Guard'),
+ 
+((SELECT staff_category_id FROM staff_category WHERE
+category_code='AGENCY_HOUSEKEEPING'),'HOUSEKEEPING_STAFF','Housekeeping
+Staff');
+ 
+--
+=============================================================

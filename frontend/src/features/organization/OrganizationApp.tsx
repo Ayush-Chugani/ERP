@@ -1,0 +1,62 @@
+import { saveOfflineCopy, type OfflineCopy } from '../../pwa/offlineCopy';
+import {PageHeader} from '../../components/feedback';
+import { useEffect, useState } from 'react';
+import { Routes, Route, Link, HashRouter, useParams, useSearchParams, useInRouterContext } from 'react-router-dom';
+import { QueryClientProvider, useQuery, useQueryClient } from '@tanstack/react-query';
+import { getQueryClient } from '../../lib/query';
+import {Alert,Box,Breadcrumbs,Button,Checkbox,Chip,Dialog,DialogActions,DialogContent,DialogTitle,FormControlLabel,LinearProgress,MenuItem,Paper,Stack,Table,TableBody,TableCell,TableContainer,TableHead,TableRow,TablePagination,TextField,Typography} from '@mui/material';
+import {client,get,title,type Resource,type Row} from './api';
+import {OrganizationForm} from './OrganizationForm';
+import {ParentInput} from './ParentInput';
+type Metadata={resources:Resource[];user_id:number};
+/**
+ * Mounted at `/organization/*` by the app router (single HashRouter at root).
+ * Standalone-safe: reuses the parent router when present (production) and
+ * provides its own HashRouter + shared QueryClient in isolation (tests).
+ */
+export function OrganizationApp(){
+ return <QueryClientProvider client={getQueryClient()}><OrganizationRouter /></QueryClientProvider>;
+}
+function OrganizationRouter(){
+ const inRouter = useInRouterContext();
+ const routes = <Routes><Route index element={<Workspace/>}/><Route path=":resource" element={<Workspace/>}/><Route path=":resource/:id" element={<Workspace/>}/><Route path="*" element={<Alert severity="warning">Organization page not found.</Alert>}/></Routes>;
+ if (inRouter) return routes;
+ return <HashRouter>{routes}</HashRouter>;
+}
+export function Workspace(){
+ const {resource,id}=useParams();
+ const metadata=useQuery({queryKey:['organization','metadata'],queryFn:({signal})=>get<Metadata>('/organization/metadata/',signal)});
+ if(metadata.isPending)return <LinearProgress aria-label="Loading organization workspace"/>;
+ if(metadata.error)return <Alert severity="error" action={<Button onClick={()=>metadata.refetch()}>Retry</Button>}>{metadata.error.message}</Alert>;
+ const selected=metadata.data.resources.find(r=>r.path===resource);
+ return <Stack spacing={3}><Breadcrumbs aria-label="Organization breadcrumbs"><Link to="/organization">Organization</Link>{selected&&<Link to={`/organization/${selected.path}`}>{selected.title}</Link>}{id&&<Typography>#{id}</Typography>}</Breadcrumbs>
+ {!resource?<><PageHeader overline="Academic core" title="Organization structure"/><Typography color="text.secondary">Explore your permitted university, institution and campus hierarchy.</Typography><Box sx={{display:'grid',gridTemplateColumns:{xs:'1fr',sm:'repeat(2,1fr)',lg:'repeat(3,1fr)'},gap:2}}>{metadata.data.resources.map(r=><Paper variant="outlined" key={r.path} sx={{p:3}}><Typography variant="h6">{r.title}</Typography><Typography color="text.secondary">{r.count} visible records</Typography><Button component={Link} to={`/organization/${r.path}`}>Explore {r.title.toLowerCase()}</Button></Paper>)}</Box><Alert severity="info">Counts and records follow your institution membership, module activation, and assigned scope.</Alert></>:selected?<EntityPage key={selected.path+':'+(id||'list')} resource={selected} id={id} resources={metadata.data.resources}/>:<Alert severity="warning">Unknown organization resource.</Alert>}
+ </Stack>;
+}
+function EntityPage({resource:r,id,resources}:{resource:Resource;id?:string;resources:Resource[]}){
+ const [params,setParams]=useSearchParams(),cache=useQueryClient();
+ const [search,setSearch]=useState(params.get('search')||''),[editing,setEditing]=useState<Row|null|undefined>(undefined),[notice,setNotice]=useState(''),[failure,setFailure]=useState(''),[operation,setOperation]=useState<{row:Row;action:string}|null>(null),[destination,setDestination]=useState<unknown>(null),[busy,setBusy]=useState(false);
+ const page=Math.max(0,Number(params.get('page')||1)-1),size=Number(params.get('page_size')||25);
+ const mutateParam=(key:string,value:string)=>setParams(old=>{const p=new URLSearchParams(old);value?p.set(key,value):p.delete(key);if(key!=='page')p.delete('page');return p;});
+ useEffect(()=>{const t=setTimeout(()=>{if(search!==(params.get('search')||''))mutateParam('search',search);},300);return()=>clearTimeout(t);},[search]);
+ useEffect(()=>setSearch(params.get('search')||''),[params]);
+ const query=new URLSearchParams(params);query.delete('columns');
+ const list=useQuery({queryKey:['organization',r.path,'list',query.toString()],enabled:!id,queryFn:({signal})=>get<{count:number;results:Row[]}>(`/organization/${r.path}/?${query}`,signal)});
+ const detail=useQuery({queryKey:['organization',r.path,id],enabled:!!id,queryFn:({signal})=>get<Row>(`/organization/${r.path}/${id}/`,signal)});
+ const impact=useQuery({queryKey:['organization','impact',r.path,operation?.row[r.id]],enabled:!!operation,queryFn:({signal})=>get<{references:Record<string,number>;move_allowed:boolean;deactivation_cascades:boolean}>(`/organization/${r.path}/${operation!.row[r.id]}/impact/`,signal),staleTime:0});
+ const parentField=r.fields.find(f=>f.name===r.parent+'_id');
+ const data=id?detail:list;
+ const columns=params.get('columns')?.split(',')||['identity','parent','status'];
+ function refresh(){void cache.invalidateQueries({queryKey:['organization']});}
+ async function edit(row:Row){try{setEditing(await get<Row>(`/organization/${r.path}/${row[r.id]}/`));}catch(e){setFailure((e as Error).message);}}
+ async function confirm(){if(!operation)return;setBusy(true);try{await client.post(`/organization/${r.path}/${operation.row[r.id]}/${operation.action}/`,operation.action==='move'?{[r.parent+'_id']:destination}:{});setOperation(null);setNotice('Change saved.');refresh();}catch(e){setFailure((e as Error).message);}finally{setBusy(false);}}
+ function actions(row:Row){return <Stack direction="row" spacing={1}>{!id&&<Button component={Link} to={`/organization/${r.path}/${row[r.id]}`}>Details</Button>}{row.can_change===true&&<><Button onClick={()=>edit(row)}>Edit</Button><Button onClick={()=>setOperation({row,action:row.is_active?'deactivate':'reactivate'})}>{row.is_active?'Deactivate':'Reactivate'}</Button>{id&&parentField&&<Button onClick={()=>{setDestination(null);setOperation({row,action:'move'});}}>Move</Button>}</>}</Stack>;}
+ return <Stack spacing={2}><Stack direction="row" sx={{alignItems:'center',justifyContent:'space-between'}}><Typography variant="h4" component="h1">{id&&detail.data?title(detail.data):r.title}</Typography>{!id&&r.can_create&&<Button variant="contained" onClick={()=>setEditing(null)}>Create {r.title.toLowerCase()}</Button>}</Stack>
+ {notice&&<Alert onClose={()=>setNotice('')}>{notice}</Alert>}{failure&&<Alert severity="error" onClose={()=>setFailure('')}>{failure}</Alert>}
+ {!id&&<Paper variant="outlined" sx={{p:2}}><Stack spacing={2}><Box sx={{display:'grid',gap:2,gridTemplateColumns:{xs:'1fr',md:'2fr 1fr 1fr'}}}><TextField label="Search organization" value={search} onChange={e=>setSearch(e.target.value.slice(0,150))}/><TextField label="Status" select value={params.get('is_active')||'true'} onChange={e=>mutateParam('is_active',e.target.value)}><MenuItem value="true">Available</MenuItem>{r.can_manage&&<MenuItem value="false">Deactivated</MenuItem>}{r.can_manage&&<MenuItem value="all">All</MenuItem>}</TextField><TextField label="Sort" select value={params.get('ordering')||r.id} onChange={e=>mutateParam('ordering',e.target.value)}>{[r.id,...r.fields.filter(f=>f.kind==='text').map(f=>f.name)].flatMap(key=>[<MenuItem key={key} value={key}>{key.replaceAll('_',' ')} ascending</MenuItem>,<MenuItem key={'-'+key} value={'-'+key}>{key.replaceAll('_',' ')} descending</MenuItem>])}</TextField></Box>{parentField&&<ParentInput field={{...parentField,label:'Filter by '+parentField.label,required:false}} value={params.get(parentField.name)?Number(params.get(parentField.name)):null} onChange={value=>mutateParam(parentField.name,value?String(value):'')} disabled={false}/>}<Button onClick={async()=>{try{const snapshot=await get<OfflineCopy>(`/organization/${r.path}/offline-snapshot/?${query}`);saveOfflineCopy(snapshot);setNotice('Read-only labels saved in this tab for five minutes. Reconnecting or signing out clears them.');}catch(e){setFailure((e as Error).message);}}}>Save available labels for offline reading</Button><Stack direction="row">{['parent','status'].map(column=><FormControlLabel key={column} label={`Show ${column}`} control={<Checkbox checked={columns.includes(column)} onChange={e=>mutateParam('columns',(e.target.checked?[...columns,column]:columns.filter(c=>c!==column)).join(','))}/>}/>)}</Stack></Stack></Paper>}
+ {data.isFetching&&<LinearProgress aria-label="Loading records"/>}{data.error&&<Alert severity="error" action={<Button onClick={()=>data.refetch()}>Retry</Button>}>{data.error.message}</Alert>}
+ {id&&detail.data?<><Paper variant="outlined" sx={{p:3}}><Stack spacing={2}>{actions(detail.data)}<Chip label={detail.data.is_active?(detail.data.effective_active?'Available':'Ancestor unavailable'):'Deactivated'}/>{r.fields.map(f=><Box key={f.name}><Typography color="text.secondary" variant="caption">{f.label}</Typography><Typography>{String(detail.data![f.kind==='parent'?f.name.replace(/_id$/,'_label'):f.name]??'Not supplied')}</Typography></Box>)}<Typography variant="caption">Created: {String(detail.data.created_at)} · Updated: {String(detail.data.updated_at)}</Typography></Stack></Paper><Typography variant="h6">Explore children</Typography><Stack direction="row" spacing={1} sx={{flexWrap:'wrap'}}>{resources.filter(child=>child.fields.some(f=>f.parent===r.path&&!f.reference)).map(child=>{const field=child.fields.find(f=>f.parent===r.path)!;return <Button key={child.path} component={Link} to={`/organization/${child.path}?${field.name}=${id}`}>{child.title}</Button>;})}</Stack></>:!id&&list.data&&<Paper variant="outlined"><TableContainer><Table aria-label={r.title}><TableHead><TableRow><TableCell>ID</TableCell><TableCell>Identity</TableCell>{columns.includes('parent')&&<TableCell>Parent</TableCell>}{columns.includes('status')&&<TableCell>Status</TableCell>}<TableCell>Actions</TableCell></TableRow></TableHead><TableBody>{list.data.results.map(row=><TableRow key={String(row[r.id])}><TableCell>{String(row[r.id])}</TableCell><TableCell>{title(row)}</TableCell>{columns.includes('parent')&&<TableCell>{String(row[r.parent+'_label']??'—')}</TableCell>}{columns.includes('status')&&<TableCell><Chip size="small" label={row.is_active?(row.effective_active?'Available':'Ancestor unavailable'):'Deactivated'}/></TableCell>}<TableCell>{actions(row)}</TableCell></TableRow>)}{!list.data.results.length&&<TableRow><TableCell colSpan={5}>No records in your permitted scope match these filters.</TableCell></TableRow>}</TableBody></Table></TableContainer><TablePagination component="div" count={list.data.count} page={page} rowsPerPage={size} rowsPerPageOptions={[10,25,50,100]} onPageChange={(_,p)=>mutateParam('page',String(p+1))} onRowsPerPageChange={e=>mutateParam('page_size',e.target.value)}/></Paper>}
+ {editing!==undefined&&<OrganizationForm resource={r} record={editing} onClose={()=>setEditing(undefined)} onSaved={()=>{setEditing(undefined);setNotice('Record saved.');refresh();}}/>}
+ <Dialog open={!!operation} onClose={()=>{if(!busy)setOperation(null);}} fullWidth aria-labelledby="org-impact-title"><DialogTitle id="org-impact-title">Confirm {operation?.action}</DialogTitle><DialogContent><Stack spacing={2}>{impact.isPending?<LinearProgress/>:impact.error?<Alert severity="error">Impact preview failed. Retry after reopening this dialog.</Alert>:<><Typography>Direct related records: {Object.entries(impact.data.references).map(([name,count])=>`${name}: ${count}`).join(', ')||'None'}</Typography><Typography>Deactivation preserves child records and historical links; it does not cascade flags.</Typography>{operation?.action==='move'&&(!impact.data.move_allowed?<Alert severity="warning">Historical references prevent moving this record.</Alert>:parentField&&<ParentInput field={parentField} value={destination} onChange={setDestination} disabled={busy}/>)}</>}</Stack></DialogContent><DialogActions><Button disabled={busy} onClick={()=>setOperation(null)}>Cancel</Button><Button disabled={busy||!impact.data||!!impact.error||(operation?.action==='move'&&(!impact.data.move_allowed||!destination))} onClick={confirm}>Confirm</Button></DialogActions></Dialog>
+ </Stack>;
+}

@@ -1,0 +1,123 @@
+Staff Profile Reference and Master Data Django Implementation Prompt Pack
+SIMS module 19  |  Django, MySQL and React PWA
+Use these prompts in order to implement the 28 supplied reference tables in the SIMS modular monolith. Each prompt asks for concrete code, migration steps and acceptance criteria. Paste the supplied SQL alongside Prompt 1 so the exact column definitions remain authoritative.
+Implementation contract
+Use the existing Django custom user model and authorization architecture. Link staff activities to the established employee entity in later modules; do not introduce a second employee or user table.
+Keep this module as a self contained Django app, with migrations, services, selectors, DRF serializers and viewsets, permission classes, admin registration, seed data and focused tests. Respect existing app labels, naming conventions and deployment settings.
+Treat the supplied DDL as the source of truth for identifiers, nullable fields, defaults, uniqueness and foreign keys. Explain any intentional deviation before coding. Existing state and country models must be referenced through their actual app labels.
+Use MySQL InnoDB and utf8mb4. Plan a dependency ordered migration; do not run raw CREATE TABLE statements over tables already managed by Django. Check whether any supplied table already exists before choosing create versus adopt/bridge migration.
+Schema inventory
+28 tables identified in the provided SQL. Role specific organizer, publisher and funding agency rows reference external_organization; the organization type link permits multiple categories per organization.
+01  publication_type
+02  journal_type
+03  indexing_agency
+04  metric_type
+05  organization_type
+06  external_organization
+07  external_organization_type
+08  organizer
+09  publisher
+10  funding_type
+11  funding_agency
+12  activity_type
+13  participation_level
+14  role_type
+15  research_status
+16  event_mode
+17  evidence_type
+18  verification_status
+19  approval_status
+20  training_program_type
+21  conference_contribution_type
+22  industry_sector
+23  cocurricular_category
+24  extracurricular_category
+25  award_category
+26  membership_type
+27  professional_contribution_type
+28  confidentiality_level
+Prompt 1  Inspect repository and map dependencies
+Act as the lead Django architect. Inspect the existing SIMS repository, installed apps, custom user and employee authorization patterns, existing state/country tables, API conventions, migration history and MySQL settings. Compare every table and column in the attached Module 19 SQL with existing models. Produce a dependency map, implementation file map, migration plan, ownership decisions for shared masters and a list of schema conflicts. Do not invent missing upstream models. Identify whether the supplied DDL is already deployed and the safest migration approach. Wait for a documented mapping before generating model code.
+Prompt 2  Implement reference and taxonomy models
+Implement Django models for publication_type, journal_type, indexing_agency, metric_type, organization_type, funding_type, activity_type, participation_level, role_type, research_status, event_mode, evidence_type, verification_status, approval_status, training_program_type, conference_contribution_type, industry_sector, cocurricular_category, extracurricular_category, award_category, membership_type, professional_contribution_type and confidentiality_level. Mirror exact db_table, db_column, primary key names, varchar lengths, nullable fields, unique columns and defaults. Use explicit choices for activity_group with the exact eleven SQL values, and field validators for unsigned numerical ranges. Preserve created_at/updated_at behavior where supplied. Define human readable labels and stable ordering; expose Meta constraints explicitly where needed. Output complete code and migrations, with notes for Django/MySQL type differences.
+Prompt 3  Implement external organization models
+Implement external_organization, external_organization_type, organizer, publisher and funding_agency. Reference existing state and country records through ForeignKey with the exact database columns. Preserve nullable organization_code and the composite unique organization_name, city, country_id. Explain MySQL NULL semantics: the unique key does not prevent duplicates when city or country is NULL; propose a service level normalization and duplicate review workflow without silently changing the DDL. Model external_organization_type with its two column composite primary key where the project’s Django version supports it, or use an explicit compatible mapping/migration plan and explain ORM limitations. Organizer and publisher each have a unique organization link. funding_agency has a unique organization and required funding_type. Do not silently infer organization type membership; validate it in a service if the business requires that invariant.
+Prompt 4  Migration and database integrity
+Create dependency ordered migrations and document SQL produced on MySQL. Review SMALLINT, TINYINT and BIGINT UNSIGNED fidelity, Boolean mapping, TIMESTAMP default and ON UPDATE handling, collation, unique indexes, foreign key names and composite primary key support. If exact MySQL fidelity needs RunSQL, pair it with appropriate migration state operations and reversible SQL. Provide migration commands, a preflight query for existing tables and records, and a rollback strategy. Never generate destructive schema changes without an explicit data migration plan.
+Prompt 5  Seed controlled vocabularies
+Create an idempotent management command or data migration to load institution approved reference values. Seed values by stable code with update_or_create, do not reset primary keys, and preserve administratively edited descriptions unless a documented policy says otherwise. Provide illustrative values for publication, indexing, metric, activity, status and confidentiality categories clearly marked as proposals rather than official institutional definitions. Expose import validation, dry run, duplicate detection and a summary report. Test reruns and rollback behavior.
+Prompt 6  Services and validation
+Implement service functions for create/update/deactivate and resolve by stable code, with transactions for external organizations and role associations. Normalize surrounding whitespace, code case and URLs consistently while preserving display names. Validate state/country consistency if the existing geography module supports it. Reject references to inactive masters for new records but allow historical references to remain readable. Protect referenced rows against hard deletion; implement explicit deactivate/reactivate decisions with audit events and permission checks. Handle concurrent unique key conflicts cleanly.
+Prompt 7  DRF API and authorization
+Build paginated DRF list/detail/create/update endpoints for each master, grouped through a coherent router. Use the existing custom user permission model: authenticated readers may view authorized reference data, designated master data administrators may mutate it, and sensitive organization contact fields require the correct permission. Support active filter, exact code, safe text search and deterministic ordering. Validate requests in serializers and services; return stable error responses and proper 403, 404 and 409 behavior. Use select_related/prefetch_related for organization roles, country/state and funding type. Produce route and permission matrices and OpenAPI examples.
+Prompt 8  Admin and mobile PWA screens
+Register all masters in Django admin with search fields, filters, read only creation timestamps and controlled mutation permissions. Build React TypeScript mobile first screens for list, search, create, edit, deactivate and organization role assignment, consuming the DRF contract. Display validation errors, loading and offline states accessibly. Cache read only reference lists with versioned invalidation in the service worker; queue no master data writes offline unless conflict handling and authorization are designed. Keep an audit friendly confirmation for deactivation.
+Prompt 9  Security and audit
+Threat model mutation routes, bulk import, organization contacts and cross app reuse. Enforce server side permission checks, CSRF/session or token policy consistent with the existing stack, input limits and safe URL validation. Audit actor, timestamp, record ID, action and before/after values for changes; avoid logging secrets and unnecessary personal information. Ensure list APIs do not reveal restricted organization fields. Add rate limiting only where supported by existing infrastructure.
+Prompt 10  Focused verification and handoff
+Write meaningful tests for unique codes/names, nullable composite uniqueness behavior, foreign keys, organization roles, inactive selections, permissions, migration on MySQL, idempotent seed reruns and concurrency conflicts. Verify schema with SHOW CREATE TABLE and compare every supplied column, index and constraint. Check API query counts for organization lists and test a narrow mobile viewport. Provide commands run, results, remaining deviations, sample API requests and a completion checklist. Do not claim MySQL behavior from SQLite tests.
+SQL field mapping checklist
+For each table below, compare the generated migration with the source SQL. Constraints and foreign keys are summarized separately in Prompts 2 to 4. The names below are extracted from the attachment.
+publication type
+publication_type_id, publication_type_code, publication_type_name, description, is_active, created_at, updated_at
+journal type
+journal_type_id, journal_type_code, journal_type_name, description, is_active
+indexing agency
+indexing_agency_id, agency_code, agency_name, website_url, description, is_active
+metric type
+metric_type_id, metric_code, metric_name, description, is_active
+organization type
+organization_type_id, organization_type_code, organization_type_name, is_active
+external organization
+organization_id, organization_code, organization_name, short_name, website_url, email, phone, address_line_1, address_line_2, city, state_id, country_id, postal_code, is_active, created_at, updated_at
+external organization type
+organization_id, organization_type_id
+organizer
+organizer_id, organization_id, is_active
+publisher
+publisher_id, organization_id, is_active
+funding type
+funding_type_id, funding_type_code, funding_type_name, is_external, description, is_active
+funding agency
+funding_agency_id, organization_id, funding_type_id, agency_category, is_active
+activity type
+activity_type_id, activity_type_code, activity_type_name, activity_group, description, is_active
+participation level
+participation_level_id, level_code, level_name, display_order, is_active
+role type
+role_type_id, role_code, role_name, description, is_active
+research status
+research_status_id, status_code, status_name, display_order, is_terminal, is_active
+event mode
+event_mode_id, mode_code, mode_name, is_active
+evidence type
+evidence_type_id, evidence_type_code, evidence_type_name, description, is_active
+verification status
+verification_status_id, status_code, status_name, is_terminal, is_active
+approval status
+approval_status_id, status_code, status_name, is_terminal, is_active
+training program type
+training_program_type_id, type_code, type_name, description, is_active
+conference contribution type
+conference_contribution_type_id, type_code, type_name, is_active
+industry sector
+industry_sector_id, sector_code, sector_name, description, is_active
+cocurricular category
+cocurricular_category_id, category_code, category_name, is_active
+extracurricular category
+extracurricular_category_id, category_code, category_name, is_active
+award category
+award_category_id, category_code, category_name, is_active
+membership type
+membership_type_id, type_code, type_name, is_active
+professional contribution type
+professional_contribution_type_id, contribution_code, contribution_name, description, is_active
+confidentiality level
+confidentiality_level_id, level_code, level_name, display_order, is_active
+Acceptance criteria
+All supplied tables and columns have explicit mappings; existing shared tables are reused.
+The MySQL schema preserves documented keys, nullable behavior, relationships and intended timestamps.
+Only authorized staff can change masters; historical references survive deactivation.
+Seed commands can run twice without duplicate rows or overwritten local edits.
+The API, admin and PWA demonstrate search, role assignment, validation and deactivation.
+A MySQL migration check and targeted test report accompany the handoff.

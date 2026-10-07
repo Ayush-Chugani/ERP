@@ -1,0 +1,85 @@
+{
+  "module": "M27 Consultancy / Industry-Sponsored Projects",
+  "date": "2026-09-26",
+  "status": "Application implementation and local verification complete; operational release acceptance pending",
+  "confirmed_decisions": {
+    "extensions": "All proposed extensions approved",
+    "over_receipts": "Allowed",
+    "faculty_incentive_share": "Monetary amount",
+    "completion": "Completion date required",
+    "closure": "Authorized administrative confirmation without full-payment gate"
+  },
+  "core_columns": 17,
+  "checks": [
+    {
+      "command": "backend/.venv/Scripts/python.exe -m pytest backend -q --reuse-db --create-db --disable-warnings --maxfail=5",
+      "result": "581 passed; 70 subtests passed; 1 warning",
+      "log": ".tmp/m27-full-backend.txt",
+      "note": "Clean database full regression before final M27 receipt-policy refinements and added acceptance tests. Elapsed wall time is not a performance benchmark."
+    },
+    {
+      "command": "backend/.venv/Scripts/python.exe -m pytest backend/apps/consultancy/tests backend/apps/funded_projects/tests backend/apps/research_proposals/tests backend/apps/faculty_internships/tests backend/apps/conferences/tests -q --reuse-db --disable-warnings --maxfail=3",
+      "result": "94 passed; 44 subtests passed in 99.70s",
+      "log": ".tmp/m27-final-regression.txt",
+      "note": "Final dependency regression, including 20 M27 tests: real concurrent receipts, source-native constraints, permitted advance/late payments, empty migration reversal/reinstallation, populated reversal refusal, private evidence, Unicode byte limits, scope and independent permissions. Unicode fixture explicitly generates code points to avoid PowerShell pipeline encoding substitution."
+    },
+    {
+      "command": "npm run test:ui -- --maxWorkers=1",
+      "cwd": "frontend",
+      "result": "19 files, 83 tests passed in 148.10s",
+      "note": "Successful complete retry after an earlier run passed 76 tests but had two worker-start timeouts."
+    },
+    {
+      "command": "npm test",
+      "cwd": "frontend",
+      "result": "12 transport/PWA tests passed"
+    },
+    {
+      "command": "npm run build",
+      "cwd": "frontend",
+      "result": "TypeScript and Vite build passed; PWA generated 42 static precache entries"
+    },
+    {
+      "command": "backend/.venv/Scripts/python.exe backend/manage.py check",
+      "result": "No issues"
+    },
+    {
+      "command": "backend/.venv/Scripts/python.exe backend/manage.py makemigrations --check --dry-run",
+      "result": "No changes detected"
+    },
+    {
+      "command": "backend/.venv/Scripts/python.exe backend/manage.py migrate --check",
+      "result": "No pending migrations; existing unrelated M13 mysql.W003 warning"
+    },
+    {
+      "command": "backend/.venv/Scripts/python.exe backend/manage.py spectacular --file .tmp/m27-openapi.yaml --validate",
+      "result": "Passed without schema warnings after lookup annotations"
+    },
+    {
+      "command": "backend/.venv/Scripts/python.exe -m ruff check backend/apps/consultancy",
+      "result": "Passed"
+    },
+    {
+      "command": "scripts/m27_verification.py through manage.py shell",
+      "result": "Core and five approved extension tables verified; seven local EXPLAIN plans saved"
+    }
+  ],
+  "runtime": {
+    "CONSULTANCY_ENABLED": false,
+    "IDENTITY_ACCESS_ENABLED": false,
+    "IDENTITY_ACCESS_SECURITY_ENABLED": false,
+    "seed": "seed_consultancy applied locally; sixteen permissions configured; no user or role grants changed"
+  },
+  "limits": [
+    "No production deployment or runtime activation",
+    "No automatic tax, overhead or incentive-distribution rules",
+    "No blind adoption of pre-existing SQL tables",
+    "Local query plans are not production load testing",
+    "Real browser/device, private storage/scanner and restore-drill acceptance remain rollout checks",
+    "Previous queued modules are not marked complete by this implementation"
+  ],
+  "original_file_hashes": {
+    "Manuals/Prompts/M27-Consultancy_Industry_Sponsored_Project_Prompt_Pack.docx": "65dab30f425f3bce07e7947a2b886009d9b4cdc36b59dee5fde6ae5eeb15e950",
+    "Manuals/sims_v6_5_1_mariadb_full_schema.sql": "8593b2e62791c03795511a56f808d29b653bc2730bee15dbafe19c23d8e51bd5"
+  }
+}

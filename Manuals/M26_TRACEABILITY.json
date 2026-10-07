@@ -1,0 +1,330 @@
+[
+  {
+    "table": "funded_research_project",
+    "column": "staff_activity_id",
+    "model": "funded_projects.FundedResearchProject",
+    "field": "staff_activity",
+    "write": "service-managed or immutable",
+    "read": "ACTIVITY.READ scoped projection"
+  },
+  {
+    "table": "funded_research_project",
+    "column": "source_proposal_activity_id",
+    "model": "funded_projects.FundedResearchProject",
+    "field": "source_proposal_activity",
+    "write": "service-managed or immutable",
+    "read": "ACTIVITY.READ scoped projection"
+  },
+  {
+    "table": "funded_research_project",
+    "column": "project_title",
+    "model": "funded_projects.FundedResearchProject",
+    "field": "project_title",
+    "write": "strict scoped serializer and service validation",
+    "read": "ACTIVITY.READ scoped projection"
+  },
+  {
+    "table": "funded_research_project",
+    "column": "principal_investigator_employee_id",
+    "model": "funded_projects.FundedResearchProject",
+    "field": "principal_investigator_employee",
+    "write": "service-managed or immutable",
+    "read": "ACTIVITY.READ scoped projection"
+  },
+  {
+    "table": "funded_research_project",
+    "column": "department_id",
+    "model": "funded_projects.FundedResearchProject",
+    "field": "department",
+    "write": "service-managed or immutable",
+    "read": "ACTIVITY.READ scoped projection"
+  },
+  {
+    "table": "funded_research_project",
+    "column": "funding_agency_id",
+    "model": "funded_projects.FundedResearchProject",
+    "field": "funding_agency",
+    "write": "strict scoped serializer and service validation",
+    "read": "ACTIVITY.READ scoped projection"
+  },
+  {
+    "table": "funded_research_project",
+    "column": "funding_type_id",
+    "model": "funded_projects.FundedResearchProject",
+    "field": "funding_type",
+    "write": "strict scoped serializer and service validation",
+    "read": "ACTIVITY.READ scoped projection"
+  },
+  {
+    "table": "funded_research_project",
+    "column": "scheme_program_name",
+    "model": "funded_projects.FundedResearchProject",
+    "field": "scheme_program_name",
+    "write": "strict scoped serializer and service validation",
+    "read": "ACTIVITY.READ scoped projection"
+  },
+  {
+    "table": "funded_research_project",
+    "column": "requested_amount",
+    "model": "funded_projects.FundedResearchProject",
+    "field": "requested_amount",
+    "write": "strict scoped serializer and service validation",
+    "read": "FINANCE.READ required"
+  },
+  {
+    "table": "funded_research_project",
+    "column": "sanctioned_amount",
+    "model": "funded_projects.FundedResearchProject",
+    "field": "sanctioned_amount",
+    "write": "strict scoped serializer and service validation",
+    "read": "FINANCE.READ required"
+  },
+  {
+    "table": "funded_research_project",
+    "column": "amount_received",
+    "model": "funded_projects.FundedResearchProject",
+    "field": "amount_received",
+    "write": "service-managed or immutable",
+    "read": "FINANCE.READ required"
+  },
+  {
+    "table": "funded_research_project",
+    "column": "amount_utilized",
+    "model": "funded_projects.FundedResearchProject",
+    "field": "amount_utilized",
+    "write": "service-managed or immutable",
+    "read": "FINANCE.READ required"
+  },
+  {
+    "table": "funded_research_project",
+    "column": "currency_code",
+    "model": "funded_projects.FundedResearchProject",
+    "field": "currency_code",
+    "write": "strict scoped serializer and service validation",
+    "read": "ACTIVITY.READ scoped projection"
+  },
+  {
+    "table": "funded_research_project",
+    "column": "sanction_date",
+    "model": "funded_projects.FundedResearchProject",
+    "field": "sanction_date",
+    "write": "strict scoped serializer and service validation",
+    "read": "ACTIVITY.READ scoped projection"
+  },
+  {
+    "table": "funded_research_project",
+    "column": "sanction_order_number",
+    "model": "funded_projects.FundedResearchProject",
+    "field": "sanction_order_number",
+    "write": "strict scoped serializer and service validation",
+    "read": "ACTIVITY.READ scoped projection"
+  },
+  {
+    "table": "funded_research_project",
+    "column": "project_start_date",
+    "model": "funded_projects.FundedResearchProject",
+    "field": "project_start_date",
+    "write": "strict scoped serializer and service validation",
+    "read": "ACTIVITY.READ scoped projection"
+  },
+  {
+    "table": "funded_research_project",
+    "column": "project_end_date",
+    "model": "funded_projects.FundedResearchProject",
+    "field": "project_end_date",
+    "write": "strict scoped serializer and service validation",
+    "read": "ACTIVITY.READ scoped projection"
+  },
+  {
+    "table": "funded_research_project",
+    "column": "duration_months",
+    "model": "funded_projects.FundedResearchProject",
+    "field": "duration_months",
+    "write": "strict scoped serializer and service validation",
+    "read": "ACTIVITY.READ scoped projection"
+  },
+  {
+    "table": "funded_research_project",
+    "column": "research_status_id",
+    "model": "funded_projects.FundedResearchProject",
+    "field": "research_status",
+    "write": "service-managed or immutable",
+    "read": "ACTIVITY.READ scoped projection"
+  },
+  {
+    "table": "funded_research_project",
+    "column": "project_objectives",
+    "model": "funded_projects.FundedResearchProject",
+    "field": "project_objectives",
+    "write": "strict scoped serializer and service validation",
+    "read": "ACTIVITY.READ scoped projection"
+  },
+  {
+    "table": "funded_research_project",
+    "column": "research_domain",
+    "model": "funded_projects.FundedResearchProject",
+    "field": "research_domain",
+    "write": "strict scoped serializer and service validation",
+    "read": "ACTIVITY.READ scoped projection"
+  },
+  {
+    "table": "funded_research_project",
+    "column": "project_outcomes",
+    "model": "funded_projects.FundedResearchProject",
+    "field": "project_outcomes",
+    "write": "strict scoped serializer and service validation",
+    "read": "ACTIVITY.READ scoped projection"
+  },
+  {
+    "table": "funded_research_project",
+    "column": "publications_generated",
+    "model": "funded_projects.FundedResearchProject",
+    "field": "publications_generated",
+    "write": "strict scoped serializer and service validation",
+    "read": "ACTIVITY.READ scoped projection"
+  },
+  {
+    "table": "funded_research_project",
+    "column": "patents_generated",
+    "model": "funded_projects.FundedResearchProject",
+    "field": "patents_generated",
+    "write": "strict scoped serializer and service validation",
+    "read": "ACTIVITY.READ scoped projection"
+  },
+  {
+    "table": "funded_research_project",
+    "column": "products_generated",
+    "model": "funded_projects.FundedResearchProject",
+    "field": "products_generated",
+    "write": "strict scoped serializer and service validation",
+    "read": "ACTIVITY.READ scoped projection"
+  },
+  {
+    "table": "funded_research_project",
+    "column": "other_outputs",
+    "model": "funded_projects.FundedResearchProject",
+    "field": "other_outputs",
+    "write": "strict scoped serializer and service validation",
+    "read": "ACTIVITY.READ scoped projection"
+  },
+  {
+    "table": "funded_research_project",
+    "column": "utilization_summary",
+    "model": "funded_projects.FundedResearchProject",
+    "field": "utilization_summary",
+    "write": "strict scoped serializer and service validation",
+    "read": "FINANCE.READ required"
+  },
+  {
+    "table": "funded_research_project",
+    "column": "completion_date",
+    "model": "funded_projects.FundedResearchProject",
+    "field": "completion_date",
+    "write": "strict scoped serializer and service validation",
+    "read": "ACTIVITY.READ scoped projection"
+  },
+  {
+    "table": "research_project_financial_utilization",
+    "column": "utilization_id",
+    "model": "funded_projects.ResearchProjectFinancialUtilization",
+    "field": "utilization_id",
+    "write": "service-managed or immutable",
+    "read": "FINANCE.READ required"
+  },
+  {
+    "table": "research_project_financial_utilization",
+    "column": "staff_activity_id",
+    "model": "funded_projects.ResearchProjectFinancialUtilization",
+    "field": "staff_activity",
+    "write": "service-managed or immutable",
+    "read": "FINANCE.READ required"
+  },
+  {
+    "table": "research_project_financial_utilization",
+    "column": "financial_year",
+    "model": "funded_projects.ResearchProjectFinancialUtilization",
+    "field": "financial_year",
+    "write": "strict scoped serializer and service validation",
+    "read": "FINANCE.READ required"
+  },
+  {
+    "table": "research_project_financial_utilization",
+    "column": "reporting_period_from",
+    "model": "funded_projects.ResearchProjectFinancialUtilization",
+    "field": "reporting_period_from",
+    "write": "strict scoped serializer and service validation",
+    "read": "FINANCE.READ required"
+  },
+  {
+    "table": "research_project_financial_utilization",
+    "column": "reporting_period_to",
+    "model": "funded_projects.ResearchProjectFinancialUtilization",
+    "field": "reporting_period_to",
+    "write": "strict scoped serializer and service validation",
+    "read": "FINANCE.READ required"
+  },
+  {
+    "table": "research_project_financial_utilization",
+    "column": "opening_balance",
+    "model": "funded_projects.ResearchProjectFinancialUtilization",
+    "field": "opening_balance",
+    "write": "strict scoped serializer and service validation",
+    "read": "FINANCE.READ required"
+  },
+  {
+    "table": "research_project_financial_utilization",
+    "column": "amount_received",
+    "model": "funded_projects.ResearchProjectFinancialUtilization",
+    "field": "amount_received",
+    "write": "strict scoped serializer and service validation",
+    "read": "FINANCE.READ required"
+  },
+  {
+    "table": "research_project_financial_utilization",
+    "column": "expenditure_amount",
+    "model": "funded_projects.ResearchProjectFinancialUtilization",
+    "field": "expenditure_amount",
+    "write": "strict scoped serializer and service validation",
+    "read": "FINANCE.READ required"
+  },
+  {
+    "table": "research_project_financial_utilization",
+    "column": "closing_balance",
+    "model": "funded_projects.ResearchProjectFinancialUtilization",
+    "field": "closing_balance",
+    "write": "strict scoped serializer and service validation",
+    "read": "FINANCE.READ required"
+  },
+  {
+    "table": "research_project_financial_utilization",
+    "column": "utilization_certificate_number",
+    "model": "funded_projects.ResearchProjectFinancialUtilization",
+    "field": "utilization_certificate_number",
+    "write": "strict scoped serializer and service validation",
+    "read": "FINANCE.READ required"
+  },
+  {
+    "table": "research_project_financial_utilization",
+    "column": "statement_of_expenditure_number",
+    "model": "funded_projects.ResearchProjectFinancialUtilization",
+    "field": "statement_of_expenditure_number",
+    "write": "strict scoped serializer and service validation",
+    "read": "FINANCE.READ required"
+  },
+  {
+    "table": "research_project_financial_utilization",
+    "column": "remarks",
+    "model": "funded_projects.ResearchProjectFinancialUtilization",
+    "field": "remarks",
+    "write": "strict scoped serializer and service validation",
+    "read": "FINANCE.READ required"
+  },
+  {
+    "table": "research_project_financial_utilization",
+    "column": "created_at",
+    "model": "funded_projects.ResearchProjectFinancialUtilization",
+    "field": "created_at",
+    "write": "service-managed or immutable",
+    "read": "FINANCE.READ required"
+  }
+]

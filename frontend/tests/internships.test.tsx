@@ -1,0 +1,22 @@
+import React from 'react';
+import {afterEach,beforeAll,afterAll,it,expect,vi} from 'vitest';
+import {cleanup,render,screen,fireEvent,waitFor,within} from '@testing-library/react';
+import {http,HttpResponse} from 'msw';
+import {setupServer} from 'msw/node';
+import {InternshipsApp} from '../src/features/faculty-internships/InternshipsApp';
+vi.mock('../src/features/auth/session',()=>({authenticatedFetch:(path:string,init?:RequestInit)=>fetch('http://localhost/api/v1'+path,init)}));
+const server=setupServer();
+beforeAll(()=>server.listen({onUnhandledRequest:'error'}));afterAll(()=>server.close());
+afterEach(()=>{cleanup();server.resetHandlers();vi.restoreAllMocks();});
+const detail={staff_activity:'12',version:'token',internship_title:'<img src=x onerror=alert(1)>',employee_name:'Faculty',organization_name:'Industry',status:'DRAFT',can_edit:true,can_archive:true,actions:['submit'],evidence:[],history:[]};
+function routes(create=false){server.use(
+ http.get('*/faculty-internships/lookups/',()=>HttpResponse.json({can_create:create,default_mine:false,categories:['OTHER']})),
+ http.get('*/faculty-internships/activities/',()=>HttpResponse.json({count:1,next:null,results:[detail]})),
+ http.get('*/faculty-internships/activities/12/',()=>HttpResponse.json(detail)),
+ http.get('*/faculty-internships/lookups/:name/',()=>HttpResponse.json({count:1,next:null,results:[{id:'1',label:'Choice'}]}))
+);}
+it('renders text safely and hides unauthorized creation',async()=>{routes();const {container}=render(<InternshipsApp/>);await screen.findAllByText(detail.internship_title);expect(container.querySelector('img')).toBeNull();expect(screen.queryByRole('button',{name:'New internship'})).not.toBeInTheDocument();});
+it('keeps offline writes disabled without persisting private drafts',async()=>{routes(true);vi.spyOn(navigator,'onLine','get').mockReturnValue(false);const saved=vi.spyOn(Storage.prototype,'setItem');render(<InternshipsApp/>);expect(await screen.findByRole('button',{name:'New internship'})).toBeDisabled();expect(screen.getByText(/Offline: saving/)).toBeInTheDocument();expect(saved).not.toHaveBeenCalled();});
+it('offers labelled form fields and conditional financial inputs',async()=>{routes(true);render(<InternshipsApp/>);fireEvent.click(await screen.findByRole('button',{name:'New internship'}));const dialog=await screen.findByRole('dialog');expect(within(dialog).getByLabelText('mentor email')).toBeInTheDocument();expect(within(dialog).getByLabelText('stipend incentive amount')).toBeDisabled();expect(within(dialog).getByLabelText('start date *')).toBeInTheDocument();});
+it('retries an ambiguous create response with the same key and body',async()=>{routes(true);const attempts:{key:string|null;body:string}[]=[];server.use(http.post('*/faculty-internships/activities/',async({request})=>{attempts.push({key:request.headers.get('Idempotency-Key'),body:await request.text()});return attempts.length===1?HttpResponse.error():HttpResponse.json(detail,{status:201});}));render(<InternshipsApp/>);fireEvent.click(await screen.findByRole('button',{name:'New internship'}));fireEvent.change(await screen.findByLabelText('internship title *'),{target:{value:'New internship'}});fireEvent.click(screen.getByRole('button',{name:'Save draft'}));await screen.findAllByText(/Unable to reach the server/);fireEvent.click(screen.getByRole('button',{name:'Save draft'}));await waitFor(()=>expect(attempts).toHaveLength(2));expect(attempts[0]).toEqual(attempts[1]);expect(attempts[0].key).toBeTruthy();await waitFor(()=>expect(screen.queryByRole('dialog')).not.toBeInTheDocument());},15000);
+it('uses the version and a stable retry key for workflow submission',async()=>{routes();const calls:{key:string|null;body:unknown}[]=[];server.use(http.post('*/faculty-internships/activities/12/workflow/',async({request})=>{calls.push({key:request.headers.get('Idempotency-Key'),body:await request.json()});return calls.length===1?HttpResponse.error():HttpResponse.json({...detail,status:'SUBMITTED',actions:[]});}));render(<InternshipsApp/>);fireEvent.click(await screen.findByRole('button',{name:'View'}));fireEvent.click(await screen.findByRole('button',{name:'submit'}));fireEvent.click(screen.getByRole('button',{name:'Confirm',exact:true}));await screen.findAllByText(/Unable to reach/);fireEvent.click(screen.getByRole('button',{name:'Confirm',exact:true}));await waitFor(()=>expect(calls).toHaveLength(2));expect(calls[0]).toEqual(calls[1]);expect(calls[0].body).toEqual({action:'submit',remarks:'',version:'token'});});

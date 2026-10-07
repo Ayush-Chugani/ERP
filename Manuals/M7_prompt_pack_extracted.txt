@@ -1,0 +1,503 @@
+﻿Term Registration Section and Course Registration Module Prompt Pack
+SIMS Module 7  Django DRF MySQL React TypeScript PWA
+
+A sequenced implementation guide for converting the supplied relational schema into a secure, transaction-safe, institution-scoped SIMS module.
+
+Document purpose
+Implementation prompt pack
+Architecture
+Plugin-ready modular monolith
+Authentication
+Django custom User model
+Database
+MySQL 8.0.16 or later
+Prepared for
+SIMS development and review team
+
+Version 1.0  |  20 September 2026
+
+How to use this pack
+Run the prompts in sequence. Each stage assumes that earlier accepted outputs are available in the same working context. Review and commit one stage before moving to the next, especially where revised DDL or migration choices affect later code.
+Attach or paste the current repository tree, relevant settings, and upstream model definitions before Prompt 1.
+Ask the implementation agent to identify assumptions and wait only when a missing decision changes data integrity or authorization.
+Require runnable files, migrations, tests, commands, and verification evidence at every stage.
+Keep institution scope server-controlled and treat all registration and allocation operations as auditable transactions.
+Use the final integrated build prompt only after the individual design decisions have been reviewed.
+Prompt sequence
+No
+Implementation stage
+Primary outcome
+1
+Audit the SQL schema and produce revised DDL
+Validated schema
+2
+Design the Django module architecture
+Django architecture
+3
+Generate models migrations and database constraints
+Models and migrations
+4
+Implement programme term offerings sections and batches
+Term structure workflows
+5
+Implement student term registration and allocation
+Student term allocation
+6
+Implement course offerings and section mappings
+Course offerings and mappings
+7
+Implement course registration and exact rosters
+Course registration and rosters
+8
+Build DRF APIs and scoped authorization
+DRF and authorization
+9
+Build the React TypeScript PWA interface
+React PWA interface
+10
+Harden security privacy auditability and reliability
+Security and operations controls
+11
+Create comprehensive automated tests and quality gates
+Automated quality gates
+12
+Plan migration seeding reconciliation deployment and handover
+Migration deployment and handover
+Common implementation context
+Act as a senior full-stack Python web developer and software architect. Implement Module 7 of the SIMS platform as part of an enterprise plugin-ready modular monolith.
+Technology baseline: Django 5.x, Django REST Framework, MySQL 8.0.16 or later, React with TypeScript, Material UI, Vite, and @vite-pwa/plugin. Use Gunicorn behind Nginx for production. The Django custom User model is the authentication authority. Preserve the lightweight SIMS authorization extension for institution membership, institution-scoped roles, campus and department scope, module activation, workflow authority, confidentiality, and record-level access.
+Integrate with the established modules for institution structure, academic calendar, curriculum and course catalog, student and staff masters, and admission and enrolment. Do not duplicate their master data. Keep business rules in explicit application services or domain services, use transaction.atomic and select_for_update where concurrency matters, and expose stable versioned APIs. Use snake_case in Python and JSON unless the project already standardizes a serializer alias. Never trust client-supplied institution, programme, term, section, batch, course, or enrolment ownership values without server-side validation.
+Cross-cutting invariants
+No record may cross institution scope through a client-supplied foreign key.
+A section and its batch must belong to the same programme-term offering as the student registration.
+A course registration must reference a course offering for the same programme-term context as its term registration.
+Roster membership must join a course registration and course-offering section for the same course offering.
+Capacity checks and allocations must remain correct under concurrent requests.
+Status changes, transfers, drops, withdrawals, and corrections must be authorized and auditable.
+
+Prompt 1  Audit the SQL schema and produce revised DDL
+Purpose  Use this prompt as the next implementation stage. Retain all accepted outputs from earlier prompts and resolve conflicts explicitly.
+Prompt
+Act as a senior full-stack Python web developer and software architect. Implement Module 7 of the SIMS platform as part of an enterprise plugin-ready modular monolith.
+Technology baseline: Django 5.x, Django REST Framework, MySQL 8.0.16 or later, React with TypeScript, Material UI, Vite, and @vite-pwa/plugin. Use Gunicorn behind Nginx for production. The Django custom User model is the authentication authority. Preserve the lightweight SIMS authorization extension for institution membership, institution-scoped roles, campus and department scope, module activation, workflow authority, confidentiality, and record-level access.
+Integrate with the established modules for institution structure, academic calendar, curriculum and course catalog, student and staff masters, and admission and enrolment. Do not duplicate their master data. Keep business rules in explicit application services or domain services, use transaction.atomic and select_for_update where concurrency matters, and expose stable versioned APIs. Use snake_case in Python and JSON unless the project already standardizes a serializer alias. Never trust client-supplied institution, programme, term, section, batch, course, or enrolment ownership values without server-side validation.
+Task for this stage:Review the supplied Module 7 DDL against MySQL 8.0.16+ and the complete SIMS ownership model. Identify syntactic defects, redundant indexes, nullable-unique behavior, unsafe cascades, cross-programme or cross-term integrity gaps, missing capacity/date/status constraints, and dependencies on composite candidate keys in earlier modules.
+Pay particular attention to: specialization ownership; whether curriculum_scheme belongs to programme and specialization; whether semester is valid for the selected scheme; whether curriculum_course and course_id can disagree; whether a student enrolment belongs to the programme offering; nullable roll_number uniqueness; section and batch capacity; same-term course ownership; roster membership consistency; duplicate active roster assignments; and status transitions.
+Return a production-ready revised DDL that preserves identifiers wherever practical. Clearly separate constraints enforceable by MySQL from invariants that require Django services or triggers. Avoid inventing referenced columns without declaring prerequisite unique keys.
+Use the supplied Module 7 SQL schema as the baseline. Produce complete, runnable artifacts rather than pseudocode. State assumptions, file paths, commands, dependencies, and verification steps. Preserve the plugin-ready modular-monolith architecture and Django custom-user authorization approach.
+Required deliverables
+Issue matrix with severity, affected table, evidence, and correction
+Revised dependency order and complete MySQL DDL
+Required prerequisite keys in earlier modules
+Index rationale for registration, roster, reporting, and search queries
+Rules reserved for service-layer validation and concurrency control
+Completion criteria
+All generated code is internally consistent and identifies its target file path.
+All ownership, authorization, status, capacity, and concurrency rules are tested.
+Database changes include safe migration and rollback guidance.
+Commands for linting, type checking, tests, build, and verification are included.
+Open assumptions and deferred decisions are listed at the end.
+
+Prompt 2  Design the Django module architecture
+Purpose  Use this prompt as the next implementation stage. Retain all accepted outputs from earlier prompts and resolve conflicts explicitly.
+Prompt
+Act as a senior full-stack Python web developer and software architect. Implement Module 7 of the SIMS platform as part of an enterprise plugin-ready modular monolith.
+Technology baseline: Django 5.x, Django REST Framework, MySQL 8.0.16 or later, React with TypeScript, Material UI, Vite, and @vite-pwa/plugin. Use Gunicorn behind Nginx for production. The Django custom User model is the authentication authority. Preserve the lightweight SIMS authorization extension for institution membership, institution-scoped roles, campus and department scope, module activation, workflow authority, confidentiality, and record-level access.
+Integrate with the established modules for institution structure, academic calendar, curriculum and course catalog, student and staff masters, and admission and enrolment. Do not duplicate their master data. Keep business rules in explicit application services or domain services, use transaction.atomic and select_for_update where concurrency matters, and expose stable versioned APIs. Use snake_case in Python and JSON unless the project already standardizes a serializer alias. Never trust client-supplied institution, programme, term, section, batch, course, or enrolment ownership values without server-side validation.
+Task for this stage:Design a cohesive Django app boundary for term registration, sections, batches, course offerings, student course registration, and exact roster membership. Show how the module depends on existing apps without circular imports or duplicated masters.
+Define aggregate boundaries, repository/query responsibilities, selectors, command services, domain policies, signals only where unavoidable, permissions, audit events, and public integration contracts. Include idempotency and concurrency strategy for bulk registration, automatic allocation, transfers, drops, withdrawals, and completion.
+Use the supplied Module 7 SQL schema as the baseline. Produce complete, runnable artifacts rather than pseudocode. State assumptions, file paths, commands, dependencies, and verification steps. Preserve the plugin-ready modular-monolith architecture and Django custom-user authorization approach.
+Required deliverables
+Recommended app/package tree
+Model-to-aggregate mapping and dependency rules
+Command and query service interfaces
+Transaction boundaries and locking order
+Published domain events and consuming modules
+ADR-style explanation of important design decisions
+Completion criteria
+All generated code is internally consistent and identifies its target file path.
+All ownership, authorization, status, capacity, and concurrency rules are tested.
+Database changes include safe migration and rollback guidance.
+Commands for linting, type checking, tests, build, and verification are included.
+Open assumptions and deferred decisions are listed at the end.
+
+Prompt 3  Generate models migrations and database constraints
+Purpose  Use this prompt as the next implementation stage. Retain all accepted outputs from earlier prompts and resolve conflicts explicitly.
+Prompt
+Act as a senior full-stack Python web developer and software architect. Implement Module 7 of the SIMS platform as part of an enterprise plugin-ready modular monolith.
+Technology baseline: Django 5.x, Django REST Framework, MySQL 8.0.16 or later, React with TypeScript, Material UI, Vite, and @vite-pwa/plugin. Use Gunicorn behind Nginx for production. The Django custom User model is the authentication authority. Preserve the lightweight SIMS authorization extension for institution membership, institution-scoped roles, campus and department scope, module activation, workflow authority, confidentiality, and record-level access.
+Integrate with the established modules for institution structure, academic calendar, curriculum and course catalog, student and staff masters, and admission and enrolment. Do not duplicate their master data. Keep business rules in explicit application services or domain services, use transaction.atomic and select_for_update where concurrency matters, and expose stable versioned APIs. Use snake_case in Python and JSON unless the project already standardizes a serializer alias. Never trust client-supplied institution, programme, term, section, batch, course, or enrolment ownership values without server-side validation.
+Task for this stage:Generate Django 5 models and migrations for every Module 7 table. Map unsigned MySQL types carefully, use TextChoices for statuses and types, preserve db_table names, explicitly name constraints and indexes, and represent generated-key uniqueness in a migration-safe way.
+Implement clean methods and database constraints without treating model validation as a substitute for transactional rules. Explain any RawSQL, RunSQL, generated-column, or SeparateDatabaseAndState migration. Include forward and reverse behavior and a migration validation checklist for an existing production database.
+Use the supplied Module 7 SQL schema as the baseline. Produce complete, runnable artifacts rather than pseudocode. State assumptions, file paths, commands, dependencies, and verification steps. Preserve the plugin-ready modular-monolith architecture and Django custom-user authorization approach.
+Required deliverables
+Complete models.py organized for maintainability
+Initial and follow-up migration files
+Named UniqueConstraint and CheckConstraint definitions
+Manager and QuerySet methods for common scoped queries
+Migration rollback and production rollout notes
+Django system checks for required upstream keys
+Completion criteria
+All generated code is internally consistent and identifies its target file path.
+All ownership, authorization, status, capacity, and concurrency rules are tested.
+Database changes include safe migration and rollback guidance.
+Commands for linting, type checking, tests, build, and verification are included.
+Open assumptions and deferred decisions are listed at the end.
+
+Prompt 4  Implement programme term offerings sections and batches
+Purpose  Use this prompt as the next implementation stage. Retain all accepted outputs from earlier prompts and resolve conflicts explicitly.
+Prompt
+Act as a senior full-stack Python web developer and software architect. Implement Module 7 of the SIMS platform as part of an enterprise plugin-ready modular monolith.
+Technology baseline: Django 5.x, Django REST Framework, MySQL 8.0.16 or later, React with TypeScript, Material UI, Vite, and @vite-pwa/plugin. Use Gunicorn behind Nginx for production. The Django custom User model is the authentication authority. Preserve the lightweight SIMS authorization extension for institution membership, institution-scoped roles, campus and department scope, module activation, workflow authority, confidentiality, and record-level access.
+Integrate with the established modules for institution structure, academic calendar, curriculum and course catalog, student and staff masters, and admission and enrolment. Do not duplicate their master data. Keep business rules in explicit application services or domain services, use transaction.atomic and select_for_update where concurrency matters, and expose stable versioned APIs. Use snake_case in Python and JSON unless the project already standardizes a serializer alias. Never trust client-supplied institution, programme, term, section, batch, course, or enrolment ownership values without server-side validation.
+Task for this stage:Implement workflows for creating and progressing programme term offerings, sections, and batches. Validate academic-term dates and status, programme-specialization ownership, curriculum-scheme applicability, semester validity, positive capacities, room availability references, and stable codes.
+Provide allowed status-transition maps and commands for opening registration, activating, completing, and cancelling an offering. Prevent destructive changes once approved registrations exist. Provide safe section/batch capacity updates and a bulk section/batch creation operation with dry-run support.
+Use the supplied Module 7 SQL schema as the baseline. Produce complete, runnable artifacts rather than pseudocode. State assumptions, file paths, commands, dependencies, and verification steps. Preserve the plugin-ready modular-monolith architecture and Django custom-user authorization approach.
+Required deliverables
+Service classes with typed command inputs
+Status transition policy and permission matrix
+Serializers and endpoints for individual and bulk operations
+Capacity and room validation rules
+Idempotency and audit logging behavior
+Unit and transaction test cases
+Completion criteria
+All generated code is internally consistent and identifies its target file path.
+All ownership, authorization, status, capacity, and concurrency rules are tested.
+Database changes include safe migration and rollback guidance.
+Commands for linting, type checking, tests, build, and verification are included.
+Open assumptions and deferred decisions are listed at the end.
+
+Prompt 5  Implement student term registration and allocation
+Purpose  Use this prompt as the next implementation stage. Retain all accepted outputs from earlier prompts and resolve conflicts explicitly.
+Prompt
+Act as a senior full-stack Python web developer and software architect. Implement Module 7 of the SIMS platform as part of an enterprise plugin-ready modular monolith.
+Technology baseline: Django 5.x, Django REST Framework, MySQL 8.0.16 or later, React with TypeScript, Material UI, Vite, and @vite-pwa/plugin. Use Gunicorn behind Nginx for production. The Django custom User model is the authentication authority. Preserve the lightweight SIMS authorization extension for institution membership, institution-scoped roles, campus and department scope, module activation, workflow authority, confidentiality, and record-level access.
+Integrate with the established modules for institution structure, academic calendar, curriculum and course catalog, student and staff masters, and admission and enrolment. Do not duplicate their master data. Keep business rules in explicit application services or domain services, use transaction.atomic and select_for_update where concurrency matters, and expose stable versioned APIs. Use snake_case in Python and JSON unless the project already standardizes a serializer alias. Never trust client-supplied institution, programme, term, section, batch, course, or enrolment ownership values without server-side validation.
+Task for this stage:Implement creation, approval, cancellation, completion, and correction of student term registrations. Validate that the enrolment is active and belongs to the offered programme and specialization, the term and semester are appropriate for academic progression, and the student is not already registered for an incompatible offering.
+Allocate section and optional batch transactionally, enforce capacity under concurrent requests, and generate or reserve roll numbers without collisions. Support administrator assignment, controlled transfer, bulk import, and automatic balanced allocation. Do not silently overwrite an existing assignment.
+Use the supplied Module 7 SQL schema as the baseline. Produce complete, runnable artifacts rather than pseudocode. State assumptions, file paths, commands, dependencies, and verification steps. Preserve the plugin-ready modular-monolith architecture and Django custom-user authorization approach.
+Required deliverables
+Term registration domain service and transition rules
+Locking strategy and deterministic lock order
+Section/batch allocation algorithm with capacity checks
+Roll-number generation or reservation policy
+Bulk import template, validation response, and partial-failure policy
+Tests for race conditions, duplicate registration, and invalid ownership
+Completion criteria
+All generated code is internally consistent and identifies its target file path.
+All ownership, authorization, status, capacity, and concurrency rules are tested.
+Database changes include safe migration and rollback guidance.
+Commands for linting, type checking, tests, build, and verification are included.
+Open assumptions and deferred decisions are listed at the end.
+
+Prompt 6  Implement course offerings and section mappings
+Purpose  Use this prompt as the next implementation stage. Retain all accepted outputs from earlier prompts and resolve conflicts explicitly.
+Prompt
+Act as a senior full-stack Python web developer and software architect. Implement Module 7 of the SIMS platform as part of an enterprise plugin-ready modular monolith.
+Technology baseline: Django 5.x, Django REST Framework, MySQL 8.0.16 or later, React with TypeScript, Material UI, Vite, and @vite-pwa/plugin. Use Gunicorn behind Nginx for production. The Django custom User model is the authentication authority. Preserve the lightweight SIMS authorization extension for institution membership, institution-scoped roles, campus and department scope, module activation, workflow authority, confidentiality, and record-level access.
+Integrate with the established modules for institution structure, academic calendar, curriculum and course catalog, student and staff masters, and admission and enrolment. Do not duplicate their master data. Keep business rules in explicit application services or domain services, use transaction.atomic and select_for_update where concurrency matters, and expose stable versioned APIs. Use snake_case in Python and JSON unless the project already standardizes a serializer alias. Never trust client-supplied institution, programme, term, section, batch, course, or enrolment ownership values without server-side validation.
+Task for this stage:Implement course offering creation from the selected curriculum scheme and semester. Ensure curriculum_course, course_id, programme_term_offering, credits, category, and availability are mutually consistent. Define the controlled exception flow for special, audit, bridge, or manually added courses.
+Implement lecture, tutorial, practical, project, seminar, and other section mappings. Validate that a mapped section and batch belong to the same programme-term offering and prevent conflicting duplicate mappings. Support shared electives only through an explicit cross-programme design, not by weakening ownership constraints.
+Use the supplied Module 7 SQL schema as the baseline. Produce complete, runnable artifacts rather than pseudocode. State assumptions, file paths, commands, dependencies, and verification steps. Preserve the plugin-ready modular-monolith architecture and Django custom-user authorization approach.
+Required deliverables
+Course offering generation service
+Curriculum consistency validation
+Section mapping command and API
+Rules for whole-section versus batch-level sessions
+Capacity aggregation and wait-list recommendation
+Handling strategy for shared electives and exceptional offerings
+Completion criteria
+All generated code is internally consistent and identifies its target file path.
+All ownership, authorization, status, capacity, and concurrency rules are tested.
+Database changes include safe migration and rollback guidance.
+Commands for linting, type checking, tests, build, and verification are included.
+Open assumptions and deferred decisions are listed at the end.
+
+Prompt 7  Implement course registration and exact rosters
+Purpose  Use this prompt as the next implementation stage. Retain all accepted outputs from earlier prompts and resolve conflicts explicitly.
+Prompt
+Act as a senior full-stack Python web developer and software architect. Implement Module 7 of the SIMS platform as part of an enterprise plugin-ready modular monolith.
+Technology baseline: Django 5.x, Django REST Framework, MySQL 8.0.16 or later, React with TypeScript, Material UI, Vite, and @vite-pwa/plugin. Use Gunicorn behind Nginx for production. The Django custom User model is the authentication authority. Preserve the lightweight SIMS authorization extension for institution membership, institution-scoped roles, campus and department scope, module activation, workflow authority, confidentiality, and record-level access.
+Integrate with the established modules for institution structure, academic calendar, curriculum and course catalog, student and staff masters, and admission and enrolment. Do not duplicate their master data. Keep business rules in explicit application services or domain services, use transaction.atomic and select_for_update where concurrency matters, and expose stable versioned APIs. Use snake_case in Python and JSON unless the project already standardizes a serializer alias. Never trust client-supplied institution, programme, term, section, batch, course, or enrolment ownership values without server-side validation.
+Task for this stage:Implement student course registration for regular, elective, backlog, repeat, improvement, audit, and credit-transfer cases. Validate eligibility, prerequisites, curriculum applicability, attempt rules, registration windows, credit limits, clashes exposed by the timetable module, and course capacity.
+Create exact lecture/lab/tutorial roster membership from approved course registrations. Make add, drop, withdraw, transfer, and completion operations atomic and historically traceable using effective dates. Ensure every roster row matches the same course offering and that transfers close the old membership before activating the new one.
+Use the supplied Module 7 SQL schema as the baseline. Produce complete, runnable artifacts rather than pseudocode. State assumptions, file paths, commands, dependencies, and verification steps. Preserve the plugin-ready modular-monolith architecture and Django custom-user authorization approach.
+Required deliverables
+Eligibility and registration policy services
+Atomic register/drop/withdraw/transfer commands
+Roster generation and reconciliation jobs
+Active-membership and date-overlap rules
+Failure codes suitable for UI display
+Concurrency, capacity, and history tests
+Completion criteria
+All generated code is internally consistent and identifies its target file path.
+All ownership, authorization, status, capacity, and concurrency rules are tested.
+Database changes include safe migration and rollback guidance.
+Commands for linting, type checking, tests, build, and verification are included.
+Open assumptions and deferred decisions are listed at the end.
+
+Prompt 8  Build DRF APIs and scoped authorization
+Purpose  Use this prompt as the next implementation stage. Retain all accepted outputs from earlier prompts and resolve conflicts explicitly.
+Prompt
+Act as a senior full-stack Python web developer and software architect. Implement Module 7 of the SIMS platform as part of an enterprise plugin-ready modular monolith.
+Technology baseline: Django 5.x, Django REST Framework, MySQL 8.0.16 or later, React with TypeScript, Material UI, Vite, and @vite-pwa/plugin. Use Gunicorn behind Nginx for production. The Django custom User model is the authentication authority. Preserve the lightweight SIMS authorization extension for institution membership, institution-scoped roles, campus and department scope, module activation, workflow authority, confidentiality, and record-level access.
+Integrate with the established modules for institution structure, academic calendar, curriculum and course catalog, student and staff masters, and admission and enrolment. Do not duplicate their master data. Keep business rules in explicit application services or domain services, use transaction.atomic and select_for_update where concurrency matters, and expose stable versioned APIs. Use snake_case in Python and JSON unless the project already standardizes a serializer alias. Never trust client-supplied institution, programme, term, section, batch, course, or enrolment ownership values without server-side validation.
+Task for this stage:Create versioned DRF endpoints for offerings, sections, batches, term registrations, course offerings, mappings, course registrations, and rosters. Use thin viewsets, explicit serializers for read/write/bulk actions, selectors for optimized queries, pagination, filters, ordering, and consistent error envelopes.
+Apply Django authentication plus SIMS institution, campus, department, programme, and record scopes. Separate student self-service from registrar, department, academic coordinator, and administrator authority. Prevent object-ID substitution and mass-assignment vulnerabilities. Document optimistic concurrency or revision checks for editable records.
+Use the supplied Module 7 SQL schema as the baseline. Produce complete, runnable artifacts rather than pseudocode. State assumptions, file paths, commands, dependencies, and verification steps. Preserve the plugin-ready modular-monolith architecture and Django custom-user authorization approach.
+Required deliverables
+URL and router map
+Viewsets serializers selectors and permissions
+Role and scope matrix
+Filter and pagination contract
+OpenAPI examples and standard error schema
+Query-count targets and select_related/prefetch_related plan
+Completion criteria
+All generated code is internally consistent and identifies its target file path.
+All ownership, authorization, status, capacity, and concurrency rules are tested.
+Database changes include safe migration and rollback guidance.
+Commands for linting, type checking, tests, build, and verification are included.
+Open assumptions and deferred decisions are listed at the end.
+
+Prompt 9  Build the React TypeScript PWA interface
+Purpose  Use this prompt as the next implementation stage. Retain all accepted outputs from earlier prompts and resolve conflicts explicitly.
+Prompt
+Act as a senior full-stack Python web developer and software architect. Implement Module 7 of the SIMS platform as part of an enterprise plugin-ready modular monolith.
+Technology baseline: Django 5.x, Django REST Framework, MySQL 8.0.16 or later, React with TypeScript, Material UI, Vite, and @vite-pwa/plugin. Use Gunicorn behind Nginx for production. The Django custom User model is the authentication authority. Preserve the lightweight SIMS authorization extension for institution membership, institution-scoped roles, campus and department scope, module activation, workflow authority, confidentiality, and record-level access.
+Integrate with the established modules for institution structure, academic calendar, curriculum and course catalog, student and staff masters, and admission and enrolment. Do not duplicate their master data. Keep business rules in explicit application services or domain services, use transaction.atomic and select_for_update where concurrency matters, and expose stable versioned APIs. Use snake_case in Python and JSON unless the project already standardizes a serializer alias. Never trust client-supplied institution, programme, term, section, batch, course, or enrolment ownership values without server-side validation.
+Task for this stage:Build accessible Material UI screens for programme-term setup, section and batch management, term registration, course offering setup, course registration, allocation, rosters, transfers, and reconciliation. Use feature-based folders, typed API clients, React Query or the project standard, React Hook Form, schema validation, and route-level authorization.
+Provide responsive tables, filters, bulk selection, CSV import review, capacity indicators, conflict messages, approval actions, and an audit timeline. Students must see only eligible offerings and their own registrations. Staff must see only their authorized scope. Cache only safe reference data; queue no high-risk registration mutation for blind offline replay.
+Use the supplied Module 7 SQL schema as the baseline. Produce complete, runnable artifacts rather than pseudocode. State assumptions, file paths, commands, dependencies, and verification steps. Preserve the plugin-ready modular-monolith architecture and Django custom-user authorization approach.
+Required deliverables
+Route map and screen inventory
+TypeScript domain types and API client
+Reusable forms tables and status components
+Loading empty error and conflict states
+PWA caching and offline behavior matrix
+Accessibility and responsive-layout acceptance criteria
+Completion criteria
+All generated code is internally consistent and identifies its target file path.
+All ownership, authorization, status, capacity, and concurrency rules are tested.
+Database changes include safe migration and rollback guidance.
+Commands for linting, type checking, tests, build, and verification are included.
+Open assumptions and deferred decisions are listed at the end.
+
+Prompt 10  Harden security privacy auditability and reliability
+Purpose  Use this prompt as the next implementation stage. Retain all accepted outputs from earlier prompts and resolve conflicts explicitly.
+Prompt
+Act as a senior full-stack Python web developer and software architect. Implement Module 7 of the SIMS platform as part of an enterprise plugin-ready modular monolith.
+Technology baseline: Django 5.x, Django REST Framework, MySQL 8.0.16 or later, React with TypeScript, Material UI, Vite, and @vite-pwa/plugin. Use Gunicorn behind Nginx for production. The Django custom User model is the authentication authority. Preserve the lightweight SIMS authorization extension for institution membership, institution-scoped roles, campus and department scope, module activation, workflow authority, confidentiality, and record-level access.
+Integrate with the established modules for institution structure, academic calendar, curriculum and course catalog, student and staff masters, and admission and enrolment. Do not duplicate their master data. Keep business rules in explicit application services or domain services, use transaction.atomic and select_for_update where concurrency matters, and expose stable versioned APIs. Use snake_case in Python and JSON unless the project already standardizes a serializer alias. Never trust client-supplied institution, programme, term, section, batch, course, or enrolment ownership values without server-side validation.
+Task for this stage:Threat-model this module for horizontal privilege escalation, IDOR, over-posting, forged ownership, duplicate submissions, race-condition overbooking, CSV injection, unsafe exports, status tampering, stale writes, denial of service, and audit-log gaps.
+Implement validation at serializer, service, model, and database layers as appropriate. Add idempotency keys for retried commands, immutable audit records for material actions, structured logging with correlation IDs, rate limits for expensive bulk endpoints, safe export encoding, retention rules, and monitoring for capacity and reconciliation anomalies.
+Use the supplied Module 7 SQL schema as the baseline. Produce complete, runnable artifacts rather than pseudocode. State assumptions, file paths, commands, dependencies, and verification steps. Preserve the plugin-ready modular-monolith architecture and Django custom-user authorization approach.
+Required deliverables
+Threat model and mitigations
+Security-focused code patterns
+Audit event catalogue with before/after data policy
+Logging metrics and alert definitions
+Privacy and retention controls
+Security and abuse test suite
+Completion criteria
+All generated code is internally consistent and identifies its target file path.
+All ownership, authorization, status, capacity, and concurrency rules are tested.
+Database changes include safe migration and rollback guidance.
+Commands for linting, type checking, tests, build, and verification are included.
+Open assumptions and deferred decisions are listed at the end.
+
+Prompt 11  Create comprehensive automated tests and quality gates
+Purpose  Use this prompt as the next implementation stage. Retain all accepted outputs from earlier prompts and resolve conflicts explicitly.
+Prompt
+Act as a senior full-stack Python web developer and software architect. Implement Module 7 of the SIMS platform as part of an enterprise plugin-ready modular monolith.
+Technology baseline: Django 5.x, Django REST Framework, MySQL 8.0.16 or later, React with TypeScript, Material UI, Vite, and @vite-pwa/plugin. Use Gunicorn behind Nginx for production. The Django custom User model is the authentication authority. Preserve the lightweight SIMS authorization extension for institution membership, institution-scoped roles, campus and department scope, module activation, workflow authority, confidentiality, and record-level access.
+Integrate with the established modules for institution structure, academic calendar, curriculum and course catalog, student and staff masters, and admission and enrolment. Do not duplicate their master data. Keep business rules in explicit application services or domain services, use transaction.atomic and select_for_update where concurrency matters, and expose stable versioned APIs. Use snake_case in Python and JSON unless the project already standardizes a serializer alias. Never trust client-supplied institution, programme, term, section, batch, course, or enrolment ownership values without server-side validation.
+Task for this stage:Create a test strategy spanning pure policy tests, model constraints, service transactions, API permissions, frontend components, end-to-end workflows, migrations, performance, and concurrency. Use factories with institution boundaries and realistic status states.
+Include negative tests for every composite ownership rule, invalid transition, cross-tenant reference, over-capacity allocation, curriculum mismatch, duplicate registration, roster mismatch, and overlapping effective dates. Demonstrate concurrent tests with separate database connections where necessary.
+Use the supplied Module 7 SQL schema as the baseline. Produce complete, runnable artifacts rather than pseudocode. State assumptions, file paths, commands, dependencies, and verification steps. Preserve the plugin-ready modular-monolith architecture and Django custom-user authorization approach.
+Required deliverables
+Traceability matrix from requirement to test
+pytest and Django test modules
+API contract and permission tests
+React component and Playwright scenarios
+Concurrency and deadlock regression tests
+Coverage, linting, type-checking, migration, and query-count gates
+Completion criteria
+All generated code is internally consistent and identifies its target file path.
+All ownership, authorization, status, capacity, and concurrency rules are tested.
+Database changes include safe migration and rollback guidance.
+Commands for linting, type checking, tests, build, and verification are included.
+Open assumptions and deferred decisions are listed at the end.
+
+Prompt 12  Plan migration seeding reconciliation deployment and handover
+Purpose  Use this prompt as the next implementation stage. Retain all accepted outputs from earlier prompts and resolve conflicts explicitly.
+Prompt
+Act as a senior full-stack Python web developer and software architect. Implement Module 7 of the SIMS platform as part of an enterprise plugin-ready modular monolith.
+Technology baseline: Django 5.x, Django REST Framework, MySQL 8.0.16 or later, React with TypeScript, Material UI, Vite, and @vite-pwa/plugin. Use Gunicorn behind Nginx for production. The Django custom User model is the authentication authority. Preserve the lightweight SIMS authorization extension for institution membership, institution-scoped roles, campus and department scope, module activation, workflow authority, confidentiality, and record-level access.
+Integrate with the established modules for institution structure, academic calendar, curriculum and course catalog, student and staff masters, and admission and enrolment. Do not duplicate their master data. Keep business rules in explicit application services or domain services, use transaction.atomic and select_for_update where concurrency matters, and expose stable versioned APIs. Use snake_case in Python and JSON unless the project already standardizes a serializer alias. Never trust client-supplied institution, programme, term, section, batch, course, or enrolment ownership values without server-side validation.
+Task for this stage:Prepare a production rollout plan for introducing Module 7 into an existing SIMS installation. Include reference/status seed data where needed, legacy registration mapping, deterministic deduplication, orphan detection, ownership validation, roll-number collision handling, and roster reconstruction.
+Provide a phased deployment compatible with zero or low downtime: schema expansion, code deployment, controlled backfill, verification, constraint activation, monitoring, and rollback. Include operational runbooks for opening registration, resolving stuck allocations, correcting rosters, closing a term, exporting official lists, and incident response.
+Use the supplied Module 7 SQL schema as the baseline. Produce complete, runnable artifacts rather than pseudocode. State assumptions, file paths, commands, dependencies, and verification steps. Preserve the plugin-ready modular-monolith architecture and Django custom-user authorization approach.
+Required deliverables
+Data migration and reconciliation scripts
+Preflight and post-migration SQL checks
+Phased deployment and rollback plan
+Operational runbooks and support checklist
+Backup restore and disaster-recovery tests
+Handover documentation and acceptance sign-off
+Completion criteria
+All generated code is internally consistent and identifies its target file path.
+All ownership, authorization, status, capacity, and concurrency rules are tested.
+Database changes include safe migration and rollback guidance.
+Commands for linting, type checking, tests, build, and verification are included.
+Open assumptions and deferred decisions are listed at the end.
+
+Source schema supplied for Module 7
+The following SQL is reproduced as the implementation baseline. Prompt 1 must audit it before downstream code is finalized.
+-- =============================================================
+-- 7. TERM REGISTRATION, SECTION AND COURSE REGISTRATION MODULE
+-- =============================================================
+ 
+CREATE TABLE programme_term_offering (
+    programme_term_offering_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    academic_term_id INT UNSIGNED NOT NULL,
+    programme_id SMALLINT UNSIGNED NOT NULL,
+    specialization_id SMALLINT UNSIGNED NULL,
+    specialization_key SMALLINT UNSIGNED GENERATED ALWAYS AS (COALESCE(specialization_id, 0)) STORED,
+    curriculum_scheme_id INT UNSIGNED NOT NULL,
+    semester_id TINYINT UNSIGNED NOT NULL,
+    status ENUM('PLANNED','REGISTRATION_OPEN','ACTIVE','COMPLETED','CANCELLED') NOT NULL DEFAULT 'PLANNED',
+    CONSTRAINT uq_programme_term UNIQUE (academic_term_id, programme_id, specialization_key, semester_id),
+    CONSTRAINT fk_programme_term_academic_term FOREIGN KEY (academic_term_id) REFERENCES academic_term(academic_term_id),
+    CONSTRAINT fk_programme_term_programme FOREIGN KEY (programme_id) REFERENCES programme(programme_id),
+    CONSTRAINT fk_programme_term_specialization_programme FOREIGN KEY (specialization_id, programme_id)
+        REFERENCES programme_specialization(specialization_id, programme_id),
+    CONSTRAINT fk_programme_term_scheme FOREIGN KEY (curriculum_scheme_id) REFERENCES curriculum_scheme(curriculum_scheme_id),
+    CONSTRAINT fk_programme_term_semester FOREIGN KEY (semester_id) REFERENCES semester(semester_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+ 
+CREATE TABLE class_section (
+    class_section_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    programme_term_offering_id BIGINT UNSIGNED NOT NULL,
+    section_code VARCHAR(20) NOT NULL,
+    section_name VARCHAR(100) NULL,
+    capacity SMALLINT UNSIGNED NULL,
+    home_room_id INT UNSIGNED NULL,
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,
+    CONSTRAINT uq_class_section UNIQUE (programme_term_offering_id, section_code),
+    CONSTRAINT uq_class_section_owner UNIQUE (class_section_id, programme_term_offering_id),
+    CONSTRAINT fk_class_section_offering FOREIGN KEY (programme_term_offering_id) REFERENCES programme_term_offering(programme_term_offering_id),
+    CONSTRAINT fk_class_section_room FOREIGN KEY (home_room_id) REFERENCES room(room_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+ 
+CREATE TABLE class_batch (
+    class_batch_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    class_section_id BIGINT UNSIGNED NOT NULL,
+    batch_code VARCHAR(20) NOT NULL,
+    batch_name VARCHAR(100) NULL,
+    capacity SMALLINT UNSIGNED NULL,
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,
+    CONSTRAINT uq_class_batch UNIQUE (class_section_id, batch_code),
+    CONSTRAINT uq_class_batch_owner UNIQUE (class_batch_id, class_section_id),
+    CONSTRAINT fk_class_batch_section FOREIGN KEY (class_section_id) REFERENCES class_section(class_section_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+ 
+CREATE TABLE student_term_registration (
+    term_registration_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    enrolment_id BIGINT UNSIGNED NOT NULL,
+    programme_term_offering_id BIGINT UNSIGNED NOT NULL,
+    class_section_id BIGINT UNSIGNED NULL,
+    class_batch_id BIGINT UNSIGNED NULL,
+    roll_number VARCHAR(30) NULL,
+    registration_date DATE NOT NULL,
+    registration_status ENUM('DRAFT','REGISTERED','APPROVED','CANCELLED','COMPLETED') NOT NULL DEFAULT 'REGISTERED',
+    CONSTRAINT uq_student_term_registration UNIQUE (enrolment_id, programme_term_offering_id),
+    CONSTRAINT uq_term_roll UNIQUE (programme_term_offering_id, roll_number),
+    CONSTRAINT chk_term_registration_batch_section CHECK (class_batch_id IS NULL OR class_section_id IS NOT NULL),
+    CONSTRAINT fk_term_registration_enrolment FOREIGN KEY (enrolment_id) REFERENCES student_programme_enrolment(enrolment_id),
+    CONSTRAINT fk_term_registration_offering FOREIGN KEY (programme_term_offering_id) REFERENCES programme_term_offering(programme_term_offering_id),
+    CONSTRAINT fk_term_registration_section_owner FOREIGN KEY (class_section_id, programme_term_offering_id)
+        REFERENCES class_section(class_section_id, programme_term_offering_id),
+    CONSTRAINT fk_term_registration_batch_owner FOREIGN KEY (class_batch_id, class_section_id)
+        REFERENCES class_batch(class_batch_id, class_section_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+ 
+CREATE TABLE course_offering (
+    course_offering_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    programme_term_offering_id BIGINT UNSIGNED NOT NULL,
+    curriculum_course_id BIGINT UNSIGNED NULL,
+    course_id INT UNSIGNED NOT NULL,
+    offering_code VARCHAR(50) NOT NULL UNIQUE,
+    registration_capacity SMALLINT UNSIGNED NULL,
+    status ENUM('PLANNED','OPEN','ACTIVE','COMPLETED','CANCELLED') NOT NULL DEFAULT 'PLANNED',
+    CONSTRAINT uq_course_offering UNIQUE (programme_term_offering_id, course_id),
+    CONSTRAINT uq_course_offering_owner UNIQUE (course_offering_id, programme_term_offering_id),
+    CONSTRAINT fk_course_offering_programme_term FOREIGN KEY (programme_term_offering_id) REFERENCES programme_term_offering(programme_term_offering_id),
+    CONSTRAINT fk_course_offering_curriculum FOREIGN KEY (curriculum_course_id) REFERENCES curriculum_course(curriculum_course_id),
+    CONSTRAINT fk_course_offering_course FOREIGN KEY (course_id) REFERENCES course_catalog(course_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+ 
+CREATE TABLE course_offering_section (
+    course_offering_section_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    course_offering_id BIGINT UNSIGNED NOT NULL,
+    programme_term_offering_id BIGINT UNSIGNED NOT NULL,
+    class_section_id BIGINT UNSIGNED NOT NULL,
+    class_batch_id BIGINT UNSIGNED NULL,
+    class_batch_key BIGINT UNSIGNED GENERATED ALWAYS AS (COALESCE(class_batch_id, 0)) STORED,
+    session_type ENUM('LECTURE','TUTORIAL','PRACTICAL','PROJECT','SEMINAR','OTHER') NOT NULL,
+    CONSTRAINT uq_course_offering_section UNIQUE (course_offering_id, class_section_id, class_batch_key, session_type),
+    CONSTRAINT uq_course_offering_section_course UNIQUE (course_offering_section_id, course_offering_id),
+    CONSTRAINT uq_course_offering_section_owner UNIQUE (course_offering_section_id, programme_term_offering_id),
+    CONSTRAINT chk_course_offering_section_batch CHECK (class_batch_id IS NULL OR class_section_id IS NOT NULL),
+    CONSTRAINT fk_course_offering_section_offering_owner FOREIGN KEY (course_offering_id, programme_term_offering_id)
+        REFERENCES course_offering(course_offering_id, programme_term_offering_id),
+    CONSTRAINT fk_course_offering_section_section_owner FOREIGN KEY (class_section_id, programme_term_offering_id)
+        REFERENCES class_section(class_section_id, programme_term_offering_id),
+    CONSTRAINT fk_course_offering_section_batch_owner FOREIGN KEY (class_batch_id, class_section_id)
+        REFERENCES class_batch(class_batch_id, class_section_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+ 
+CREATE TABLE student_course_registration (
+    course_registration_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    term_registration_id BIGINT UNSIGNED NOT NULL,
+    course_offering_id BIGINT UNSIGNED NOT NULL,
+    registration_type ENUM('REGULAR','ELECTIVE','BACKLOG','REPEAT','IMPROVEMENT','AUDIT','CREDIT_TRANSFER') NOT NULL DEFAULT 'REGULAR',
+    registration_date DATE NOT NULL,
+    registration_status ENUM('REGISTERED','APPROVED','DROPPED','WITHDRAWN','COMPLETED') NOT NULL DEFAULT 'REGISTERED',
+    CONSTRAINT uq_student_course_registration UNIQUE (term_registration_id, course_offering_id),
+    CONSTRAINT uq_course_registration_owner UNIQUE (course_registration_id, course_offering_id),
+    CONSTRAINT fk_course_registration_term FOREIGN KEY (term_registration_id) REFERENCES student_term_registration(term_registration_id),
+    CONSTRAINT fk_course_registration_offering FOREIGN KEY (course_offering_id) REFERENCES course_offering(course_offering_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+ 
+CREATE TABLE course_offering_section_student (
+    course_offering_section_student_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    course_offering_section_id BIGINT UNSIGNED NOT NULL,
+    course_registration_id BIGINT UNSIGNED NOT NULL,
+    course_offering_id BIGINT UNSIGNED NOT NULL,
+    roster_status ENUM('ACTIVE','DROPPED','TRANSFERRED','COMPLETED') NOT NULL DEFAULT 'ACTIVE',
+    effective_from DATE NULL,
+    effective_to DATE NULL,
+    CONSTRAINT uq_course_section_student UNIQUE (course_offering_section_id, course_registration_id),
+    CONSTRAINT uq_course_section_student_owner UNIQUE (course_offering_section_student_id, course_offering_section_id),
+    CONSTRAINT chk_course_section_student_dates CHECK (effective_to IS NULL OR effective_from IS NULL OR effective_to >= effective_from),
+    CONSTRAINT fk_roster_section_course FOREIGN KEY (course_offering_section_id, course_offering_id)
+        REFERENCES course_offering_section(course_offering_section_id, course_offering_id),
+    CONSTRAINT fk_roster_registration_course FOREIGN KEY (course_registration_id, course_offering_id)
+        REFERENCES student_course_registration(course_registration_id, course_offering_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+Final integrated build prompt
+Act as a senior full-stack Python web developer and software architect. Implement Module 7 of the SIMS platform as part of an enterprise plugin-ready modular monolith.
+Technology baseline: Django 5.x, Django REST Framework, MySQL 8.0.16 or later, React with TypeScript, Material UI, Vite, and @vite-pwa/plugin. Use Gunicorn behind Nginx for production. The Django custom User model is the authentication authority. Preserve the lightweight SIMS authorization extension for institution membership, institution-scoped roles, campus and department scope, module activation, workflow authority, confidentiality, and record-level access.
+Integrate with the established modules for institution structure, academic calendar, curriculum and course catalog, student and staff masters, and admission and enrolment. Do not duplicate their master data. Keep business rules in explicit application services or domain services, use transaction.atomic and select_for_update where concurrency matters, and expose stable versioned APIs. Use snake_case in Python and JSON unless the project already standardizes a serializer alias. Never trust client-supplied institution, programme, term, section, batch, course, or enrolment ownership values without server-side validation.
+Using the reviewed outputs from Prompts 1 through 12, implement Module 7 end to end in the current repository. Begin by summarizing the accepted architecture and listing the files you will create or modify. Then generate production-ready code in dependency order: migrations and models; policies, selectors, services, and audit events; DRF serializers, permissions, filters, views, routes, and OpenAPI examples; React TypeScript pages and components; PWA caching rules; tests; seed and migration utilities; deployment configuration; and operational documentation.
+Do not omit code behind ellipses. Preserve existing naming and project conventions unless a change is justified. Enforce institution and ownership scope on the server. Use atomic transactions and row locks for registration, allocation, capacity, transfer, and roster operations. Treat repeated requests idempotently. Prevent cross-term, cross-programme, cross-course, and cross-tenant references. Include a clear command sequence for migrations, checks, tests, frontend build, deployment, smoke testing, reconciliation, and rollback.
+Conclude with: implemented files; schema changes; API inventory; permission matrix; frontend routes; automated test results; manual acceptance checks; known limitations; and recommended next module integrations.
+Final acceptance checklist
+Revised schema passes MySQL validation and Django migration checks.
+Concurrent capacity tests prove that overbooking is prevented.
+Every API operation is institution-scoped and object-level authorized.
+Course and roster ownership invariants cannot be bypassed through identifiers.
+Frontend supports keyboard access, validation, conflicts, bulk workflows, and responsive layouts.
+Audit and reconciliation reports explain every material registration change.
+Deployment, rollback, backup, monitoring, and operator runbooks are complete.

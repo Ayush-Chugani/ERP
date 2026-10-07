@@ -1,0 +1,102 @@
+{
+  "module": "M29 Extra-Curricular Activities",
+  "verified_at": "2026-09-28T01:20:51.575105+00:00",
+  "status": "Implementation and local verification complete; operational acceptance remains; runtime disabled",
+  "backend_full": {
+    "result": "passed",
+    "tests": 629,
+    "subtests": 86,
+    "seconds": 1827.9,
+    "log": ".tmp/m29-full-backend.txt",
+    "database": "Fresh isolated MySQL test database",
+    "note": "Long execution delays affected elapsed time; this is not a performance benchmark."
+  },
+  "backend_m29": {
+    "result": "passed",
+    "tests": 23,
+    "subtests": 10,
+    "seconds": 38.9,
+    "coverage": [
+      "source schema and native history retention",
+      "full PUT vs partial PATCH",
+      "every filter dimension and award presence",
+      "search over event/venue/city/award/details",
+      "active masters and matching country/state",
+      "Unicode and length boundaries",
+      "atomic rollback and concurrent edits",
+      "live scoped permissions and M28/M29 isolation",
+      "private evidence and retained replacements",
+      "formula-safe scoped exports",
+      "constant list query counts",
+      "empty migration reversal/reinstallation",
+      "after-commit notification retry/rollback"
+    ]
+  },
+  "frontend_final_focused": {
+    "result": "passed",
+    "files": 2,
+    "tests": 11,
+    "seconds": 47.01,
+    "log": ".tmp/m29-final-ui.txt",
+    "includes": "All seven M29 UI tests plus four staff UI tests, including profile link and employee scope."
+  },
+  "frontend_full_runs": [
+    {
+      "passed": 96,
+      "timed_out": 1,
+      "files": 21,
+      "tests": 97,
+      "seconds": 511.28,
+      "failure": "Existing internships labelled-form test timed out after a long delay; unchanged isolated rerun passed all five tests in 19.66 seconds."
+    },
+    {
+      "passed": 96,
+      "timed_out": 1,
+      "files": 21,
+      "tests": 97,
+      "seconds": 850.7,
+      "log": ".tmp/m29-full-ui-rerun.txt",
+      "failure": "M29 complete-form test timed out after a roughly 681-second delay. Final focused M29/staff tests all passed. Other 20 UI files passed this full run."
+    }
+  ],
+  "frontend_transport_pwa": {
+    "result": "passed",
+    "tests": 12
+  },
+  "build": {
+    "result": "passed",
+    "log": ".tmp/m29-final-build.txt",
+    "checks": [
+      "TypeScript noEmit",
+      "Vite production assets",
+      "44 static PWA precache entries"
+    ]
+  },
+  "checks": {
+    "django_system": "0 issues",
+    "migration_drift": "No changes detected",
+    "pending_migrations": "None",
+    "openapi_validation": "0 warnings and errors after giving M29 lookup catalogue a unique operation ID",
+    "ruff": "Passed for M29 app and new master migration helpers"
+  },
+  "database_evidence": {
+    "schema": "Manuals/M29_SCHEMA_INVENTORY.json",
+    "plans": "Manuals/M29_QUERY_PLANS.json",
+    "query_plans": 8,
+    "warning": "Existing documents_exit.FileObject.storage_key mysql.W003 warning remains; not introduced by M29."
+  },
+  "runtime": {
+    "M29_enabled": false,
+    "IAM_enabled": false,
+    "IAM_security_enabled": false,
+    "notification_adapter_configured": false,
+    "new_user_or_role_grants": false
+  },
+  "limitations": [
+    "No uninterrupted clean full UI run in this session: full runs had timing timeouts, with affected tests passing separately.",
+    "Live-server browser, physical-device, screen-reader/zoom and production-load acceptance remain staging tasks.",
+    "Production role grants, masters, scanner/storage and optional deduplicating notification adapter require operational setup."
+  ],
+  "traceability": "Manuals/M29_TRACEABILITY.json",
+  "handoff": "Manuals/M29_HANDOFF.md"
+}

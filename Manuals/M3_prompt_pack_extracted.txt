@@ -1,0 +1,331 @@
+﻿Academic Calendar Module Prompt Pack
+Student Information Management System
+Django 5  DRF  MySQL 8  React TypeScript PWA
+
+Architecture baseline
+Plugin ready modular monolith with a Django custom User model and institution scoped authorization extensions
+
+Document item
+Value
+Module
+3  Academic Calendar
+Schema entities
+academic_year  academic_term  semester  time_slot
+Primary audience
+Full stack developers  solution architects  reviewers
+Prompt mode
+Sequential implementation and verification
+Version
+1.0  15 September 2026
+
+Prepared for SIMS implementation planning
+
+How to use this prompt pack
+This pack converts the supplied Academic Calendar schema into a controlled sequence of prompts for an AI coding assistant or development team. Use Prompt 0 once to establish the architectural contract. Then execute Prompts 1 through 13 in order. Each prompt asks for bounded outputs, tests, and explicit assumptions so the module can be reviewed before the next implementation increment.
+1.  Paste Prompt 0 together with the authoritative SQL baseline into the implementation conversation.
+2.  Run one numbered prompt at a time and review its deliverables and acceptance criteria.
+3.  Require migrations and tests to pass before moving to the next prompt.
+4.  Keep module boundaries intact. Cross module data must be referenced through stable contracts, not copied.
+5.  Record approved schema refinements in an architecture decision record before changing the baseline.
+Architecture invariants
+The system remains a plugin-ready modular monolith. Academic Calendar is an internal Django app with explicit public services and API contracts.
+Authentication uses Django with a custom User model defined from the beginning. Do not create a parallel password, session, group, or permission system.
+Authorization extends Django permissions with institution membership, institution-scoped roles, campus or department scope, module activation, workflow authority, confidentiality, and record-level access.
+MySQL 8.0.16 or later is the persistence baseline. Database constraints and application validation must reinforce each other.
+All writes that change calendar state are transactional, auditable, idempotent where appropriate, and safe under concurrent requests.
+API and UI behavior must be institution-aware and timezone-aware. Never trust a client-supplied institution or campus identifier without authorization checks.
+Authoritative entity summary
+Entity
+Responsibility
+Key constraints
+academic_year
+Institutional academic period container
+Unique year_code; end after start; PLANNED ACTIVE CLOSED
+academic_term
+Term within an academic year
+Unique year plus term_code; valid term and registration dates
+semester
+Reusable semester reference
+Unique positive number and unique name
+time_slot
+Campus-owned teaching or break interval
+Unique campus plus slot_code; end after start; active flag
+
+Schema review decisions to make explicitly
+The supplied DDL is the baseline, but implementation must explicitly decide the following before production migration. These are review questions, not silent changes.
+Tenant ownership: academic_year and academic_term currently have no institution_id. Confirm whether calendars are globally shared or institution-owned. A multi-client SIMS usually requires institution ownership and institution-scoped uniqueness.
+Term containment: validate that term dates and registration dates fall within the parent academic year, not merely that each local range is ordered.
+Active-period cardinality: decide whether one institution may have only one ACTIVE academic year and whether overlapping terms of the same type are permitted.
+Time-slot overlap: decide whether non-break teaching slots may overlap within one campus. MySQL CHECK constraints cannot enforce interval overlap across rows, so a transactional service rule is required.
+Deletion policy: choose PROTECT or RESTRICT for referenced calendar records. Closed or used periods should normally be immutable and never cascaded away.
+Timezone semantics: TIME stores wall-clock time without timezone. Confirm that campus timezone is available and used when constructing datetimes.
+
+Authoritative SQL baseline
+CREATE TABLE academic_year (
+    academic_year_id SMALLINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    year_code VARCHAR(9) NOT NULL UNIQUE,
+    start_date DATE NOT NULL,
+    end_date DATE NOT NULL,
+    status ENUM('PLANNED','ACTIVE','CLOSED') NOT NULL DEFAULT 'PLANNED',
+    CONSTRAINT chk_academic_year_dates CHECK (end_date > start_date)
+);
+ 
+CREATE TABLE academic_term (
+    academic_term_id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    academic_year_id SMALLINT UNSIGNED NOT NULL,
+    term_code VARCHAR(20) NOT NULL,
+    term_name VARCHAR(100) NOT NULL,
+    term_type ENUM('ODD','EVEN','SUMMER','ANNUAL','OTHER') NOT NULL,
+    start_date DATE NOT NULL,
+    end_date DATE NOT NULL,
+    registration_start_date DATE NULL,
+    registration_end_date DATE NULL,
+    status ENUM('PLANNED','REGISTRATION_OPEN','ACTIVE','CLOSED') NOT NULL DEFAULT 'PLANNED',
+    CONSTRAINT uq_term_code UNIQUE (academic_year_id, term_code),
+    CONSTRAINT chk_term_dates CHECK (end_date >= start_date),
+    CONSTRAINT chk_term_registration_dates CHECK (
+        registration_start_date IS NULL OR registration_end_date IS NULL
+        OR registration_end_date >= registration_start_date
+    ),
+    CONSTRAINT fk_term_academic_year FOREIGN KEY (academic_year_id)
+        REFERENCES academic_year(academic_year_id)
+);
+ 
+CREATE TABLE semester (
+    semester_id TINYINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    semester_number TINYINT UNSIGNED NOT NULL UNIQUE,
+    semester_name VARCHAR(50) NOT NULL UNIQUE,
+    CONSTRAINT chk_semester_number CHECK (semester_number > 0)
+);
+ 
+CREATE TABLE time_slot (
+    time_slot_id SMALLINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    campus_id SMALLINT UNSIGNED NOT NULL,
+    slot_code VARCHAR(20) NOT NULL,
+    start_time TIME NOT NULL,
+    end_time TIME NOT NULL,
+    is_break BOOLEAN NOT NULL DEFAULT FALSE,
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,
+    CONSTRAINT uq_time_slot UNIQUE (campus_id, slot_code),
+    CONSTRAINT chk_time_slot CHECK (end_time > start_time),
+    CONSTRAINT fk_time_slot_campus FOREIGN KEY (campus_id)
+        REFERENCES campus(campus_id)
+);
+Prompt 0  Establish the implementation contract
+Purpose. Fix the architectural and security rules for every later prompt.
+You are the senior full-stack architect implementing Module 3, Academic Calendar, in SIMS. Use Django 5.x, Django REST Framework, MySQL 8.0.16+, React with TypeScript and Material UI, and Vite PWA. Preserve a plugin-ready modular monolith. Implement the module as a cohesive Django app with internal domain services, selectors, policies, API endpoints, migrations, tests, and documented extension points.Use the project custom User model and Django authentication. Do not implement another user, credential, session, role, or permission store. Authorization must combine Django permissions with active institution membership, institution-scoped role assignments, campus or department scope where relevant, module activation, workflow authority, confidentiality, and record-level rules. Derive institution context from trusted membership and request context; never accept it solely from the payload.Treat the supplied SQL as the authoritative baseline. Identify ambiguities before changing it. If tenant ownership is required, propose the smallest compatible institution foreign keys and scoped uniqueness changes in an architecture decision record. Use database constraints for row-local invariants and service-layer validation with transactions and locking for cross-row, cross-table, lifecycle, overlap, and single-current invariants. Use explicit PROTECT or RESTRICT deletion semantics for referenced calendar data. Keep imports between modules directed through stable public interfaces.For every implementation response, provide: files changed, concise rationale, code, migration impact, authorization checks, tests, commands to verify, assumptions, and unresolved decisions. Do not leave TODO placeholders in production paths. Do not claim success without showing the relevant test or check result.
+Required deliverables
+A short architecture contract
+Proposed app package layout
+Dependency direction and public interfaces
+Decision log for unresolved schema questions
+Acceptance criteria
+No microservices are introduced
+No parallel authentication or RBAC store is created
+Tenant context and authorization are explicit
+Baseline schema is not silently altered
+Prompt 1  Perform domain and schema gap analysis
+Purpose. Turn the DDL into explicit domain rules before coding.
+Analyze academic_year, academic_term, semester, and time_slot against a multi-institution, multi-campus SIMS. Produce a field-by-field mapping to Django types, identify database and application invariants, and classify each rule as database-enforced, model validation, service validation, or authorization policy. Evaluate tenant ownership, uniqueness scope, term containment, active-year cardinality, term overlap, registration-window containment, time-slot overlap, deletion protection, auditability, and timezone handling. Do not modify code in this step. Recommend only changes that are necessary for correctness or the agreed tenancy model.
+Required deliverables
+Field mapping matrix
+Invariant enforcement matrix
+Risk-ranked gap list
+Architecture decision record proposals
+Acceptance criteria
+Every supplied constraint is accounted for
+Cross-row rules are not misrepresented as CHECK constraints
+Tenant and timezone assumptions are explicit
+Recommendations remain backward-conscious
+Prompt 2  Scaffold the bounded Django app
+Purpose. Create the module boundary without implementing business workflows.
+Create an academic_calendar Django app inside the modular monolith. Define a package layout for models, enums, services, selectors, policies, api, admin, tests, migrations, and public interfaces. Register the app and expose only deliberate integration points. Add an AppConfig ready for module activation hooks, but do not use import-time database queries or signals for core business workflows. Document allowed dependencies on the institution and campus modules.
+Required deliverables
+App package and AppConfig
+Public interface module
+Dependency notes
+Initial import and system-check tests
+Acceptance criteria
+App loads under Django checks
+No circular imports
+No business logic hidden in signals
+Module can be disabled without breaking unrelated app imports
+Prompt 3  Implement models and migrations
+Purpose. Map the approved schema accurately into Django and MySQL.
+Implement AcademicYear, AcademicTerm, Semester, and TimeSlot using Django models, TextChoices, explicit db_table names, explicit primary-key column names, indexes, UniqueConstraint and CheckConstraint definitions, and descriptive related_name values. Use the approved institution ownership decision. Map unsigned MySQL identifiers carefully and document any Django portability limitation. Use clean methods for user-facing validation while retaining database constraints. Apply PROTECT to parent references unless an approved decision says otherwise. Generate and inspect migrations and show the resulting MySQL SQL.
+Required deliverables
+Models and enums
+Migration files
+Migration SQL review
+Model constraint tests
+Acceptance criteria
+DDL semantics match the approved baseline
+Names are stable and explicit
+Referenced records cannot be accidentally cascaded
+Migrations run forward on MySQL
+Prompt 4  Build lifecycle services
+Purpose. Centralize state changes and their invariants.
+Implement transactional application services for creating, updating, activating, closing, and reopening when permitted for academic years and terms. Define an explicit transition matrix. Enforce parent-year containment, registration-window rules, configured single-active-year policy, immutable closed periods, and dependencies from other modules. Use transaction.atomic and select_for_update where concurrency can violate an invariant. Make retry behavior and idempotency explicit. Avoid placing request objects in domain services.
+Required deliverables
+Transition matrix
+Typed service commands and results
+Transactional implementation
+Concurrency and transition tests
+Acceptance criteria
+Illegal transitions fail predictably
+Concurrent activation cannot break cardinality
+Closed records follow the approved immutability policy
+Services are usable by API, admin, and background tasks
+Prompt 5  Implement time slot scheduling rules
+Purpose. Protect campus-owned timetable intervals.
+Implement services for creating, editing, activating, deactivating, and ordering campus time slots. Enforce authorized campus scope, end_time greater than start_time, normalized slot codes, and the approved overlap policy. If overlap is prohibited, lock the relevant campus slot set inside a transaction and return a structured conflict containing the conflicting slot. Treat break slots explicitly. Use campus timezone when converting a date plus slot into an aware datetime.
+Required deliverables
+Time-slot service API
+Overlap algorithm and policy
+Timezone conversion helper
+Boundary and concurrency tests
+Acceptance criteria
+Campus isolation is enforced
+Adjacent intervals are handled correctly
+Overnight slots are rejected under the supplied schema
+Errors are stable enough for UI display
+Prompt 6  Enforce Django based authorization
+Purpose. Apply custom-user authorization without duplicating Django auth.
+Define permissions and policy functions for view, add, change, activate, close, and delete actions on academic years, terms, semesters, and time slots. Combine user.is_active, Django permissions, active institution membership, institution-scoped role, module activation, campus scope for time slots, workflow authority for lifecycle transitions, and object-level checks. Superuser behavior must be explicit and auditable. Implement DRF permission classes that delegate to the same policies used outside HTTP.
+Required deliverables
+Permission codename matrix
+Policy functions
+DRF permission adapters
+Authorization test matrix
+Acceptance criteria
+No payload-controlled tenant escalation
+List and object access use the same scope rules
+Cross-institution and cross-campus denial tests pass
+Policies can be called from admin and services
+Prompt 7  Build the DRF API
+Purpose. Expose secure and predictable REST endpoints.
+Create serializers, filter sets, viewsets or explicit API views, URL routes, pagination, ordering, and OpenAPI documentation for the four entities. Separate ordinary updates from lifecycle actions such as activate and close. Apply service functions for writes and selectors for reads. Filter querysets before serialization using trusted institution and campus context. Return RFC 7807-style or project-standard structured errors for validation, conflicts, authorization failures, and invalid transitions. Prevent mass assignment of protected fields.
+Required deliverables
+Endpoint inventory
+Serializers and routes
+Filtering and error contract
+API and schema tests
+Acceptance criteria
+Unauthorized rows never enter the queryset
+Lifecycle changes do not bypass services
+Validation errors identify fields and stable codes
+API schema matches runtime behavior
+Prompt 8  Create selectors and integration contracts
+Purpose. Give other modules stable read-only access.
+Implement optimized selectors for current academic year, open registration term, active terms, term by code, semester reference data, and campus time slots. Define typed public contracts that Admissions, Course Registration, Attendance, Assessment, Timetable, and Fees may consume. Avoid exposing unrestricted model managers as an integration API. Add indexes justified by actual selector predicates and ordering; validate with representative MySQL EXPLAIN output.
+Required deliverables
+Selector functions
+Integration contract documentation
+Index rationale and migration if needed
+Query-count and correctness tests
+Acceptance criteria
+Selectors always require or derive institution context
+No downstream module copies calendar state
+Common reads avoid N plus 1 queries
+Indexes match real query patterns
+Prompt 9  Configure Django admin and audit trail
+Purpose. Provide safe operational management for authorized staff.
+Configure Django admin screens with institution-aware and campus-aware querysets, list filters, search, readonly lifecycle fields, optimized related-object loading, and controlled actions. Admin actions must call the same lifecycle services and policies as the API. Add or integrate audit events that capture actor, trusted institution, action, object identity, before and after values, timestamp, request correlation, and reason for sensitive transitions. Do not log credentials or unnecessary personal data.
+Required deliverables
+Admin classes and forms
+Safe bulk action behavior
+Audit event mapping
+Admin authorization tests
+Acceptance criteria
+Admin cannot bypass tenant scope
+Bulk actions are transactional or report partial behavior explicitly
+Audit entries exist for lifecycle mutations
+Closed records cannot be casually edited
+Prompt 10  Build the React PWA interface
+Purpose. Create an accessible offline-aware calendar administration UI.
+Build TypeScript React pages using Material UI for academic years, terms, semesters, and campus time slots. Use generated or strongly typed API clients, server-side pagination and filtering, accessible forms, clear status chips, transition confirmations, conflict messages, and permission-aware controls. Treat hidden buttons only as UX; the API remains authoritative. For PWA behavior, cache static assets and safe reference reads only. Do not queue lifecycle mutations or destructive writes offline. Show stale-data and connectivity states clearly.
+Required deliverables
+Page and component structure
+Typed API layer
+Form and state validation
+PWA caching policy and frontend tests
+Acceptance criteria
+Keyboard and screen-reader flows are usable
+Unauthorized actions are not offered and remain server-protected
+Offline behavior never invents successful writes
+Date and time display respects campus timezone
+Prompt 11  Create the complete test strategy
+Purpose. Prove correctness at schema, service, policy, API, and UI layers.
+Create a layered test suite using pytest-django and the established frontend test stack. Cover database constraints, model validation, state transitions, containment, nullable registration dates, overlap boundaries, concurrency, tenant isolation, campus scope, module activation, workflow authority, selectors, API filtering, error payloads, admin behavior, and PWA offline rules. Use factories that make institution context explicit. Include MySQL integration tests for behavior that SQLite cannot represent accurately.
+Required deliverables
+Test matrix mapped to requirements
+Backend and frontend tests
+MySQL CI configuration
+Coverage and mutation-risk notes
+Acceptance criteria
+Positive, negative, and cross-tenant paths are covered
+Concurrency tests exercise real transactions
+Constraint names and error codes are asserted where stable
+Tests do not rely solely on SQLite
+Prompt 12  Plan rollout and data migration
+Purpose. Introduce the module safely into an existing SIMS environment.
+Prepare a production rollout plan covering migration ordering, prerequisite institution and campus data, legacy calendar import, deterministic key or code mapping, duplicate detection, date validation, dry runs, reconciliation, rollback or forward-fix strategy, deployment sequencing, cache invalidation, monitoring, and operational ownership. If tenant columns are added, specify a safe backfill before making them non-null. Do not delete or rewrite legacy data without a reviewed reconciliation report.
+Required deliverables
+Migration runbook
+Import validation report design
+Rollback or forward-fix plan
+Post-deployment checks and metrics
+Acceptance criteria
+Every destructive risk has a recovery path
+Backfills are restartable and idempotent
+Counts and hashes or equivalent reconciliations are defined
+Deployment preserves API compatibility as agreed
+Prompt 13  Conduct the final architecture review
+Purpose. Decide whether the module is production ready.
+Review the completed Academic Calendar module against the implementation contract and supplied schema. Trace every invariant to code and tests. Check tenancy, authorization, lifecycle integrity, concurrency, deletion behavior, timezone handling, API documentation, query plans, auditability, PWA behavior, migration safety, observability, and dependency direction. Report findings by severity with file and test evidence. Provide a clear go, conditional-go, or no-go recommendation. Do not implement fixes during this review unless separately authorized.
+Required deliverables
+Requirements traceability matrix
+Severity-ranked findings
+Residual risk register
+Release recommendation
+Acceptance criteria
+Every baseline table and constraint is traced
+Evidence distinguishes verified facts from assumptions
+Security and data-integrity blockers are explicit
+Recommendation includes measurable exit criteria
+
+Cross prompt completion checklist
+Area
+Completion condition
+Architecture
+Academic Calendar remains one bounded app in the modular monolith.
+Authentication
+All principals use the project custom User model and Django auth.
+Authorization
+Institution, campus, role, module, workflow, and object scope are enforced.
+Data integrity
+Database and service constraints jointly enforce all approved invariants.
+Concurrency
+Activation and overlap-sensitive operations use transactions and locking.
+API
+Reads are pre-filtered by scope and writes pass through domain services.
+Integration
+Other modules use documented selectors or public services.
+PWA
+Only safe reads are cached; sensitive mutations are never falsely queued as successful.
+Testing
+MySQL integration, tenant isolation, transition, boundary, and concurrency tests pass.
+Operations
+Migration, audit, monitoring, reconciliation, and recovery procedures are documented.
+
+Suggested response format for every implementation prompt
+1.  Decision and assumptions
+2.  Files changed
+3.  Implementation
+4.  Authorization and tenancy controls
+5.  Migration impact
+6.  Tests added and results
+7.  Commands to verify
+8.  Open risks or next decision
+Definition of done
+The module is done only when the approved tenancy model is encoded, every invariant has an enforcement location and test, all list and object access is scope-filtered, lifecycle changes are transactional and audited, MySQL migrations and query plans are reviewed, the PWA communicates offline limits honestly, and the final architecture review has no unresolved critical or high-severity findings.

@@ -1,0 +1,91 @@
+{
+  "module": "M30 Awards, Honours and Recognitions",
+  "date": "2026-09-28",
+  "database": "Isolated local MySQL 8.4 development/test databases; no production deployment",
+  "checks": [
+    {
+      "check": "Native source/category/history migrations applied",
+      "status": "PASS",
+      "evidence": "M30_SCHEMA_INVENTORY.json; migrate --check"
+    },
+    {
+      "check": "Source field and ORM column fidelity",
+      "status": "PASS",
+      "evidence": "scripts/m30_verification.py; 10 staff_award columns, source unsigned identifiers, 3 FKs, decimal checks"
+    },
+    {
+      "check": "Django system check",
+      "status": "PASS",
+      "evidence": "0 issues"
+    },
+    {
+      "check": "Migration drift",
+      "status": "PASS",
+      "evidence": "makemigrations --check --dry-run: No changes detected"
+    },
+    {
+      "check": "OpenAPI validation",
+      "status": "PASS",
+      "evidence": ".tmp/m30-openapi.yaml; no warnings/errors"
+    },
+    {
+      "check": "M30 lint",
+      "status": "PASS",
+      "evidence": "ruff check backend/apps/awards and new master migration helpers"
+    },
+    {
+      "check": "Focused backend tests",
+      "status": "PASS",
+      "evidence": ".tmp/m30-final-backend.txt: 25 tests and 35 subtests passed in 42.45 seconds, including final admin governance and cross-module authorization tests."
+    },
+    {
+      "check": "Full backend regression",
+      "status": "PASS",
+      "evidence": ".tmp/m30-full-backend.txt: 652 tests, 121 subtests, 1 pre-existing M13 warning; 989.65 seconds. A separate final focused run covers the two tests added after this run was collected."
+    },
+    {
+      "check": "Full frontend regression",
+      "status": "PASS",
+      "evidence": ".tmp/m30-full-ui-final.txt: 106 tests, 22 files, 230.27 seconds"
+    },
+    {
+      "check": "Final focused frontend regression",
+      "status": "PASS",
+      "evidence": ".tmp/m30-final-focused-ui.txt: 13 tests, 2 files, 31.24 seconds"
+    },
+    {
+      "check": "Frontend typecheck and production/PWA build",
+      "status": "PASS",
+      "evidence": ".tmp/m30-final-build.txt: tsc and Vite successful, 45 precache entries"
+    },
+    {
+      "check": "Shared PWA and transport contract tests",
+      "status": "PASS",
+      "evidence": "npm test: 12 passed"
+    },
+    {
+      "check": "Actual ORM EXPLAIN review",
+      "status": "PASS",
+      "evidence": "M30_QUERY_PLANS.json: 8 queries; local plans, not production-volume benchmark"
+    },
+    {
+      "check": "Configuration installed without grants",
+      "status": "PASS",
+      "evidence": "seed_awards: 8 permissions created, no role/user grants changed"
+    },
+    {
+      "check": "Runtime disabled by default",
+      "status": "PASS",
+      "evidence": "AWARDS_ENABLED=False, both IAM switches False, event adapter empty"
+    }
+  ],
+  "resolved_findings": [
+    "First full UI run: 102 passed, people suite failed before collection due to an encoding conversion in the edited test. Restored UTF-8; all 106 tests passed on clean full rerun."
+  ],
+  "known_platform_warning": "documents_exit.FileObject.storage_key mysql.W003 is pre-existing and unrelated to M30.",
+  "operational_acceptance": {
+    "status": "NOT_RUN",
+    "remediation": "Follow M30_HANDOFF.md for production data backup/migration rehearsal, approved scoped grants, M13 storage/scanner configuration, enablement, real-device acceptance and representative-volume measurements. Runtime remains disabled."
+  },
+  "implementation_status": "COMPLETE: local implementation and automated verification; runtime remains disabled pending operational activation."
+}

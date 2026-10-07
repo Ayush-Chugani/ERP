@@ -1,0 +1,5 @@
+"""Frozen canonical source DDL."""
+
+DDL = [
+    "CREATE TABLE staff_award (\n    staff_activity_id BIGINT UNSIGNED PRIMARY KEY,\n    award_category_id SMALLINT UNSIGNED NULL,\n    award_name VARCHAR(500) NOT NULL,\n    awarding_organization_id BIGINT UNSIGNED NULL,\n    award_date DATE NOT NULL,\n    citation_details TEXT NULL,\n    cash_prize_amount DECIMAL(14,2) NULL,\n    incentive_amount DECIMAL(14,2) NULL,\n    currency_code CHAR(3) NOT NULL DEFAULT 'INR',\n    award_reference_number VARCHAR(150) NULL,\n\n    CONSTRAINT chk_staff_award_amounts CHECK (\n        (cash_prize_amount IS NULL OR cash_prize_amount >= 0)\n        AND (incentive_amount IS NULL OR incentive_amount >= 0)\n    ),\n    CONSTRAINT fk_staff_award_activity FOREIGN KEY (staff_activity_id)\n        REFERENCES staff_activity(staff_activity_id),\n    CONSTRAINT fk_staff_award_category FOREIGN KEY (award_category_id)\n        REFERENCES award_category(award_category_id),\n    CONSTRAINT fk_staff_award_org FOREIGN KEY (awarding_organization_id)\n        REFERENCES external_organization(organization_id)\n) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;"
+]

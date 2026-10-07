@@ -1,0 +1,20 @@
+services:
+  mysql:
+    image: mysql:8.4
+    environment:
+      MYSQL_ROOT_PASSWORD: ${SIMS_DB_PASSWORD:?Set SIMS_DB_PASSWORD}
+      MYSQL_ROOT_HOST: "%"
+      MYSQL_DATABASE: sims_reference_dev
+    command: ["--character-set-server=utf8mb4", "--collation-server=utf8mb4_0900_ai_ci", "--default-time-zone=+00:00", "--sql-mode=STRICT_TRANS_TABLES,NO_ENGINE_SUBSTITUTION"]
+    ports:
+      - "127.0.0.1:3307:3306"
+    volumes:
+      - sims_reference_mysql:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "MYSQL_PWD=$$MYSQL_ROOT_PASSWORD mysql -h 127.0.0.1 -u root -D sims_reference_dev -e 'SELECT 1' >/dev/null 2>&1"]
+      interval: 10s
+      timeout: 5s
+      retries: 15
+      start_period: 30s
+volumes:
+  sims_reference_mysql:

@@ -1,0 +1,98 @@
+{
+  "module": "M25 Research Proposals",
+  "date": "2026-09-26",
+  "status": "Application implementation verified locally; runtime activation and operational acceptance pending",
+  "backend": {
+    "full_suite": {
+      "passed": 539,
+      "subtests_passed": 26,
+      "command": "backend/.venv/Scripts/python.exe -m pytest backend -q --reuse-db --create-db --disable-warnings --maxfail=10",
+      "log": ".tmp/m25-full-backend.txt",
+      "note": "Full suite passed after fixture/retention cleanup fixes; subsequent final code changes verified by affected-module and M25-specific runs."
+    },
+    "affected_module_regression_passed": 70,
+    "final_m25_passed": 23,
+    "final_module_command": "backend/.venv/Scripts/python.exe -m pytest backend/apps/research_proposals/tests -q --reuse-db --disable-warnings",
+    "native_database": "8.4.11",
+    "fresh_test_database_migrations": "Passed",
+    "existing_development_upgrade": "Passed",
+    "migration_drift": "None",
+    "pending_migrations": "None",
+    "django_check": "Passed",
+    "openapi": "Validated without warnings or errors",
+    "ruff_new_and_module_shared_changes": "Passed"
+  },
+  "frontend": {
+    "full_ui_passed": 65,
+    "ui_files": 17,
+    "transport_and_pwa_passed": 12,
+    "final_m25_ui_passed": 5,
+    "ui_command": "npm run test:ui",
+    "transport_command": "npm test",
+    "production_build": "TypeScript, Vite and PWA generation passed",
+    "real_browser_acceptance": "Not performed"
+  },
+  "performance": {
+    "plans": "M25_QUERY_PLANS.json",
+    "query_shapes": 6,
+    "list_query_growth": "Constant from one to five records",
+    "new_indexes": "None; native PK/FK coverage retained; production cardinality review still required"
+  },
+  "runtime_enabled": false,
+  "notification_adapter_configured": false,
+  "resolved_findings": [
+    {
+      "severity": "high",
+      "finding": "Financial aggregate JSON could use floats",
+      "resolution": "Exact decimal strings and float-input rejection; maximum-precision regression test"
+    },
+    {
+      "severity": "medium",
+      "finding": "History retention trigger blocked isolated concurrency-test teardown",
+      "resolution": "Test-only guarded TRUNCATE; production SQL and ORM retention remain enforced"
+    },
+    {
+      "severity": "medium",
+      "finding": "Shared action fixture was module-order dependent",
+      "resolution": "Moved stable test catalogue fixture to backend scope"
+    },
+    {
+      "severity": "medium",
+      "finding": "People seed test assumed retained migration baseline",
+      "resolution": "Initialize baseline before testing repeated seeding"
+    },
+    {
+      "severity": "medium",
+      "finding": "Timetable integration test relied on past wall-clock date",
+      "resolution": "Pinned the intended historical test clock"
+    },
+    {
+      "severity": "medium",
+      "finding": "Detail/save timeline used inconsistent event shapes",
+      "resolution": "Canonical history serializer and refresh after saving"
+    },
+    {
+      "severity": "low",
+      "finding": "OpenAPI action enum collision",
+      "resolution": "Stable shared workflow enum name"
+    }
+  ],
+  "open_blocker_or_high_module_defects": [],
+  "existing_warning": "mysql.W003 for documents_exit.FileObject.storage_key remains unchanged",
+  "release_checklist_pending": [
+    "Review institution-specific funding masters and scoped role grants",
+    "Configure M13 institutions, private storage and malware scanner",
+    "Configure approved notification adapter/recipient and retry policy if notifications are required",
+    "Real-browser keyboard/mobile acceptance",
+    "Representative-volume staging performance tests",
+    "Coordinated runtime flags and production deployment smoke checks"
+  ],
+  "intentional_scope": [
+    "Co-investigators excluded as optional extension",
+    "Reference numbers remain nonunique pending institutional policy",
+    "Parent PI/department/context corrections require withdraw/recreate",
+    "Shared evidence supports PDF/PNG/JPEG",
+    "Exports use existing formula-safe CSV",
+    "No sanctioned/released/utilized fund lifecycle added"
+  ]
+}

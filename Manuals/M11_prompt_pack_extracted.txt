@@ -1,0 +1,282 @@
+STRUCTURED WORD PROMPT PACK
+Module 11 - Feedback
+Implementation blueprint for the SIMS / Student Information System
+Django 5.x • Django REST Framework • MySQL • React + TypeScript + MUI • Vite PWA
+Architecture
+Plugin-ready modular monolith
+Authorization
+Django custom-user model + role/permission policies
+Database baseline
+Supplied MySQL Module 11 schema
+Primary scope
+Question bank, questionnaires, cycles, submissions, analytics
+Document purpose
+Copy-ready prompts for an AI coding agent / implementation team
+Prepared: 20 September 2026
+
+1. How to Use This Prompt Pack
+Use the prompts in sequence. Each prompt assumes the output from earlier prompts has been applied to the same codebase. The database schema is the authoritative business-data baseline, while implementation prompts add application-layer validation, authorization, auditing, API design, tests, and frontend behavior.
+Create the Django app as an isolated feedback domain inside the modular monolith; do not place feedback logic inside unrelated academic, registration, or timetable apps.
+Reuse existing project entities by foreign key/import only: academic_term, student_term_registration, course_offering, and faculty_course_assignment.
+Use the existing custom User model and existing RBAC/permission framework. Do not introduce a second user table or duplicate employee/student identity.
+Keep business rules in domain/service functions; serializers and views should orchestrate rather than contain large rules.
+Use atomic transactions for questionnaire publication, response submission, cycle close operations, and aggregation refreshes.
+Treat anonymity as a privacy boundary: eligibility and duplicate-prevention data must not be exposed in faculty-facing result APIs.
+Run backend tests and frontend tests after every prompt; never continue with a failing migration or broken API contract.
+Recommended execution mode:
+Paste one prompt into the coding agent.
+Review generated migrations/diffs.
+Run unit/integration tests.
+Run API smoke tests.
+Commit the verified increment.
+Proceed to the next prompt.
+Global instruction to prepend when needed:
+Work inside the existing SIMS Django/React repository. Preserve current architecture, naming conventions, custom user model, settings split, API versioning, and shared utilities. Do not rewrite unrelated modules. Make the smallest production-grade change that satisfies this prompt. Show changed files, migrations, tests, and commands to verify the implementation.
+
+2. Module Scope, Boundaries, and Dependencies
+The Feedback module owns the question bank, selectable choices, questionnaire templates, questionnaire items, feedback cycles, submitted responses, and response items. It consumes academic and teaching context from existing modules but must not duplicate those records.
+Owned table
+Purpose
+feedback_question_category
+Reusable classification for feedback questions.
+feedback_question
+Question bank with response type.
+feedback_choice
+Allowed selectable answers and optional score.
+feedback_questionnaire
+Reusable questionnaire definition/template.
+feedback_questionnaire_item
+Ordered weighted questions inside a questionnaire.
+feedback_cycle
+Term-bound publication window and visibility policy.
+feedback_response
+One submitted feedback envelope with contextual target.
+feedback_response_item
+Answer value for one questionnaire item.
+External dependencies:
+External entity
+Module responsibility
+Usage in Feedback
+academic_term
+Academic Calendar
+Binds each feedback cycle to a term.
+student_term_registration
+Term Registration
+Eligibility/context for student respondents.
+course_offering
+Course Registration / Curriculum Delivery
+Course-level target of a response.
+faculty_course_assignment
+Teaching Allocation
+Faculty-level target of a response.
+Custom User / RBAC
+Identity & Access
+Admin, coordinator, faculty, student permissions.
+Boundary rule:
+The feedback app may import identifiers, query services, and read approved fields from dependent modules. It must not update academic terms, registrations, course offerings, teaching assignments, or identity records as a side effect of feedback operations.
+
+3. Schema Review and Required Implementation Decisions
+The supplied SQL is coherent as a baseline, but several invariants are not expressible with the current columns alone. The implementation must make these decisions explicit rather than relying on UI behavior.
+Finding
+Risk
+Implementation decision
+MULTIPLE_CHOICE vs single feedback_choice_id
+A response item can physically store only one selected choice.
+Add a child table feedback_response_item_choice for selected choices; keep feedback_choice_id for SINGLE_CHOICE backward compatibility or phase it out in a controlled migration.
+Answer-type exclusivity
+choice, numeric_score and text_response can all be populated together.
+Validate exactly the fields allowed by the question response_type; reject ambiguous payloads.
+Choice/question ownership
+A selected choice may belong to another question.
+Validate selected choices belong to questionnaire_item.feedback_question.
+Questionnaire item ownership
+A response could reference an item from another questionnaire.
+Validate item belongs to response.cycle.questionnaire.
+Cycle scope / target shape
+COURSE/FACULTY/PROGRAMME/etc. do not enforce which context FK is required.
+Create a target-policy validator keyed by questionnaire_type.
+Duplicate submission
+No unique key prevents the same eligible respondent from submitting twice.
+Use a privacy-safe eligibility/submission ledger or deterministic scope rule; do not expose identity in analytics.
+Anonymous semantics
+term_registration_id can identify the respondent even when questionnaire is anonymous.
+Separate eligibility proof from analytic response identity; faculty result endpoints never return respondent identity fields.
+Lifecycle immutability
+Questionnaires can be edited after a cycle opens unless blocked by code.
+Freeze questionnaire structure for OPEN/CLOSED cycles; use copy/version workflow for later edits.
+Mandatory schema amendment for full feature parity:
+CREATE TABLE feedback_response_item_choice (    feedback_response_item_id BIGINT UNSIGNED NOT NULL,    feedback_choice_id INT UNSIGNED NOT NULL,    PRIMARY KEY (feedback_response_item_id, feedback_choice_id),    CONSTRAINT fk_feedback_ric_item FOREIGN KEY (feedback_response_item_id)        REFERENCES feedback_response_item(feedback_response_item_id) ON DELETE CASCADE,    CONSTRAINT fk_feedback_ric_choice FOREIGN KEY (feedback_choice_id)        REFERENCES feedback_choice(feedback_choice_id)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+If the project team intentionally excludes MULTIPLE_CHOICE in release 1, disable that response type in admin/API and document the deferred migration instead of accepting invalid partial behavior.
+
+4. Prompt 1 - Create the Feedback Domain Skeleton
+Copy-ready implementation prompt
+Act as a senior Django software architect. Implement a new `feedback` domain app inside the existing SIMS modular monolith.Requirements:1. Preserve the existing Django custom User model and current RBAC system.2. Create a clean app structure: models, enums, repositories/selectors, services, validators, serializers, views/viewsets, urls, permissions, admin, tests, and optional tasks/management commands.3. Do not duplicate Academic Calendar, Registration, Course Offering, Faculty Assignment, Student, Employee, or User models.4. Add API routes under the project's existing versioned API namespace.5. Add app configuration and settings only where required.6. Use transaction-safe service functions for writes; keep views thin.7. Add module README documentation describing ownership and external dependencies.8. Do not create database tables yet beyond what is required for an empty app migration.Deliverables:- Proposed file tree.- Minimal code for app registration and URL routing.- Empty initial migration if project conventions require it.- Import-boundary notes.- Smoke test proving Django starts and URL configuration loads.Acceptance criteria:- `python manage.py check` passes.- Existing tests remain green.- No circular imports are introduced.- No second identity/user model is created.
+Expected app shape:
+feedback/  admin.py  apps.py  enums.py  models.py  permissions.py  selectors.py  services.py  validators.py  api/serializers.py  api/views.py  api/urls.py  tests/test_models.py  tests/test_services.py  tests/test_api.py  migrations/  README.md
+
+5. Prompt 2 - Implement Django Models and Enumerations
+Copy-ready implementation prompt
+Implement Django ORM models for Module 11 using the supplied MySQL schema as the naming and relationship baseline.Model requirements:- Use `db_table` to preserve table names exactly.- Map primary keys and unsigned numeric ranges appropriately for MySQL.- Implement response/questionnaire/cycle/status values with Django TextChoices/Enum classes, while keeping database values identical to the SQL.- Preserve nullability, uniqueness, maximum lengths, defaults, and foreign-key relationships.- Give every model useful `__str__` output and stable default ordering where appropriate.- Add indexes only when justified by expected API/filter patterns and document each addition.- Use PROTECT/RESTRICT semantics for reference/master records where deletion would corrupt history; do not cascade-delete submitted feedback accidentally.- Add model-level clean()/constraint validation only for invariants that remain useful outside serializers.- Keep created/updated auditing consistent with existing project conventions; do not invent duplicate audit columns if the project has a shared mixin.Important compatibility note:Native MySQL ENUM in the supplied DDL may not be reproduced exactly by standard Django CharField migrations. Follow the project's database policy: either (a) preserve the existing native ENUM via controlled RunSQL/state operations, or (b) use varchar + choices only if the project has explicitly standardized on Django-managed constraints. Document the chosen approach.Deliverables:- enums.py and models.py.- Migration plan/diff.- Model tests for defaults, unique constraints, FK behavior, and string representations.- A mapping table from SQL columns to Django fields.Do not yet implement response submission APIs.
+
+6. Prompt 3 - Build Safe MySQL Migrations and Integrity Hardening
+Copy-ready implementation prompt
+Create production-safe MySQL migrations for the Feedback module.Tasks:1. Generate/apply tables in FK dependency order.2. Reconcile exact SQL requirements with Django migration capabilities, especially UNSIGNED keys, DATETIME/TIMESTAMP defaults, CHECK constraints, collation, and ENUM representation.3. Add the mandatory `feedback_response_item_choice` join table needed by MULTIPLE_CHOICE questions.4. Add practical indexes for common lookups: active question/category lists, questionnaire items by questionnaire/display_order, cycles by term/status/date window, responses by cycle/target/submitted_at, and response items by response.5. Do not add indexes that duplicate unique keys or primary-key indexes.6. Protect historical response data from accidental cascading deletes.7. Make migrations reversible where safe; explain any irreversible RunSQL.8. Include a data migration only if needed to preserve pre-existing records.Validation:- Run migrations on an empty MySQL database.- Run migration rollback/forward test for this app.- Inspect SHOW CREATE TABLE output for all feedback tables.- Run Django system checks.Deliverables:- Migration files.- SQL preview / SHOW CREATE TABLE verification notes.- Index rationale.- Rollback strategy.
+Integrity principle:
+Database constraints enforce structural integrity; service-layer validators enforce cross-table semantic integrity such as response type, questionnaire ownership, target context, cycle window, and anonymity rules.
+
+7. Prompt 4 - Question Categories, Question Bank, and Choice Management
+Copy-ready implementation prompt
+Implement administrative CRUD for feedback question categories, questions, and choices.Business rules:- category_code and category_name are unique; inactive categories remain readable for historical data.- A question belongs to one category and has one response_type.- SINGLE_CHOICE and MULTIPLE_CHOICE questions must have active choices before they can be used in an ACTIVE questionnaire/cycle.- RATING questions may use numeric_score rules or scored choices according to one project-wide convention; do not support two ambiguous modes simultaneously.- TEXT questions must not have selectable choices in normal authoring workflows.- Choice text is unique within a question.- display_order determines presentation; define deterministic fallback ordering when null.- Deactivating a question/choice must not mutate historical responses.- Changing response_type is blocked once the question is referenced by a questionnaire that has an OPEN or CLOSED cycle.API/admin deliverables:- DRF serializers/viewsets or project-standard endpoints.- Filters: category, response_type, active status, search text.- Pagination and ordering.- Django admin with inline choices and validation.- Permission classes using existing roles/permissions.- Tests for valid CRUD, invalid state transitions, inactive records, and historical protection.Return consistent problem-detail/error payloads using the project's API error convention.
+
+8. Prompt 5 - Questionnaire Authoring and Publication Rules
+Copy-ready implementation prompt
+Implement questionnaire authoring for `feedback_questionnaire` and ordered `feedback_questionnaire_item` records.Rules:- Questionnaire codes are stable unique identifiers.- Status flow: DRAFT -> ACTIVE -> RETIRED. RETIRED questionnaires cannot be reactivated unless project policy explicitly allows cloning.- Only DRAFT questionnaires are structurally editable.- ACTIVE questionnaires may be scheduled into feedback cycles.- Each question appears at most once per questionnaire.- display_order must be unique/deterministic inside a questionnaire even though the supplied SQL does not enforce a database unique key; validate in the service layer and optionally add a DB unique constraint if approved.- weightage, when used, must be non-negative. Define whether total must equal 100; if weightage is optional, normalize analytics explicitly rather than guessing.- Required questions must be answered according to their response type during submission.- Before activating a questionnaire, run a readiness validator: at least one item, valid response types, selectable choices present where required, no duplicate display_order, and all referenced questions active.- Once a questionnaire has a cycle in OPEN/CLOSED state, preserve its structure. Provide `clone questionnaire` for future revisions.Endpoints/actions:- create/update/retrieve/list questionnaire.- bulk replace/reorder items atomically.- validate/readiness endpoint.- activate, retire, and clone actions.Add service tests, permission tests, transaction rollback tests, and API tests.
+
+9. Prompt 6 - Feedback Cycle Lifecycle and Scheduling
+Copy-ready implementation prompt
+Implement feedback_cycle lifecycle services and APIs.Rules:- Cycle references one ACTIVE questionnaire and one academic_term.- end_at must be later than start_at.- Lifecycle: SCHEDULED -> OPEN -> CLOSED; SCHEDULED/OPEN may move to CANCELLED under authorized rules. CLOSED is final.- A cycle cannot open before start_at except through a separately authorized administrative override that is audited.- A cycle automatically becomes eligible to open/close based on current time, but do not hide state changes in read requests. Use explicit scheduled jobs/management commands or deterministic status evaluation according to project conventions.- Opening a cycle performs a final questionnaire readiness validation and freezes its effective structure.- Closing blocks new submissions and preserves historical data.- result_visibility controls who may access aggregate results: HIDDEN, ADMIN_ONLY, FACULTY, PUBLIC.- PUBLIC must still expose aggregate-only data and never respondent identity.- Validate the cycle's dates fit institutional policy for the academic term if such a policy exists; do not hard-code a term-date restriction without project approval.Deliverables:- lifecycle service methods with `transaction.atomic` and row locking where concurrent transitions are possible.- scheduler/management command integration.- list/filter API by term, questionnaire, status, date.- open/close/cancel actions with authorization.- audit events.- boundary-time and concurrency tests.
+
+10. Prompt 7 - Eligibility, Target Context, and Duplicate Prevention
+Copy-ready implementation prompt
+Design and implement the eligibility/targeting layer for feedback submissions without duplicating academic data.The questionnaire_type determines permitted response context:- COURSE: require a valid course_offering context for the respondent/term.- FACULTY: require a valid faculty_assignment context and verify it belongs to the relevant offering/term.- PROGRAMME: verify respondent term registration belongs to the programme scope derived from academic records.- INSTITUTION / EXIT / OTHER: implement explicit policy objects rather than accepting arbitrary context combinations.Requirements:1. Implement a `FeedbackTargetPolicy` abstraction selected by questionnaire_type.2. Verify cycle term, respondent eligibility, registration status, offering/faculty relationships, and active cycle window.3. Reject impossible or extraneous target identifiers.4. Prevent duplicate submissions for the same respondent + cycle + logical target.5. For anonymous questionnaires, duplicate prevention must not make respondent identity visible in analytic response retrieval.6. Prefer an eligibility/submission ledger or one-way scoped fingerprint if the existing architecture supports it; document privacy trade-offs.7. Return generic eligibility errors to end users where detailed errors could leak another person's data.Tests must cover cross-term IDs, wrong faculty/course relationships, duplicate attempts, cancelled/closed cycles, inactive registration, and anonymous/non-anonymous behavior.
+Suggested policy interface:
+class FeedbackTargetPolicy(Protocol):    def validate_eligibility(self, *, user, cycle, target) -> EligibilityResult: ...    def canonical_scope(self, *, cycle, target) -> str: ...    def response_context(self, *, eligibility) -> dict: ...
+
+11. Prompt 8 - Anonymous Feedback Tokens and Privacy Boundary
+Copy-ready implementation prompt
+Implement privacy-safe response authorization for anonymous and identified questionnaires.Goals:- Students can prove eligibility and submit once.- Anonymous analytic responses must not expose student/user identity to faculty or public consumers.- Administrators receive only the identity access explicitly permitted by institutional policy.Implementation requirements:1. Treat `response_token` as an opaque UUID/random token, not an encoded user identifier.2. Never place student ID, registration ID, email, or employee ID inside tokens/JWT claims used as a response identifier.3. If term_registration_id is stored for operational reasons, exclude it from faculty/public serializers, exports, logs, and aggregates; consider separating identity linkage into a restricted ledger table for stronger anonymity.4. Avoid logging raw free-text answers with request identity.5. Redact response payloads from application error logs.6. Apply rate limiting/throttling to token issuance and submission endpoints.7. Protect token lookup against enumeration.8. Define retention/deletion rules separately for eligibility ledgers and response content.9. Add tests that assert forbidden identity fields are absent from faculty/public APIs and exports.Deliverables:- token/eligibility service.- privacy-safe serializers.- logging redaction hooks if needed.- threat-model notes for re-identification through small cohorts/free text.- tests for authorization and data minimization.
+
+12. Prompt 9 - Transaction-Safe Response Submission Engine
+Copy-ready implementation prompt
+Implement the feedback submission service and POST API as one atomic transaction.Input should identify the cycle, target context, and answers keyed by questionnaire_item_id. The service must:1. Lock/recheck the cycle and verify it is OPEN and within the allowed window.2. Resolve current respondent eligibility and canonical target scope.3. Enforce duplicate-prevention atomically.4. Load the cycle's questionnaire items efficiently and reject answers for items outside that questionnaire.5. Enforce required items.6. Validate answer shape by question response_type:   - SINGLE_CHOICE: exactly one allowed active choice.   - MULTIPLE_CHOICE: one or more allowed choices, unique; persist in feedback_response_item_choice.   - RATING: numeric score in the configured range/step OR one scored choice, according to the selected project convention.   - TEXT: sanitized text only, with configured length limits; preserve user text but prevent unsafe rendering.7. Reject fields that do not apply to the response type.8. Validate each choice belongs to the item's underlying question.9. Create the response envelope and all items using bulk operations where safe.10. Generate an opaque response_token when required.11. Never allow update/delete of submitted responses through normal student APIs; corrections require an explicit audited administrative policy.Return a minimal receipt: response ID/token, submitted_at, cycle ID, and success status. Do not echo all sensitive answer content by default.Add tests for rollback on one invalid answer, simultaneous duplicate submissions, every response type, required/optional questions, wrong choices, and cycle closing during submission.
+
+13. Prompt 10 - DRF API Contract, Serializers, and Permissions
+Copy-ready implementation prompt
+Implement versioned DRF APIs for Module 11 using the project's established router/style.Administrative endpoints:- categories, questions, choices- questionnaires + validate/activate/retire/clone/reorder- cycles + open/close/cancelRespondent endpoints:- available feedback cycles for the authenticated user- retrieve questionnaire for an eligible target- eligibility/token issuance if required- submit feedback- retrieve submission receipt/status only when policy allowsResult endpoints:- aggregate cycle summary- question-level distribution/average/count- course/faculty/programme scoped aggregates- authorized export request/download if project supports exportsSerializer rules:- Separate read/write serializers.- Never accept server-owned fields such as submitted_at or derived identity through client payloads.- Do not expose term_registration_id or respondent identity in faculty/public result serializers for anonymous questionnaires.- Use select_related/prefetch_related to avoid N+1 queries.- Implement filtering, ordering, pagination, and stable API error codes.Permission rules:- Reuse existing permission names/roles; do not hard-code role strings in every view.- Object-level checks for term/cycle/target scope.- Result visibility must be enforced server-side independent of UI.Generate OpenAPI schema/examples and API tests for 200/201, 400, 401, 403, 404, 409 conflict, and closed-cycle cases.
+Suggested endpoint matrix:
+Method
+Path (illustrative)
+Purpose
+GET
+/api/v1/feedback/cycles/available/
+Eligible respondent cycles/targets
+GET
+/api/v1/feedback/cycles/{id}/questionnaire/
+Render immutable cycle questionnaire
+POST
+/api/v1/feedback/cycles/{id}/submit/
+Atomic feedback submission
+POST
+/api/v1/feedback/questionnaires/{id}/activate/
+Publish questionnaire template
+POST
+/api/v1/feedback/cycles/{id}/open/
+Open cycle
+GET
+/api/v1/feedback/cycles/{id}/results/
+Visibility-filtered aggregates
+
+14. Prompt 11 - Custom-User Authorization and RBAC Integration
+Copy-ready implementation prompt
+Integrate the Feedback module with the existing custom Django User model and authorization framework.Create/align permissions for capabilities, not UI screens. Suggested capabilities:- feedback.manage_question_bank- feedback.manage_questionnaires- feedback.manage_cycles- feedback.submit_feedback- feedback.view_admin_results- feedback.view_faculty_results- feedback.export_results- feedback.override_cycle_stateRequirements:1. Map capabilities to existing institutional roles/groups through existing seed/config mechanisms.2. Students may submit only for their own eligible academic context.3. Faculty may access only permitted aggregate results tied to their assignments when result_visibility=FACULTY.4. Department/programme administrators may access only their authorized organizational scope if the project supports scoped roles.5. Superuser behavior should follow project conventions; do not bypass privacy serialization accidentally.6. PUBLIC result access must be a deliberate endpoint/policy and must remain aggregate-only.7. Every mutating admin action records actor, timestamp, object, and before/after state through the existing audit mechanism.8. Add permission matrix tests and object-scope tests.Do not add user IDs or role columns to feedback domain tables as a substitute for the existing identity system.
+Minimum access matrix:
+Capability
+Student
+Faculty
+Feedback Admin
+Manage question bank
+No
+No
+Yes
+Manage questionnaires/cycles
+No
+No
+Yes
+Submit eligible feedback
+Yes
+No*
+No*
+View faculty aggregate result
+No
+Scoped
+Yes
+Export identified data
+No
+No
+Policy-restricted
+*Different respondent roles can be enabled by policy for non-student questionnaires; never infer this automatically.
+
+15. Prompt 12 - Result Aggregation, Scoring, and Reporting
+Copy-ready implementation prompt
+Implement privacy-safe feedback analytics without altering submitted response records.Metrics:- response count and eligible-population count when available- response rate (only when denominator is reliable)- per-choice counts/percentages- rating average, median, distribution, and count where applicable- weighted questionnaire score only when weightage/scoring conventions are fully defined- text-response count; raw text access only to authorized rolesRules:1. Respect result_visibility on every query.2. Apply minimum-cohort suppression for anonymous faculty/public reports according to configurable institutional policy; never hard-code a risky small value without configuration.3. Do not expose combinations of dimensions that can trivially re-identify one respondent.4. Do not treat `feedback_choice.score` and `numeric_score` as interchangeable without a documented normalization strategy.5. Store aggregates/cache only if performance requires it; the source of truth remains response records.6. Any cached aggregation must be invalidated/refreshed transactionally or after commit.7. Exports must include context, question text/code references, counts, scoring notes, generation timestamp, and applied privacy suppression.8. Never include respondent identity columns in anonymous faculty/public exports.Add selectors/services, optimized queries, performance tests on representative volume, and correctness tests for weighted/unweighted questionnaires and null/optional responses.
+
+16. Prompt 13 - React + TypeScript + MUI Feedback UI
+Copy-ready implementation prompt
+Build the Feedback module frontend in the existing React + TypeScript + Material UI application.Admin UX:- Question category and question-bank management.- Choice editor for selectable questions.- Questionnaire builder with ordered items, required flag, and optional weightage.- Readiness validation before activation.- Cycle scheduler with term, open/close dates, visibility, lifecycle actions.- Result dashboard with aggregate cards/tables/charts and export action gated by permission.Student/respondent UX:- 'Available Feedback' list showing only server-authorized cycles/targets.- Questionnaire form generated from response_type.- Required-field markers and inline validation.- Clear submission confirmation and duplicate/closed-cycle messages.- One final confirmation before irreversible submit.- No client-side ability to alter server-derived target/user identity.Engineering requirements:- Strong TypeScript API types.- Reuse the project's API client, auth provider, route guards, form library, notification/toast system, and design tokens.- Accessible labels, keyboard navigation, focus management, and error summary.- Sanitize/escape displayed free text.- Do not infer permission from hidden buttons; APIs remain authoritative.- Add component tests and end-to-end happy/error path tests.Keep UI terminology aligned with institutional language and backend enums.
+
+17. Prompt 14 - PWA, Offline Behavior, and Submission Safety
+Copy-ready implementation prompt
+Integrate Feedback screens with the existing Vite PWA without risking duplicate or stale submissions.Rules:1. Cache static assets and non-sensitive reference UI according to current PWA strategy.2. Do NOT blindly cache authenticated feedback API responses, respondent eligibility data, tokens, or submitted answer payloads.3. Do NOT queue final feedback submission for background replay unless the product explicitly implements idempotency keys and encrypted secure storage. Default behavior: final submission requires network connectivity.4. If draft answers are stored locally, make it opt-in/project-approved, scoped to the current user/device, automatically cleared on logout/submission/expiry, and never include reusable auth tokens.5. Display clear online/offline state and prevent the user from believing an offline submission succeeded.6. Use an idempotency key/request identifier for retry-safe network failures if the backend supports it.7. On service-worker update, do not lose an in-progress form without warning.8. Add PWA tests for offline opening, online submission, network interruption, retry, logout cleanup, and service-worker update.Deliverables:- service-worker/cache configuration changes.- frontend network-state handling.- security rationale for what is and is not cached.- tests.
+
+18. Prompt 15 - Comprehensive Backend and Frontend Test Pack
+Copy-ready implementation prompt
+Create a comprehensive automated test suite for Module 11.Backend test groups:- model constraints and FK protection- question/choice authoring validation- questionnaire readiness, ordering, cloning, immutability- cycle lifecycle and date boundaries- target-policy eligibility for each questionnaire_type- duplicate prevention under concurrency- anonymous token/privacy behavior- all answer types, including MULTIPLE_CHOICE child rows- transaction rollback on partial failure- RBAC/object-level authorization- result_visibility enforcement- aggregation/scoring correctness- query-count/N+1 regression tests- API schema/error contractSecurity tests:- IDOR attempts using another student's registration/target IDs- forged choice/questionnaire item IDs- token enumeration/replay- repeated submission race- HTML/script content in text feedback rendered safely- sensitive payload absence from logs/serializers where testableFrontend tests:- questionnaire rendering by response type- required validation- permission-gated admin actions- submission confirmation/receipt- duplicate/closed-cycle errors- accessibility basics- offline/network interruption behaviorUse factories/fixtures consistent with existing project conventions. Keep test data minimal but relationally valid. Add CI commands and coverage target consistent with the repository standard.
+
+19. Prompt 16 - Observability, Audit, Performance, and Operational Controls
+Copy-ready implementation prompt
+Add production operational controls for the Feedback module.Observability:- structured logs for lifecycle transitions and administrative changes- counters/metrics for cycles opened/closed, submissions accepted/rejected, duplicate conflicts, latency, and export generation- no raw answer text or respondent identity in routine logs for anonymous feedback- alerts for repeated submission failures or scheduler errorsAudit:- actor, action, object type/id, timestamp, source/IP only if permitted, before/after metadata for admin changes- lifecycle overrides and export actions must be auditable- submitted response content should be immutable in the normal pathPerformance:- select_related/prefetch_related and batch inserts- indexes verified using EXPLAIN for high-volume queries- pagination on all admin/result lists- avoid recomputing expensive aggregates on every request if volume requires caching- load test submission bursts and result queries separatelyOperational tools:- management command to evaluate scheduled cycle transitions if scheduler infrastructure needs it- health/readiness checks for dependent DB/scheduler components- safe admin command to rebuild aggregate caches (if implemented)- backup/restore validation notesDeliver code, configuration, runbook notes, and tests without introducing a second monitoring stack if the project already has one.
+
+20. Prompt 17 - Integration, Deployment, and Definition of Done
+Copy-ready implementation prompt
+Integrate Module 11 into the complete SIMS application and prepare it for deployment.Integration checks:1. Confirm migrations run after Academic Calendar, Registration, Course Offering, and Teaching Allocation dependencies.2. Confirm imports use stable app labels/model references and do not create circular dependencies.3. Register API routes, OpenAPI tags, admin screens, frontend routes, navigation, and permission guards.4. Add seed data only for safe reference values/permissions; never seed production responses.5. Verify MySQL collation/charset and time-zone handling for cycle start_at/end_at.6. Verify Gunicorn/Nginx request limits and timeout settings are reasonable for normal feedback requests and exports.7. Build React production bundle and PWA service worker.8. Run backend unit/integration tests, frontend tests, lint/typecheck, migrations, collectstatic/build, and smoke tests.9. Perform backup before production migration and document rollback steps.10. Publish module README/runbook and API documentation.Final acceptance demonstration:- Admin creates question category/questions/choices.- Admin builds and activates a questionnaire.- Admin schedules and opens a cycle for an academic term.- Eligible student sees only the correct feedback target.- Student submits each supported response type once.- Duplicate and forged submissions are rejected.- Faculty sees only authorized aggregate results when visibility permits.- Anonymous APIs/exports reveal no respondent identity.- Cycle closes and blocks new submissions.- All automated tests and deployment checks pass.Return a final changed-file inventory, migration list, verification commands, known limitations, and rollback plan.
+
+21. Release Acceptance Checklist
+Area
+Release gate
+Schema
+All supplied tables mapped; MULTIPLE_CHOICE storage gap resolved or feature disabled explicitly.
+Migrations
+Fresh install and rollback/forward validated on MySQL; SHOW CREATE TABLE inspected.
+Architecture
+Feedback app owns feedback logic; no duplicated academic/identity models.
+Authorization
+Custom-user RBAC integrated; object-level scope tests pass.
+Privacy
+Anonymous faculty/public payloads and exports contain no respondent identity; logs avoid answer content.
+Questionnaire
+Draft authoring, readiness, activation, immutability, clone workflow verified.
+Cycle
+Scheduling/open/close/cancel transitions validated, including boundary times.
+Submission
+Atomic, idempotent/duplicate-safe, type-validated, immutable after submit.
+Analytics
+Visibility, minimum cohort policy, scoring rules and aggregation verified.
+Frontend
+Admin and respondent flows accessible and permission-aware.
+PWA
+No unsafe sensitive-data caching or false offline submission success.
+Performance
+N+1 tests, indexes/EXPLAIN, representative load tests completed.
+Operations
+Audit, monitoring, backup, migration, rollback and runbook ready.
+Quality
+Backend/frontend tests, lint, typecheck, build, Django checks all green.
+Recommended completion evidence:
+Screenshot/API trace of one complete questionnaire lifecycle.
+Automated test report including privacy/authorization tests.
+Migration verification output against MySQL.
+OpenAPI section for Feedback endpoints.
+Performance/query-count evidence for questionnaire rendering and result aggregation.
+Deployment and rollback commands captured in the project runbook.
+
+22. Appendix A - Supplied SQL Baseline (Reference)
+-- 11. FEEDBACK MODULECREATE TABLE feedback_question_category (    feedback_category_id SMALLINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,    category_code VARCHAR(30) NOT NULL UNIQUE,    category_name VARCHAR(100) NOT NULL UNIQUE,    is_active BOOLEAN NOT NULL DEFAULT TRUE) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;CREATE TABLE feedback_question (    feedback_question_id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,    feedback_category_id SMALLINT UNSIGNED NOT NULL,    question_text VARCHAR(1000) NOT NULL,    response_type ENUM('SINGLE_CHOICE','MULTIPLE_CHOICE','RATING','TEXT') NOT NULL,    is_active BOOLEAN NOT NULL DEFAULT TRUE,    CONSTRAINT fk_feedback_question_category FOREIGN KEY (feedback_category_id)        REFERENCES feedback_question_category(feedback_category_id)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;CREATE TABLE feedback_choice (    feedback_choice_id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,    feedback_question_id INT UNSIGNED NOT NULL,    choice_text VARCHAR(250) NOT NULL,    score DECIMAL(6,2) NULL,    display_order SMALLINT UNSIGNED NULL,    is_active BOOLEAN NOT NULL DEFAULT TRUE,    CONSTRAINT uq_feedback_choice UNIQUE (feedback_question_id, choice_text),    CONSTRAINT fk_feedback_choice_question FOREIGN KEY (feedback_question_id)        REFERENCES feedback_question(feedback_question_id)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;CREATE TABLE feedback_questionnaire (    questionnaire_id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,    questionnaire_code VARCHAR(30) NOT NULL UNIQUE,    questionnaire_name VARCHAR(150) NOT NULL,    questionnaire_type ENUM('COURSE','FACULTY','PROGRAMME','INSTITUTION','EXIT','OTHER') NOT NULL,    is_anonymous BOOLEAN NOT NULL DEFAULT TRUE,    status ENUM('DRAFT','ACTIVE','RETIRED') NOT NULL DEFAULT 'DRAFT') ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;CREATE TABLE feedback_questionnaire_item (    questionnaire_item_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,    questionnaire_id INT UNSIGNED NOT NULL,    feedback_question_id INT UNSIGNED NOT NULL,    weightage DECIMAL(6,2) NULL,    display_order SMALLINT UNSIGNED NOT NULL,    is_required BOOLEAN NOT NULL DEFAULT TRUE,    CONSTRAINT uq_questionnaire_question UNIQUE (questionnaire_id, feedback_question_id),    CONSTRAINT fk_questionnaire_item_questionnaire FOREIGN KEY (questionnaire_id)        REFERENCES feedback_questionnaire(questionnaire_id),    CONSTRAINT fk_questionnaire_item_question FOREIGN KEY (feedback_question_id)        REFERENCES feedback_question(feedback_question_id)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+23. Appendix A - Supplied SQL Baseline (continued)
+CREATE TABLE feedback_cycle (    feedback_cycle_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,    questionnaire_id INT UNSIGNED NOT NULL,    academic_term_id INT UNSIGNED NOT NULL,    cycle_name VARCHAR(150) NOT NULL,    start_at DATETIME NOT NULL,    end_at DATETIME NOT NULL,    result_visibility ENUM('HIDDEN','ADMIN_ONLY','FACULTY','PUBLIC') NOT NULL DEFAULT 'HIDDEN',    status ENUM('SCHEDULED','OPEN','CLOSED','CANCELLED') NOT NULL DEFAULT 'SCHEDULED',    CONSTRAINT chk_feedback_cycle_dates CHECK (end_at > start_at),    CONSTRAINT fk_feedback_cycle_questionnaire FOREIGN KEY (questionnaire_id)        REFERENCES feedback_questionnaire(questionnaire_id),    CONSTRAINT fk_feedback_cycle_term FOREIGN KEY (academic_term_id)        REFERENCES academic_term(academic_term_id)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;CREATE TABLE feedback_response (    feedback_response_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,    feedback_cycle_id BIGINT UNSIGNED NOT NULL,    term_registration_id BIGINT UNSIGNED NULL,    course_offering_id BIGINT UNSIGNED NULL,    faculty_assignment_id BIGINT UNSIGNED NULL,    submitted_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,    response_token CHAR(36) NULL UNIQUE,    CONSTRAINT fk_feedback_response_cycle FOREIGN KEY (feedback_cycle_id)        REFERENCES feedback_cycle(feedback_cycle_id),    CONSTRAINT fk_feedback_response_term_registration FOREIGN KEY (term_registration_id)        REFERENCES student_term_registration(term_registration_id),    CONSTRAINT fk_feedback_response_course FOREIGN KEY (course_offering_id)        REFERENCES course_offering(course_offering_id),    CONSTRAINT fk_feedback_response_faculty FOREIGN KEY (faculty_assignment_id)        REFERENCES faculty_course_assignment(faculty_assignment_id)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;CREATE TABLE feedback_response_item (    feedback_response_item_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,    feedback_response_id BIGINT UNSIGNED NOT NULL,    questionnaire_item_id BIGINT UNSIGNED NOT NULL,    feedback_choice_id INT UNSIGNED NULL,    numeric_score DECIMAL(6,2) NULL,    text_response TEXT NULL,    CONSTRAINT uq_feedback_response_item UNIQUE (feedback_response_id, questionnaire_item_id),    CONSTRAINT fk_feedback_item_response FOREIGN KEY (feedback_response_id)        REFERENCES feedback_response(feedback_response_id),    CONSTRAINT fk_feedback_item_questionnaire_item FOREIGN KEY (questionnaire_item_id)        REFERENCES feedback_questionnaire_item(questionnaire_item_id),    CONSTRAINT fk_feedback_item_choice FOREIGN KEY (feedback_choice_id)        REFERENCES feedback_choice(feedback_choice_id)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+24. Appendix B - Implementation Handoff Template
+Use this compact handoff after each prompt so the next coding session has a reliable starting point.
+PROMPT COMPLETED: <number / title>DATE / COMMIT: <...>FILES ADDED:- ...FILES MODIFIED:- ...MIGRATIONS:- ...API CONTRACT CHANGES:- ...BUSINESS RULES IMPLEMENTED:- ...TESTS ADDED / RESULT:- ...MANUAL VERIFICATION:- ...OPEN DECISIONS / DEFERRED ITEMS:- ...NEXT PROMPT PREREQUISITES:- ...
+Final project rule:
+Never solve a Feedback-module gap by weakening authorization, storing identity in an anonymous payload, duplicating academic master data, or relying only on frontend validation. Make invariants explicit in database constraints and/or tested domain services.

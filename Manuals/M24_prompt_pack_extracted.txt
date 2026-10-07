@@ -1,0 +1,96 @@
+SIMS – MODULE 24
+INDUSTRY / FACULTY INTERNSHIP
+Enterprise Django + MySQL + Progressive Web Application Implementation Prompt Pack
+This prompt pack guides an AI coding assistant to implement Module 24 in the existing SIMS modular-monolith. It assumes the established custom-user authorization model, shared master data, staff_activity supertype, MySQL, Django/DRF backend, and mobile-first PWA frontend. Each prompt should be executed only after inspecting and reusing existing project conventions.
+1. Source Schema
+CREATE TABLE faculty_internship (
+    staff_activity_id BIGINT UNSIGNED PRIMARY KEY,
+    organization_id BIGINT UNSIGNED NOT NULL,
+    internship_title VARCHAR(500) NOT NULL,
+    internship_domain VARCHAR(250) NULL,
+    industry_sector_id SMALLINT UNSIGNED NULL,
+    location_text VARCHAR(300) NULL,
+    mentor_name VARCHAR(200) NULL,
+    mentor_designation VARCHAR(150) NULL,
+    mentor_email VARCHAR(254) NULL,
+    work_undertaken TEXT NULL,
+    technologies_tools TEXT NULL,
+    outcomes TEXT NULL,
+    stipend_incentive_type ENUM(
+        'NONE','STIPEND','INCENTIVE','HONORARIUM','OTHER'
+    ) NOT NULL DEFAULT 'NONE',
+    stipend_incentive_amount DECIMAL(14,2) NULL,
+    currency_code CHAR(3) NOT NULL DEFAULT 'INR',
+    funding_source VARCHAR(250) NULL,
+    mou_reference VARCHAR(150) NULL,
+    collaboration_reference VARCHAR(250) NULL,
+    CONSTRAINT chk_faculty_internship_amount CHECK (
+        stipend_incentive_amount IS NULL OR stipend_incentive_amount >= 0
+    ),
+    CONSTRAINT fk_faculty_internship_activity FOREIGN KEY (staff_activity_id)
+        REFERENCES staff_activity(staff_activity_id),
+    CONSTRAINT fk_faculty_internship_org FOREIGN KEY (organization_id)
+        REFERENCES external_organization(organization_id),
+    CONSTRAINT fk_faculty_internship_sector FOREIGN KEY (industry_sector_id)
+        REFERENCES industry_sector(industry_sector_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+2. Architecture and Implementation Guardrails
+faculty_internship is a strict one-to-one subtype of staff_activity; staff_activity_id is both its primary key and foreign key.
+Reuse existing staff_activity, external_organization, industry_sector, employee, academic-year, institution, campus, department, document, audit, notification, and workflow components.
+Use the configured Django custom user model and existing role/permission framework. Never introduce a parallel authentication system.
+Keep business rules in services/domain logic; serializers/forms validate input; views/API controllers orchestrate requests.
+Use transaction.atomic() for parent/subtype creation and workflow transitions.
+Use server-side object-level authorization. Never trust organizational scope or employee identity sent by the browser when it can be derived from the authenticated user.
+Use MySQL/InnoDB/utf8mb4, reversible migrations, query optimization, and database constraints.
+Build a responsive, accessible, mobile-first PWA; support intermittent networks without duplicating writes or leaking sensitive cached data.
+Use the shared attachment service for evidence. Do not add file/blob columns to faculty_internship.
+Historical institutional records should not be cascade-deleted unless the wider SIMS retention policy explicitly requires it.
+3. Series of AI Development Prompts
+Prompt 01 – Repository Discovery and Module Integration
+Inspect the existing SIMS repository before writing code. Identify current patterns for Django apps, models, migrations, services, DRF APIs, custom-user authorization, staff_activity, external_organization, industry_sector, audit/workflow, attachments, notifications, React/TypeScript PWA, API clients, tests and MySQL naming.Prepare an integration plan for Module 24: Industry / Faculty Internship. Do not duplicate any shared entity. Specify exact files/modules to reuse or extend, proposed backend/frontend structure, authorization matrix, API routes, validation rules, migration strategy, test strategy and risks. Confirm how the one-to-one subtype will share staff_activity_id as its primary key.
+Prompt 02 – Django Model and Migration
+Implement the faculty_internship Django model and reversible migration from the supplied schema. Use OneToOneField to the existing StaffActivity with primary_key=True and the correct db_column. Use existing ExternalOrganization and IndustrySector models. Preserve all lengths, nullability, choices, DecimalField(14,2), INR default, and non-negative amount constraint. Use db_table='faculty_internship' and legacy-compatible column names where required by project conventions.Do not duplicate dates, employee, institution, campus or department fields already owned by staff_activity. Review on_delete behavior against institutional retention policy; avoid destructive cascading of historical records. Add model/migration tests and document any intentional difference from the SQL.
+Prompt 03 – Transactional Domain Service and Validation
+Implement create/update services for Faculty Internship and its parent staff_activity. Enforce: correct staff activity type; one subtype per parent; required active organization; optional valid industry sector; nonblank internship title; valid mentor email; amount null or >= 0; uppercase three-letter currency; normalize amount to null when type is NONE unless project policy says otherwise; trim strings; reject whitespace-only required values.Parent staff_activity start_date/end_date are canonical internship dates. Use transaction.atomic(), concurrency-safe creation, clear domain exceptions, and tests for success, rollback, duplicate subtype, invalid amount/currency/email, and race-sensitive creation.
+Prompt 04 – Authorization and Organizational Data Scope
+Implement permissions using the existing SIMS custom-user authorization framework: faculty view/create/edit/submit own eligible records; reviewer view/return/review records in authorized department/campus scope; approver verify/approve/reject where the common workflow supports it; institution-level reporting/export for explicitly authorized users; privileged administrative correction only with audit.Derive employee and organizational scope from trusted server context wherever possible. Prevent IDOR, horizontal privilege escalation, mass assignment, unauthorized master-data mutation and cross-institution exports. Add positive and negative permission tests.
+Prompt 05 – DRF API Layer
+Create versioned DRF endpoints following project conventions for list, retrieve, create draft, update, submit, withdraw/delete where policy permits, reviewer/approver actions, and authorized reporting/export. Reuse existing organization and industry-sector lookup APIs.Support filters for employee, academic year, institution, campus, department, organization, industry sector, domain, stipend type, parent activity date range and workflow status; add safe text search for title/organization/mentor/domain. Use pagination, controlled ordering, select_related/prefetch_related, consistent error responses, OpenAPI documentation and comprehensive API tests. Never expose unrestricted querysets.
+Prompt 06 – Mobile-First PWA Internship Form
+Build the React/TypeScript PWA form using the existing design system and API layer. Sections: Parent Activity; Host Organization; Industry Mentor; Work Undertaken; Technologies/Tools; Outcomes; Financial Details; Collaboration/MoU; Evidence.Use searchable organization/sector selectors, date controls from staff_activity, accessible labels, error summary, field-level server errors, conditional amount/currency behavior, responsive mobile-first layout, unsaved-change warning and retry-safe submission. Prevent duplicate records when a slow network causes retries. Do not persist sensitive drafts in insecure browser storage. Add component and integration tests.
+Prompt 07 – List, Detail and Dashboard UX
+Implement role-aware Faculty Internship list and detail pages. Faculty default to own records; reviewers/administrators see only authorized scope. Provide server-side pagination, filters, search, sorting, mobile cards and an accessible desktop table.Detail view must combine parent staff_activity context with internship-specific details, workflow history and evidence. Actions must appear only when permitted. Add dashboard summaries for authorized scope by academic year, department, organization, sector, domain and stipend type. Ensure aggregates are not inflated by joins. Add loading, empty, error and offline-safe read states.
+Prompt 08 – Evidence / Attachment Integration
+Integrate evidence through the existing shared attachment/document subsystem. Suggested evidence categories: permission/offer letter, completion certificate, organization letter, work report, photographs, MoU/collaboration proof and other approved evidence.Do not store binaries in faculty_internship. Enforce file type/size validation, malware/security checks if available, non-guessable storage paths, authorization on upload/download, audit metadata and retention/replacement rules. Test invalid type, oversized file, unauthorized download and cross-record attachment access.
+Prompt 09 – Workflow and Notifications
+Reuse the common staff_activity workflow rather than creating an incompatible workflow. Where supported, use Draft -> Submitted -> Under Review/Returned -> Verified/Approved or Rejected/Withdrawn.Define allowed transition actors, remarks, timestamps, editability after submission, return-for-correction behavior and audit events. Make transition endpoints idempotent and concurrency-safe. Send notifications only through the existing notification infrastructure for meaningful state changes. Add transition-matrix and unauthorized-transition tests.
+Prompt 10 – Reporting and Export
+Create authorized reports for academic year, institution/campus/department, employee, host organization, industry sector, domain, parent activity duration, stipend/incentive type, currency, funding source, MoU/collaboration reference and workflow status.Reuse existing CSV/XLSX/PDF export services. Apply exactly the same data scope to exports as to on-screen reports. Protect CSV/XLSX output against spreadsheet formula injection. Optimize aggregations, provide deterministic ordering and add tests proving no cross-department or cross-institution data leakage.
+Prompt 11 – MySQL Performance and Integrity Review
+Review generated DDL and SQL against the source schema. Confirm the one-to-one primary-key relationship, foreign keys, decimal precision, non-negative amount constraint, utf8mb4 compatibility and appropriate deletion behavior. Inspect actual list/report queries with EXPLAIN and add only justified indexes; do not add redundant PK/FK indexes.Find N+1 queries, expensive counts, unbounded searches and inefficient aggregations. Add database-focused tests and document query/index decisions.
+Prompt 12 – Security Hardening
+Perform a security review covering authentication, object-level authorization, CSRF/CORS/session or token handling, IDOR, queryset leakage, mass assignment, injection, unsafe ordering/filter parameters, stored/reflected XSS from free-text fields, attachment security, export authorization, rate limits, audit integrity and sensitive-data caching.Apply fixes using existing project security conventions. Add regression tests for every discovered vulnerability. Do not weaken validation or authorization for UI convenience.
+Prompt 13 – PWA Offline, Reliability and Synchronization
+Review this module specifically for PWA reliability. Define what may be cached for offline read and what must remain online-only. Do not cache sensitive API responses broadly. Queueing writes is allowed only if the existing architecture securely supports it; otherwise show a clear offline state and submit when connectivity returns.Use idempotency or equivalent safeguards for create/submit actions, handle stale versions/conflicts, and ensure service-worker updates do not serve incompatible frontend/API behavior. Add network-loss and retry tests.
+Prompt 14 – Automated Test Suite
+Build a complete automated test suite: model constraints, service validation, transactions, permissions, object scoping, CRUD APIs, filters, workflow transitions, attachments, exports, query counts, frontend form behavior, accessibility-critical interactions and retry/idempotency behavior.Create realistic factories/fixtures using existing test utilities. Include negative tests and cross-tenant/cross-department access tests. Provide commands for backend and frontend test execution and expected pass criteria.
+Prompt 15 – Seed Data and Master Configuration
+Add only the configuration/seed data needed to activate this module. Ensure the existing activity-type master contains the Industry / Faculty Internship activity type with a stable code used by business logic. Reuse existing stipend-independent masters for organizations and sectors; do not hard-code organization or sector choices in frontend code.If reference data uses fixtures/data migrations, follow the repository's established method and make it idempotent. Add tests that fail clearly when required configuration is missing.
+Prompt 16 – Final Integration, Documentation and Release Checklist
+Perform final integration review of Module 24. Verify migrations on a clean database and an upgraded database, permissions, staff_activity integration, API documentation, PWA routes, navigation, accessibility, audit trail, evidence, reporting, exports, tests and production settings.Produce: changed-file inventory; architecture notes; database mapping; API endpoint table; permission matrix; validation rules; deployment/migration steps; rollback plan; test results; known limitations; administrator guide; faculty user guide; reviewer guide; and release checklist. Do not mark the module complete until all critical tests pass and no unauthorized data path remains.
+4. Acceptance Criteria
+One faculty_internship exists for at most one staff_activity, with the same identifier used as the subtype primary key.
+Create/update operations cannot leave orphaned or partially created parent/subtype data.
+Only authorized users can view or modify records within their permitted organizational scope.
+All source-schema fields are represented with correct validation and MySQL-compatible persistence.
+Organization and industry sector are reused from existing master data.
+Internship dates and common staff metadata remain in staff_activity and are not duplicated.
+PWA forms and views are mobile-first, accessible, responsive and robust under slow/intermittent networks.
+Evidence uses the shared attachment system and is protected by object-level authorization.
+Reports/exports enforce the same authorization scope as interactive screens.
+Backend/frontend automated tests cover business rules, permissions, workflows, security and critical UI behavior.
+No unjustified schema duplication, redundant index, N+1 query, insecure direct-object access or destructive historical cascade remains.
+5. Suggested Delivery Sequence
+Discovery → Model/Migration → Domain Service → Authorization → API → PWA Form → List/Detail → Evidence → Workflow → Reporting → Performance → Security → Offline Reliability → Tests → Seed Configuration → Final Integration.
+6. Important Implementation Note
+The supplied SQL intentionally keeps internship-specific attributes in faculty_internship and common staff activity attributes in staff_activity. The Django implementation should preserve this supertype/subtype design. If the existing SIMS codebase already provides generic workflow, audit, attachment, export, master-data, or notification capabilities, extend those facilities rather than building module-specific replacements.

@@ -1,0 +1,114 @@
+{
+  "prompts": {
+    "1": "M27_DESIGN.md discovery and integration plan",
+    "2": "models.ConsultancyProject + source-native 0001 migration",
+    "3": "services.save_activity + atomic rollback/retry tests",
+    "4": "services.save_activity/archive + optimistic versions",
+    "5": "services.TRANSITIONS/workflow + retained status history",
+    "6": "services.metrics/extension receipts + exact Decimal and over-receipt tests",
+    "7": "api strict writers + labelled scoped reads",
+    "8": "versioned urls + filters/search/pagination + OpenAPI",
+    "9": "permissions.py + separate resources + negative scope/action tests",
+    "10": "ProjectTeam + approved migration/API/ExtensionPanel + duplicate/date tests",
+    "11": "ProjectMilestone + progress/overdue/acceptance + date tests",
+    "12": "ProjectReceipt/ReceiptVoid + reconciliation + unique references + concurrent writes",
+    "13": "shared M13 upload/download/replacement + content/IDOR/rollback tests",
+    "14": "ConsultancyApp/ExtensionPanel + UI interaction tests",
+    "15": "memory-only drafts + offline controls + shared NetworkOnly worker tests",
+    "16": "summary/export + exact currency totals + formula-safe CSV tests",
+    "17": "validation matrix, Unicode/nullable/enum/date/money/native checks",
+    "18": "M27_QUERY_PLANS.json + constant list-query regression",
+    "19": "focused and full backend/UI regression logs",
+    "20": "M27_HANDOFF.md rollout/monitoring/restore checklist",
+    "21": "native fidelity/security review and empty reverse/reinstall test",
+    "22": "M27_HANDOFF.md field dictionary/API/policy/admin documentation"
+  },
+  "core_fields": [
+    {
+      "column": "staff_activity_id",
+      "name": "staff_activity",
+      "type": "bigint unsigned"
+    },
+    {
+      "column": "client_organization_id",
+      "name": "client_organization",
+      "type": "bigint unsigned"
+    },
+    {
+      "column": "principal_consultant_employee_id",
+      "name": "principal_consultant_employee",
+      "type": "bigint unsigned"
+    },
+    {
+      "column": "consultancy_title",
+      "name": "consultancy_title",
+      "type": "varchar(500)"
+    },
+    {
+      "column": "consultancy_type",
+      "name": "consultancy_type",
+      "type": "enum('CONSULTANCY','INDUSTRY_SPONSORED_PROJECT','TESTING_SERVICE','TRAINING_SERVICE','OTHER')"
+    },
+    {
+      "column": "work_order_number",
+      "name": "work_order_number",
+      "type": "varchar(150)"
+    },
+    {
+      "column": "agreement_number",
+      "name": "agreement_number",
+      "type": "varchar(150)"
+    },
+    {
+      "column": "purchase_order_number",
+      "name": "purchase_order_number",
+      "type": "varchar(150)"
+    },
+    {
+      "column": "project_start_date",
+      "name": "project_start_date",
+      "type": "date"
+    },
+    {
+      "column": "completion_date",
+      "name": "completion_date",
+      "type": "date"
+    },
+    {
+      "column": "consultancy_amount",
+      "name": "consultancy_amount",
+      "type": "numeric(16, 2)"
+    },
+    {
+      "column": "amount_received",
+      "name": "amount_received",
+      "type": "numeric(16, 2)"
+    },
+    {
+      "column": "faculty_incentive_share",
+      "name": "faculty_incentive_share",
+      "type": "numeric(16, 2)"
+    },
+    {
+      "column": "currency_code",
+      "name": "currency_code",
+      "type": "char(3)"
+    },
+    {
+      "column": "deliverables",
+      "name": "deliverables",
+      "type": "text"
+    },
+    {
+      "column": "status",
+      "name": "status",
+      "type": "enum('PROPOSED','APPROVED','ONGOING','COMPLETED','CANCELLED','CLOSED')"
+    },
+    {
+      "column": "client_feedback",
+      "name": "client_feedback",
+      "type": "text"
+    }
+  ],
+  "approval": "All proposed extensions approved by user; over-receipts allowed; incentive monetary; closure without full-payment gate."
+}

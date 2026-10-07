@@ -1,0 +1,138 @@
+[
+  {
+    "path": "backend/.env.example",
+    "sha256": "ba0c5fe8429239da4c746a4e37e1afa387bcafe16202cdf1d0f26ae7a99c8311"
+  },
+  {
+    "path": "backend/apps/awards/__init__.py",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "backend/apps/awards/admin.py",
+    "sha256": "bb0eda7f4ebe221916d0c36127b61d53c4a5a9b0fd9445005c5ad7af5af2d157"
+  },
+  {
+    "path": "backend/apps/awards/api.py",
+    "sha256": "38cc5d296a4e7f73ea619a28ea706c2f489492d94aadf6f02de1764ea7633ee4"
+  },
+  {
+    "path": "backend/apps/awards/apps.py",
+    "sha256": "067d51d12890cd886269de7e48ec59693669cfb44ca18e0e56d675472fdfafb4"
+  },
+  {
+    "path": "backend/apps/awards/events.py",
+    "sha256": "6cde457d0271d05f3536b21fa636bb5eefa68137659f2302fe8b7456fc081b33"
+  },
+  {
+    "path": "backend/apps/awards/management/__init__.py",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "backend/apps/awards/management/commands/__init__.py",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "backend/apps/awards/management/commands/seed_awards.py",
+    "sha256": "082a9d893bd897ffdb560c5fedb0abe955296176385f8265ccbc5aca0bce541c"
+  },
+  {
+    "path": "backend/apps/awards/migrations/0001_initial.py",
+    "sha256": "85c58113484fa808b828ad60dd0a22f5f469bb5e6b27eb167f8cd0cb4aacb2ff"
+  },
+  {
+    "path": "backend/apps/awards/migrations/0002_retain_status_history.py",
+    "sha256": "68504d52ae674c284f369702bd7725e7bfa21d63dc55e1da6738f65513040e05"
+  },
+  {
+    "path": "backend/apps/awards/migrations/__init__.py",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "backend/apps/awards/migrations/_ddl.py",
+    "sha256": "90e4951eed22b3cb37008327002c0c732fe92caec32d97f683a12e15cd43829b"
+  },
+  {
+    "path": "backend/apps/awards/migrations/_install.py",
+    "sha256": "3ac8ecb768da2bb5db403a5f109736b2bfba45e93f5e7c1bad198c1359bc239e"
+  },
+  {
+    "path": "backend/apps/awards/models.py",
+    "sha256": "4e5af5ba0d378de25c13961f610d1b9ef2aa4f93ef98f07304162115a33f4270"
+  },
+  {
+    "path": "backend/apps/awards/permissions.py",
+    "sha256": "f4fb3f72656b118830fa6a1b045d8b08ae9fae2d1644873e2f535a03c157beb8"
+  },
+  {
+    "path": "backend/apps/awards/services.py",
+    "sha256": "5faf37abb458db0222c6a0a9585095900c74547b17c1ee1bc52dfd1bdc2526dc"
+  },
+  {
+    "path": "backend/apps/awards/tests/__init__.py",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "backend/apps/awards/tests/test_concurrency.py",
+    "sha256": "d8b0a125651f7085f81846af2b143ec9444ef44415fb697be293ad04025781f2"
+  },
+  {
+    "path": "backend/apps/awards/tests/test_module.py",
+    "sha256": "edd2a10df57ebcfca93f27127585ba424925299edf56aefecf515ad65cd7891e"
+  },
+  {
+    "path": "backend/apps/awards/urls.py",
+    "sha256": "0ca84a6bec71824700a546bcf59af7c2685733a0517d3b6d22af4043f004c154"
+  },
+  {
+    "path": "backend/apps/staff_profile/migrations/0007_awardcategory.py",
+    "sha256": "a86df0ee5b5957af5c9c6ad46697888779872e8f305c3962ab2021f59697b336"
+  },
+  {
+    "path": "backend/apps/staff_profile/migrations/_ddl_m30.py",
+    "sha256": "1d8d2e107e2f7a2243cfc7f26afdaa4e862a5eae337e4e2b4e9da9e55a990c06"
+  },
+  {
+    "path": "backend/apps/staff_profile/migrations/_install_m30.py",
+    "sha256": "428ceadcb960e5a7543f49d1b2994c8e6a018623828f0ef5b7f484d312eddfe6"
+  },
+  {
+    "path": "backend/apps/staff_profile/models.py",
+    "sha256": "1c53d1f38ac1da557cb4d8337a77b7c335627291d6332d3ce6d23c3d22a1698d"
+  },
+  {
+    "path": "backend/config/settings/base.py",
+    "sha256": "4744145ddc095b4b3e88927ca8893c50877833ab1775976c4931138c87d066d0"
+  },
+  {
+    "path": "backend/config/urls.py",
+    "sha256": "6df16cf326931c7649f29422d89bd6ad66bf65657073b9e6c76319493b04ae26"
+  },
+  {
+    "path": "frontend/src/app/App.tsx",
+    "sha256": "5321594d16bd1bce723ce6c93a9eb7b8e41c6293e21006184805b370acb26ec6"
+  },
+  {
+    "path": "frontend/src/features/awards/AwardApp.tsx",
+    "sha256": "2677c5b25bfa2afeeb09b13d0fdfd0dca9dce41cfdec5ea2f07fa58971ea31b4"
+  },
+  {
+    "path": "frontend/src/features/people/PeopleApp.tsx",
+    "sha256": "5f20ffc33c1e532b0afa6d38202634212a2907629f7364b1b4070d8b6df5826e"
+  },
+  {
+    "path": "frontend/tests/awards.test.tsx",
+    "sha256": "097df7c1c4f68c7552e951ed789ac801d52fff8eafef8a39ccfc3447f452c132"
+  },
+  {
+    "path": "frontend/tests/people.test.tsx",
+    "sha256": "1e162c8e1a188ec60596963c1999291c706a0a97dab01de8f70ca968e6ef235c"
+  },
+  {
+    "path": "frontend/vitest.config.ts",
+    "sha256": "cacf2a4a3cbf5d3206f3300f7f04fd1ad704d9ec8270808be43ae7e54033a943"
+  },
+  {
+    "path": "scripts/m30_verification.py",
+    "sha256": "b1399d50c128fe3731db5e023040ffad2bc53839e8201f2ff27cbe1ed22ca3e4"
+  }
+]

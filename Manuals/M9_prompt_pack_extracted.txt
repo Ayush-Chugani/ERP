@@ -1,0 +1,472 @@
+﻿Attendance and Lesson Plan Module Prompt Pack
+SIMS Module 9  Django DRF MySQL React TypeScript PWA
+A sequenced implementation guide for converting the supplied relational schema into a secure, roster-aware, auditable attendance and lesson execution module.
+Version 1.0  |  20 September 2026
+
+Document detail
+Value
+Document purpose
+Implementation prompt pack
+Architecture
+Plugin-ready modular monolith
+Authentication
+Django custom User model
+Database
+MySQL 8.0.16 or later
+Frontend
+React TypeScript Material UI PWA
+
+How to use this pack
+Run the prompts in sequence. Each stage assumes that earlier accepted outputs are available in the same working context. Review and commit one stage before moving to the next, especially where revised DDL, attendance policy, lesson-plan structure, or correction workflow affects later code.
+Attach or paste the current repository tree, relevant settings, and upstream model definitions before Prompt 1.
+Ask the implementation agent to identify assumptions and wait only when a missing decision changes data integrity, attendance calculation, or authorization.
+Require runnable files, migrations, tests, commands, sample data, and verification evidence at every stage.
+Keep institution and section scope server-controlled and treat marking, reopening, correction, export, and policy changes as auditable operations.
+Use the final integrated build prompt only after the individual design decisions have been reviewed.
+Prompt sequence
+No
+Implementation stage
+Primary outcome
+1
+Audit the SQL schema and produce revised DDL
+Validated attendance and lesson-plan schema
+2
+Design the Django module architecture
+Cohesive attendance domain architecture
+3
+Generate models migrations and database constraints
+Models migrations and seed data
+4
+Implement class session and lesson plan lifecycle
+Reliable session and lesson execution workflow
+5
+Implement roster aware attendance marking
+Atomic attendance register workflow
+6
+Implement attendance correction workflow
+Auditable correction and approval process
+7
+Build DRF APIs permissions and documentation
+Secure versioned attendance APIs
+8
+Implement analytics notifications integrations and exports
+Policy correct attendance intelligence
+9
+Build the React TypeScript and PWA interface
+Accessible role aware attendance interface
+10
+Harden security auditability privacy and performance
+Secure observable and scalable module
+11
+Build comprehensive tests and legacy data migration
+Verified behavior and reconciled historical data
+12
+Create deployment monitoring runbooks and handover
+Production rollout and operational handover
+
+Common implementation context
+Act as a senior full-stack Python web developer and software architect. Implement Module 9 of the SIMS platform as part of an enterprise plugin-ready modular monolith.
+Use Django 5.x, Django REST Framework, MySQL 8.0.16 or later, React with TypeScript, Material UI, Vite, and @vite-pwa/plugin, with Gunicorn behind Nginx. The Django custom User model is the authentication authority. Retain the SIMS authorization extension for institution membership, scoped roles, campus and department scope, module activation, workflow authority, confidentiality, and record-level access.
+Reuse the established institution, academic calendar, curriculum, student and staff, admission, term-registration, teaching-allocation, and timetable modules. Do not duplicate users, employees, rooms, courses, offerings, sections, rosters, timetable sessions, or academic periods. Derive ownership scope on the server, keep attendance and lesson-plan rules in explicit services, use transaction.atomic and select_for_update for collision-prone updates, and expose stable versioned APIs.
+Cross cutting invariants
+No session, roster row, faculty assignment, timetable occurrence, room, attendance record, or correction may cross institution scope through a client-supplied identifier.
+A class session may reference only faculty and timetable records that belong to the same course-offering section and are valid on the session date.
+Attendance may be recorded only for a roster membership valid for the same section and session date.
+Bulk marking, finalization, reopening, and correction decisions must be atomic, idempotent, version-aware, and auditable.
+Attendance calculations must use an explicit policy and remain historically reproducible after configuration changes.
+Cancellation, rescheduling, timetable changes, roster changes, or status deactivation must not silently rewrite historical attendance.
+Lesson plans must distinguish planned content from actual coverage and retain authorized revision history.
+Students may view only their own permitted records; faculty and reviewers receive only their assigned and authorized scope.
+Schema review focus
+Concern
+Why it matters
+Likely enforcement
+Session ownership
+Single-column foreign keys do not prove section alignment
+Composite key plus service
+Roster date
+Section membership may not be valid on the session date
+Selector plus transaction policy
+Marked by user
+The supplied column has no foreign-key constraint
+Foreign key plus actor policy
+Correction actors
+Requester and resolver provenance is absent
+Schema plus workflow service
+Stale correction
+old_status_id alone does not prevent concurrent change
+Version check plus row locking
+Duplicate pending request
+Repeated requests can create ambiguous decisions
+Constraint or transactional guard
+Status mutability
+Changing counts_as_present can rewrite historical percentages
+Immutability or policy snapshot
+Lesson plan depth
+Free-text topics do not provide ordered curriculum progress
+Accepted lesson-plan extension
+Session lineage
+RESCHEDULED does not identify replacement or source
+Lineage fields or exception table
+Register overwrite
+Composite primary key does not preserve edit history
+Version plus immutable audit
+Timetable consistency
+Date, time, room, and faculty can diverge from published schedule
+Generation and exception policy
+Reporting indexes
+Operational keys may not support shortage and history queries
+Purpose-built composite indexes
+
+Prompt 1  Audit the SQL schema and produce revised DDL
+PurposeUse this prompt as the next implementation stage. Retain all accepted outputs from earlier prompts and resolve conflicts explicitly.
+Prompt
+Act as a senior full-stack Python web developer and software architect. Implement Module 9 of the SIMS platform as part of an enterprise plugin-ready modular monolith.
+Use Django 5.x, Django REST Framework, MySQL 8.0.16 or later, React with TypeScript, Material UI, Vite, and @vite-pwa/plugin, with Gunicorn behind Nginx. The Django custom User model is the authentication authority. Retain the SIMS authorization extension for institution membership, scoped roles, campus and department scope, module activation, workflow authority, confidentiality, and record-level access.
+Reuse the established institution, academic calendar, curriculum, student and staff, admission, term-registration, teaching-allocation, and timetable modules. Do not duplicate users, employees, rooms, courses, offerings, sections, rosters, timetable sessions, or academic periods. Derive ownership scope on the server, keep attendance and lesson-plan rules in explicit services, use transaction.atomic and select_for_update for collision-prone updates, and expose stable versioned APIs.
+Task for this stageReview the supplied Module 9 DDL against MySQL 8.0.16+ and the complete SIMS ownership model. Identify syntactic defects, missing foreign keys and indexes, redundant constraints, unsafe nullable behavior, mutable-reference risks, incomplete workflow provenance, and rules that the current four tables cannot enforce by themselves.
+Pay particular attention to whether faculty_assignment_id and timetable_session_id belong to the same course-offering section as class_session; whether room and time values agree with the published timetable or an authorized exception; whether a roster row is active on the session date; the missing foreign key for marked_by_user_id; correction requester, resolver, resolution remarks, and stale old-status checks; duplicate pending corrections; class-number sequencing; attendance edit versioning; status-code history; and whether planned_topic/topic_covered are sufficient for an auditable lesson plan.
+Use the supplied Module 9 SQL schema as the baseline. Produce complete, runnable artifacts rather than pseudocode. State assumptions, file paths, commands, dependencies, and verification steps. Preserve the plugin-ready modular-monolith architecture and Django custom-user authorization approach.
+Required deliverables
+Issue matrix with severity, affected object, evidence, and correction
+Complete revised MySQL DDL with prerequisite composite keys and indexes
+Decision on lesson-plan structure, session lineage, attendance history, and correction provenance
+Clear separation of database-enforced constraints from transaction-service policies
+Index rationale for registers, student history, shortages, corrections, and topic progress
+Safe migration, data reconciliation, and rollback notes for an existing database
+Completion criteria
+All generated code is internally consistent and identifies its target file path.
+Institution, ownership, roster-date, faculty authority, workflow, privacy, and stale-write rules are tested.
+Database changes include safe migration, data reconciliation, and rollback guidance.
+Commands for linting, type checking, tests, frontend build, and verification are included.
+Open assumptions and deferred policy decisions are listed at the end.
+Prompt 2  Design the Django module architecture
+PurposeUse this prompt as the next implementation stage. Retain all accepted outputs from earlier prompts and resolve conflicts explicitly.
+Prompt
+Act as a senior full-stack Python web developer and software architect. Implement Module 9 of the SIMS platform as part of an enterprise plugin-ready modular monolith.
+Use Django 5.x, Django REST Framework, MySQL 8.0.16 or later, React with TypeScript, Material UI, Vite, and @vite-pwa/plugin, with Gunicorn behind Nginx. The Django custom User model is the authentication authority. Retain the SIMS authorization extension for institution membership, scoped roles, campus and department scope, module activation, workflow authority, confidentiality, and record-level access.
+Reuse the established institution, academic calendar, curriculum, student and staff, admission, term-registration, teaching-allocation, and timetable modules. Do not duplicate users, employees, rooms, courses, offerings, sections, rosters, timetable sessions, or academic periods. Derive ownership scope on the server, keep attendance and lesson-plan rules in explicit services, use transaction.atomic and select_for_update for collision-prone updates, and expose stable versioned APIs.
+Task for this stageDesign a cohesive Django app boundary for dated class sessions, lesson planning, roster-bound attendance, correction requests, shortage monitoring, and reporting. Show dependencies on published timetable occurrences, faculty assignment, course-offering rosters, academic calendar, authorization, notifications, and audit infrastructure without circular imports or duplicate masters.
+Define aggregates, commands, selectors, policy objects, transaction boundaries, locking order, domain events, and stable public contracts. Distinguish the planned lesson sequence, the scheduled or exceptional class occurrence, the attendance register, and the immutable correction/audit history. Explain how attendance policy is configured and how historical interpretations remain stable when status definitions or percentage rules change.
+Use the supplied Module 9 SQL schema as the baseline. Produce complete, runnable artifacts rather than pseudocode. State assumptions, file paths, commands, dependencies, and verification steps. Preserve the plugin-ready modular-monolith architecture and Django custom-user authorization approach.
+Required deliverables
+Recommended app and package tree
+Aggregate, dependency, and lifecycle map
+Command, query, policy, and integration interfaces
+Transaction boundaries and deterministic locking order
+Domain event catalogue and consuming modules
+ADR-style explanation of major design decisions
+Completion criteria
+All generated code is internally consistent and identifies its target file path.
+Institution, ownership, roster-date, faculty authority, workflow, privacy, and stale-write rules are tested.
+Database changes include safe migration, data reconciliation, and rollback guidance.
+Commands for linting, type checking, tests, frontend build, and verification are included.
+Open assumptions and deferred policy decisions are listed at the end.
+Prompt 3  Generate models migrations and database constraints
+PurposeUse this prompt as the next implementation stage. Retain all accepted outputs from earlier prompts and resolve conflicts explicitly.
+Prompt
+Act as a senior full-stack Python web developer and software architect. Implement Module 9 of the SIMS platform as part of an enterprise plugin-ready modular monolith.
+Use Django 5.x, Django REST Framework, MySQL 8.0.16 or later, React with TypeScript, Material UI, Vite, and @vite-pwa/plugin, with Gunicorn behind Nginx. The Django custom User model is the authentication authority. Retain the SIMS authorization extension for institution membership, scoped roles, campus and department scope, module activation, workflow authority, confidentiality, and record-level access.
+Reuse the established institution, academic calendar, curriculum, student and staff, admission, term-registration, teaching-allocation, and timetable modules. Do not duplicate users, employees, rooms, courses, offerings, sections, rosters, timetable sessions, or academic periods. Derive ownership scope on the server, keep attendance and lesson-plan rules in explicit services, use transaction.atomic and select_for_update for collision-prone updates, and expose stable versioned APIs.
+Task for this stageGenerate Django 5 models and migrations for the accepted Module 9 schema. Map unsigned MySQL types carefully, use TextChoices for controlled lifecycle values, preserve db_table names, and explicitly name constraints and indexes. Model composite ownership relationships without pretending that model clean methods prevent concurrent or cross-request violations.
+Include any accepted lesson-plan, topic, session-lineage, attendance-history, policy, evidence, or audit tables. Seed attendance statuses through an idempotent data migration and define whether status rows can be renamed, deactivated, or have counts_as_present changed after use. Explain every RunSQL, RunPython, SeparateDatabaseAndState, generated column, and reverse migration.
+Use the supplied Module 9 SQL schema as the baseline. Produce complete, runnable artifacts rather than pseudocode. State assumptions, file paths, commands, dependencies, and verification steps. Preserve the plugin-ready modular-monolith architecture and Django custom-user authorization approach.
+Required deliverables
+Complete model files organized for maintainability
+Initial and follow-up migration files
+Named constraints, indexes, and deletion policies
+Scoped managers and QuerySet selectors
+Idempotent attendance-status seed migration
+Migration validation, reconciliation, and rollback checklist
+Completion criteria
+All generated code is internally consistent and identifies its target file path.
+Institution, ownership, roster-date, faculty authority, workflow, privacy, and stale-write rules are tested.
+Database changes include safe migration, data reconciliation, and rollback guidance.
+Commands for linting, type checking, tests, frontend build, and verification are included.
+Open assumptions and deferred policy decisions are listed at the end.
+Prompt 4  Implement class session and lesson plan lifecycle
+PurposeUse this prompt as the next implementation stage. Retain all accepted outputs from earlier prompts and resolve conflicts explicitly.
+Prompt
+Act as a senior full-stack Python web developer and software architect. Implement Module 9 of the SIMS platform as part of an enterprise plugin-ready modular monolith.
+Use Django 5.x, Django REST Framework, MySQL 8.0.16 or later, React with TypeScript, Material UI, Vite, and @vite-pwa/plugin, with Gunicorn behind Nginx. The Django custom User model is the authentication authority. Retain the SIMS authorization extension for institution membership, scoped roles, campus and department scope, module activation, workflow authority, confidentiality, and record-level access.
+Reuse the established institution, academic calendar, curriculum, student and staff, admission, term-registration, teaching-allocation, and timetable modules. Do not duplicate users, employees, rooms, courses, offerings, sections, rosters, timetable sessions, or academic periods. Derive ownership scope on the server, keep attendance and lesson-plan rules in explicit services, use transaction.atomic and select_for_update for collision-prone updates, and expose stable versioned APIs.
+Task for this stageImplement creation and lifecycle management for planned, conducted, cancelled, and rescheduled class sessions. Generate dated sessions idempotently from committed published timetable occurrences, while supporting authorized additional, makeup, merged, split, substituted, or exceptional sessions. Validate section, faculty, room, date, clock interval, academic-term boundary, holidays, and assignment eligibility.
+Implement lesson planning at course-offering-section level with ordered topics, planned dates or weeks, contact hours, teaching method, learning outcomes or curriculum references where available, and faculty ownership. Record topic coverage against conducted sessions, including partial coverage, carry-forward, remarks, and authorized revision history. Prevent cancellation or rescheduling from silently losing lesson-plan or attendance evidence.
+Use the supplied Module 9 SQL schema as the baseline. Produce complete, runnable artifacts rather than pseudocode. State assumptions, file paths, commands, dependencies, and verification steps. Preserve the plugin-ready modular-monolith architecture and Django custom-user authorization approach.
+Required deliverables
+Session generation and lifecycle command services
+Lesson-plan and topic-progress services
+Status-transition matrix and authorization policy
+Timetable exception and reschedule lineage handling
+Idempotent calendar regeneration and reconciliation job
+Unit, transaction, and concurrency tests
+Completion criteria
+All generated code is internally consistent and identifies its target file path.
+Institution, ownership, roster-date, faculty authority, workflow, privacy, and stale-write rules are tested.
+Database changes include safe migration, data reconciliation, and rollback guidance.
+Commands for linting, type checking, tests, frontend build, and verification are included.
+Open assumptions and deferred policy decisions are listed at the end.
+Prompt 5  Implement roster aware attendance marking
+PurposeUse this prompt as the next implementation stage. Retain all accepted outputs from earlier prompts and resolve conflicts explicitly.
+Prompt
+Act as a senior full-stack Python web developer and software architect. Implement Module 9 of the SIMS platform as part of an enterprise plugin-ready modular monolith.
+Use Django 5.x, Django REST Framework, MySQL 8.0.16 or later, React with TypeScript, Material UI, Vite, and @vite-pwa/plugin, with Gunicorn behind Nginx. The Django custom User model is the authentication authority. Retain the SIMS authorization extension for institution membership, scoped roles, campus and department scope, module activation, workflow authority, confidentiality, and record-level access.
+Reuse the established institution, academic calendar, curriculum, student and staff, admission, term-registration, teaching-allocation, and timetable modules. Do not duplicate users, employees, rooms, courses, offerings, sections, rosters, timetable sessions, or academic periods. Derive ownership scope on the server, keep attendance and lesson-plan rules in explicit services, use transaction.atomic and select_for_update for collision-prone updates, and expose stable versioned APIs.
+Task for this stageImplement opening, populating, marking, saving, finalizing, reopening, and viewing a class attendance register. Include only students whose course-offering-section roster membership is valid for the session date, and define policy for late enrolment, withdrawal, transfer, approved leave, on-duty status, and roster corrections. Never trust a client-supplied course-offering-section identifier.
+Support efficient bulk marking with explicit treatment of unmarked students; do not silently convert missing input into absence. Make retries idempotent, reject stale versions, lock the session and affected attendance rows in a documented order, and prevent two faculty members from overwriting each other. Capture actor, source, marked time, remarks, and any required reason for late or reopened entry. Define safe limits for offline drafts without permitting unsynchronized authoritative writes.
+Use the supplied Module 9 SQL schema as the baseline. Produce complete, runnable artifacts rather than pseudocode. State assumptions, file paths, commands, dependencies, and verification steps. Preserve the plugin-ready modular-monolith architecture and Django custom-user authorization approach.
+Required deliverables
+Register-open, bulk-mark, finalize, and reopen command services
+Roster-at-session-date selector and exception rules
+Idempotency and optimistic-version contract
+Structured validation and partial-failure response model
+Authority and time-window policy configuration
+Race-condition, retry, and deadlock regression tests
+Completion criteria
+All generated code is internally consistent and identifies its target file path.
+Institution, ownership, roster-date, faculty authority, workflow, privacy, and stale-write rules are tested.
+Database changes include safe migration, data reconciliation, and rollback guidance.
+Commands for linting, type checking, tests, frontend build, and verification are included.
+Open assumptions and deferred policy decisions are listed at the end.
+Prompt 6  Implement attendance correction workflow
+PurposeUse this prompt as the next implementation stage. Retain all accepted outputs from earlier prompts and resolve conflicts explicitly.
+Prompt
+Act as a senior full-stack Python web developer and software architect. Implement Module 9 of the SIMS platform as part of an enterprise plugin-ready modular monolith.
+Use Django 5.x, Django REST Framework, MySQL 8.0.16 or later, React with TypeScript, Material UI, Vite, and @vite-pwa/plugin, with Gunicorn behind Nginx. The Django custom User model is the authentication authority. Retain the SIMS authorization extension for institution membership, scoped roles, campus and department scope, module activation, workflow authority, confidentiality, and record-level access.
+Reuse the established institution, academic calendar, curriculum, student and staff, admission, term-registration, teaching-allocation, and timetable modules. Do not duplicate users, employees, rooms, courses, offerings, sections, rosters, timetable sessions, or academic periods. Derive ownership scope on the server, keep attendance and lesson-plan rules in explicit services, use transaction.atomic and select_for_update for collision-prone updates, and expose stable versioned APIs.
+Task for this stageImplement correction requests for an existing attendance record with requester identity, original status snapshot, requested status, reason, optional evidence reference, timestamps, and current workflow state. Define who may request, cancel, review, approve, reject, or administratively correct attendance under institution, department, section, and date-window rules.
+On approval, lock the correction and attendance record, verify that the stored old status still matches the current attendance version, apply the change once, and append immutable audit history. Prevent duplicate pending requests for the same target unless policy explicitly permits them. Capture resolver identity and remarks, make repeated decisions idempotent, notify affected parties, and expose escalation or expiry for overdue requests.
+Use the supplied Module 9 SQL schema as the baseline. Produce complete, runnable artifacts rather than pseudocode. State assumptions, file paths, commands, dependencies, and verification steps. Preserve the plugin-ready modular-monolith architecture and Django custom-user authorization approach.
+Required deliverables
+Correction state machine and transition policy
+Atomic request, cancel, approve, reject, and expire services
+Stale-status and duplicate-request protections
+Evidence and notification integration contract
+Immutable before-and-after audit record
+Permission, transaction, and concurrency tests
+Completion criteria
+All generated code is internally consistent and identifies its target file path.
+Institution, ownership, roster-date, faculty authority, workflow, privacy, and stale-write rules are tested.
+Database changes include safe migration, data reconciliation, and rollback guidance.
+Commands for linting, type checking, tests, frontend build, and verification are included.
+Open assumptions and deferred policy decisions are listed at the end.
+Prompt 7  Build DRF APIs permissions and documentation
+PurposeUse this prompt as the next implementation stage. Retain all accepted outputs from earlier prompts and resolve conflicts explicitly.
+Prompt
+Act as a senior full-stack Python web developer and software architect. Implement Module 9 of the SIMS platform as part of an enterprise plugin-ready modular monolith.
+Use Django 5.x, Django REST Framework, MySQL 8.0.16 or later, React with TypeScript, Material UI, Vite, and @vite-pwa/plugin, with Gunicorn behind Nginx. The Django custom User model is the authentication authority. Retain the SIMS authorization extension for institution membership, scoped roles, campus and department scope, module activation, workflow authority, confidentiality, and record-level access.
+Reuse the established institution, academic calendar, curriculum, student and staff, admission, term-registration, teaching-allocation, and timetable modules. Do not duplicate users, employees, rooms, courses, offerings, sections, rosters, timetable sessions, or academic periods. Derive ownership scope on the server, keep attendance and lesson-plan rules in explicit services, use transaction.atomic and select_for_update for collision-prone updates, and expose stable versioned APIs.
+Task for this stageBuild versioned DRF APIs for class sessions, lesson plans, topic coverage, attendance registers, student attendance history, corrections, policy configuration, summaries, and authorized exports. Use separate read and command serializers, explicit service calls, typed filters, pagination, and consistent problem-details errors. Avoid writable nested serializers for transactional workflows.
+Enforce institution membership, campus and department scope, faculty assignment, section ownership, student self-service boundaries, reviewer authority, module activation, and record-level visibility in both queryset and object checks. Add idempotency keys for bulk commands and a version or ETag strategy for stale-write rejection. Generate OpenAPI examples for successful and failed bulk marking and correction decisions.
+Use the supplied Module 9 SQL schema as the baseline. Produce complete, runnable artifacts rather than pseudocode. State assumptions, file paths, commands, dependencies, and verification steps. Preserve the plugin-ready modular-monolith architecture and Django custom-user authorization approach.
+Required deliverables
+Endpoint inventory with methods, filters, and response contracts
+Serializers, viewsets or API views, services, and URLs
+Role and scope permission matrix
+Idempotency, versioning, and error-response conventions
+OpenAPI schema and representative examples
+API, authorization, tampering, and contract tests
+Completion criteria
+All generated code is internally consistent and identifies its target file path.
+Institution, ownership, roster-date, faculty authority, workflow, privacy, and stale-write rules are tested.
+Database changes include safe migration, data reconciliation, and rollback guidance.
+Commands for linting, type checking, tests, frontend build, and verification are included.
+Open assumptions and deferred policy decisions are listed at the end.
+Prompt 8  Implement analytics notifications integrations and exports
+PurposeUse this prompt as the next implementation stage. Retain all accepted outputs from earlier prompts and resolve conflicts explicitly.
+Prompt
+Act as a senior full-stack Python web developer and software architect. Implement Module 9 of the SIMS platform as part of an enterprise plugin-ready modular monolith.
+Use Django 5.x, Django REST Framework, MySQL 8.0.16 or later, React with TypeScript, Material UI, Vite, and @vite-pwa/plugin, with Gunicorn behind Nginx. The Django custom User model is the authentication authority. Retain the SIMS authorization extension for institution membership, scoped roles, campus and department scope, module activation, workflow authority, confidentiality, and record-level access.
+Reuse the established institution, academic calendar, curriculum, student and staff, admission, term-registration, teaching-allocation, and timetable modules. Do not duplicate users, employees, rooms, courses, offerings, sections, rosters, timetable sessions, or academic periods. Derive ownership scope on the server, keep attendance and lesson-plan rules in explicit services, use transaction.atomic and select_for_update for collision-prone updates, and expose stable versioned APIs.
+Task for this stageImplement attendance percentages and shortage analysis using a documented denominator policy. Define treatment of cancelled sessions, non-instructional events, partially conducted periods, status rows that count as present, approved leave or on-duty status, late enrolment, withdrawal, course changes, merged classes, and correction effective time. Preserve historical reproducibility when policy changes.
+Provide student, course, faculty, section, department, and term summaries; lesson-plan completion and syllabus-lag indicators; configurable shortage thresholds; and reconciliation between published timetable occurrences, conducted sessions, registers, and topic coverage. Integrate notifications through transactional outbox events and provide authorized CSV and print-ready exports protected against spreadsheet formula injection and excess personal-data exposure.
+Use the supplied Module 9 SQL schema as the baseline. Produce complete, runnable artifacts rather than pseudocode. State assumptions, file paths, commands, dependencies, and verification steps. Preserve the plugin-ready modular-monolith architecture and Django custom-user authorization approach.
+Required deliverables
+Attendance-calculation specification with worked edge cases
+Summary selectors, materialization or caching strategy, and invalidation rules
+Shortage and lesson-progress reports
+Transactional outbox events and idempotent consumers
+Privacy-scoped CSV and print export services
+Reconciliation, policy-change, and notification tests
+Completion criteria
+All generated code is internally consistent and identifies its target file path.
+Institution, ownership, roster-date, faculty authority, workflow, privacy, and stale-write rules are tested.
+Database changes include safe migration, data reconciliation, and rollback guidance.
+Commands for linting, type checking, tests, frontend build, and verification are included.
+Open assumptions and deferred policy decisions are listed at the end.
+Prompt 9  Build the React TypeScript and PWA interface
+PurposeUse this prompt as the next implementation stage. Retain all accepted outputs from earlier prompts and resolve conflicts explicitly.
+Prompt
+Act as a senior full-stack Python web developer and software architect. Implement Module 9 of the SIMS platform as part of an enterprise plugin-ready modular monolith.
+Use Django 5.x, Django REST Framework, MySQL 8.0.16 or later, React with TypeScript, Material UI, Vite, and @vite-pwa/plugin, with Gunicorn behind Nginx. The Django custom User model is the authentication authority. Retain the SIMS authorization extension for institution membership, scoped roles, campus and department scope, module activation, workflow authority, confidentiality, and record-level access.
+Reuse the established institution, academic calendar, curriculum, student and staff, admission, term-registration, teaching-allocation, and timetable modules. Do not duplicate users, employees, rooms, courses, offerings, sections, rosters, timetable sessions, or academic periods. Derive ownership scope on the server, keep attendance and lesson-plan rules in explicit services, use transaction.atomic and select_for_update for collision-prone updates, and expose stable versioned APIs.
+Task for this stageBuild the React TypeScript and Material UI interface for faculty, attendance coordinators, heads, students, and authorized administrators. Use typed API clients, shared domain types, accessible forms, responsive layouts, and a predictable server-state strategy. Frontend visibility must never substitute for server-side permission checks.
+Include session and lesson-plan calendars; an efficient keyboard-accessible attendance grid; mobile quick marking; explicit unmarked-state handling; save, finalize, reopen, conflict, and stale-version feedback; topic coverage; correction request and review queues; student attendance details; shortage dashboards; and print or export actions. Cache only application assets and approved read-only data. If offline drafts are supported, visibly separate them from server-confirmed attendance and require conflict-aware synchronization.
+Use the supplied Module 9 SQL schema as the baseline. Produce complete, runnable artifacts rather than pseudocode. State assumptions, file paths, commands, dependencies, and verification steps. Preserve the plugin-ready modular-monolith architecture and Django custom-user authorization approach.
+Required deliverables
+Route and component tree with role visibility
+Typed API and server-state layer
+Accessible attendance grid and mobile workflow
+Lesson-plan, correction, report, and student self-service screens
+Loading, unsaved, stale, offline, error, and permission states
+Vitest, component, accessibility, and Playwright tests
+Completion criteria
+All generated code is internally consistent and identifies its target file path.
+Institution, ownership, roster-date, faculty authority, workflow, privacy, and stale-write rules are tested.
+Database changes include safe migration, data reconciliation, and rollback guidance.
+Commands for linting, type checking, tests, frontend build, and verification are included.
+Open assumptions and deferred policy decisions are listed at the end.
+Prompt 10  Harden security auditability privacy and performance
+PurposeUse this prompt as the next implementation stage. Retain all accepted outputs from earlier prompts and resolve conflicts explicitly.
+Prompt
+Act as a senior full-stack Python web developer and software architect. Implement Module 9 of the SIMS platform as part of an enterprise plugin-ready modular monolith.
+Use Django 5.x, Django REST Framework, MySQL 8.0.16 or later, React with TypeScript, Material UI, Vite, and @vite-pwa/plugin, with Gunicorn behind Nginx. The Django custom User model is the authentication authority. Retain the SIMS authorization extension for institution membership, scoped roles, campus and department scope, module activation, workflow authority, confidentiality, and record-level access.
+Reuse the established institution, academic calendar, curriculum, student and staff, admission, term-registration, teaching-allocation, and timetable modules. Do not duplicate users, employees, rooms, courses, offerings, sections, rosters, timetable sessions, or academic periods. Derive ownership scope on the server, keep attendance and lesson-plan rules in explicit services, use transaction.atomic and select_for_update for collision-prone updates, and expose stable versioned APIs.
+Task for this stageThreat-model Module 9 and implement controls for tenant escape, identifier tampering, unauthorized register access, proxy or fraudulent marking, mass assignment, replayed bulk requests, stale writes, correction self-approval, export leakage, spreadsheet injection, insecure offline storage, audit-log gaps, and denial of service through wide reports or oversized register submissions.
+Record actor, effective membership and role, institution scope, action, object identifiers, material before and after values, reason, request or correlation identifier, and timestamp without retaining unnecessary sensitive data. Add query budgets, bulk prefetching, covering indexes, rate limits, export quotas, cache invalidation, structured logs, metrics, tracing points, and alerts for unmarked sessions, late edits, correction backlog, reconciliation mismatches, and elevated authorization failures.
+Use the supplied Module 9 SQL schema as the baseline. Produce complete, runnable artifacts rather than pseudocode. State assumptions, file paths, commands, dependencies, and verification steps. Preserve the plugin-ready modular-monolith architecture and Django custom-user authorization approach.
+Required deliverables
+Threat model and control matrix
+Audit event schema, integrity controls, and retention guidance
+Privacy and data-visibility matrix
+Index, query-plan, batching, and cache report
+Logs, metrics, alerts, and operational dashboard specification
+Security, load, permission, and fault-injection tests
+Completion criteria
+All generated code is internally consistent and identifies its target file path.
+Institution, ownership, roster-date, faculty authority, workflow, privacy, and stale-write rules are tested.
+Database changes include safe migration, data reconciliation, and rollback guidance.
+Commands for linting, type checking, tests, frontend build, and verification are included.
+Open assumptions and deferred policy decisions are listed at the end.
+Prompt 11  Build comprehensive tests and legacy data migration
+PurposeUse this prompt as the next implementation stage. Retain all accepted outputs from earlier prompts and resolve conflicts explicitly.
+Prompt
+Act as a senior full-stack Python web developer and software architect. Implement Module 9 of the SIMS platform as part of an enterprise plugin-ready modular monolith.
+Use Django 5.x, Django REST Framework, MySQL 8.0.16 or later, React with TypeScript, Material UI, Vite, and @vite-pwa/plugin, with Gunicorn behind Nginx. The Django custom User model is the authentication authority. Retain the SIMS authorization extension for institution membership, scoped roles, campus and department scope, module activation, workflow authority, confidentiality, and record-level access.
+Reuse the established institution, academic calendar, curriculum, student and staff, admission, term-registration, teaching-allocation, and timetable modules. Do not duplicate users, employees, rooms, courses, offerings, sections, rosters, timetable sessions, or academic periods. Derive ownership scope on the server, keep attendance and lesson-plan rules in explicit services, use transaction.atomic and select_for_update for collision-prone updates, and expose stable versioned APIs.
+Task for this stageCreate a requirement-to-test traceability matrix and automated suites for schema constraints, session lifecycle, lesson plans, dated roster eligibility, bulk attendance, correction races, permissions, attendance calculation, reports, exports, events, accessibility, and PWA behavior. Include property-based tests for date and status combinations and genuine concurrency tests against MySQL rather than relying only on SQLite.
+Design a restartable legacy import for class sessions, attendance status mappings, student records, topic coverage, and correction history. Resolve institution, course offering, roster, faculty, room, and date ownership deterministically. Produce duplicate, orphan, invalid-status, out-of-roster, cross-scope, and impossible-time reports; quarantine unresolved rows; and reconcile imported totals against source registers before activation.
+Use the supplied Module 9 SQL schema as the baseline. Produce complete, runnable artifacts rather than pseudocode. State assumptions, file paths, commands, dependencies, and verification steps. Preserve the plugin-ready modular-monolith architecture and Django custom-user authorization approach.
+Required deliverables
+Requirement-to-test traceability matrix
+Unit, API, integration, property, concurrency, and end-to-end suites
+Factories and representative fixtures
+Restartable dry-run legacy import commands
+Exception, quarantine, and reconciliation reports
+Performance baseline and acceptance thresholds
+Completion criteria
+All generated code is internally consistent and identifies its target file path.
+Institution, ownership, roster-date, faculty authority, workflow, privacy, and stale-write rules are tested.
+Database changes include safe migration, data reconciliation, and rollback guidance.
+Commands for linting, type checking, tests, frontend build, and verification are included.
+Open assumptions and deferred policy decisions are listed at the end.
+Prompt 12  Create deployment monitoring runbooks and handover
+PurposeUse this prompt as the next implementation stage. Retain all accepted outputs from earlier prompts and resolve conflicts explicitly.
+Prompt
+Act as a senior full-stack Python web developer and software architect. Implement Module 9 of the SIMS platform as part of an enterprise plugin-ready modular monolith.
+Use Django 5.x, Django REST Framework, MySQL 8.0.16 or later, React with TypeScript, Material UI, Vite, and @vite-pwa/plugin, with Gunicorn behind Nginx. The Django custom User model is the authentication authority. Retain the SIMS authorization extension for institution membership, scoped roles, campus and department scope, module activation, workflow authority, confidentiality, and record-level access.
+Reuse the established institution, academic calendar, curriculum, student and staff, admission, term-registration, teaching-allocation, and timetable modules. Do not duplicate users, employees, rooms, courses, offerings, sections, rosters, timetable sessions, or academic periods. Derive ownership scope on the server, keep attendance and lesson-plan rules in explicit services, use transaction.atomic and select_for_update for collision-prone updates, and expose stable versioned APIs.
+Task for this stageCreate the complete production rollout package for Module 9. Use a phased approach covering schema expansion, status seeding, code deployment, optional timetable-to-session backfill, legacy attendance import, reconciliation, constraint activation, pilot sections, threshold validation, monitoring, and progressive institution rollout. Define backups, restore checks, feature flags, rollback boundaries, and compatibility with Module 8 during mixed-version deployment.
+Prepare operator runbooks for session generation, attendance reopening, correction escalation, status configuration, missed or duplicate registers, roster mismatch, timetable reconciliation, incorrect shortage reports, export failure, event backlog, and emergency read-only mode. Include ownership, service-level objectives, support evidence, training notes, acceptance sign-off, and a post-deployment review checklist.
+Use the supplied Module 9 SQL schema as the baseline. Produce complete, runnable artifacts rather than pseudocode. State assumptions, file paths, commands, dependencies, and verification steps. Preserve the plugin-ready modular-monolith architecture and Django custom-user authorization approach.
+Required deliverables
+Phased deployment, feature-flag, rollback, backup, and restore plan
+Preflight and post-deployment SQL and application checks
+Pilot acceptance and production smoke-test scripts
+Monitoring, alerting, ownership, and SLO specification
+Operational runbooks and support checklist
+Administrator, faculty, reviewer, and student handover guide
+Completion criteria
+All generated code is internally consistent and identifies its target file path.
+Institution, ownership, roster-date, faculty authority, workflow, privacy, and stale-write rules are tested.
+Database changes include safe migration, data reconciliation, and rollback guidance.
+Commands for linting, type checking, tests, frontend build, and verification are included.
+Open assumptions and deferred policy decisions are listed at the end.
+
+Source schema supplied for Module 9
+The following SQL is reproduced as the implementation baseline. Prompt 1 must audit it before downstream code is finalized.
+-- =============================================================
+-- 9. ATTENDANCE AND LESSON PLAN MODULE
+-- =============================================================
+ 
+CREATE TABLE class_session (
+    class_session_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    course_offering_section_id BIGINT UNSIGNED NOT NULL,
+    faculty_assignment_id BIGINT UNSIGNED NULL,
+    timetable_session_id BIGINT UNSIGNED NULL,
+    session_date DATE NOT NULL,
+    start_time TIME NOT NULL,
+    end_time TIME NOT NULL,
+    room_id INT UNSIGNED NULL,
+    session_type ENUM('LECTURE','TUTORIAL','PRACTICAL','PROJECT','SEMINAR','OTHER') NOT NULL,
+    planned_topic TEXT NULL,
+    topic_covered TEXT NULL,
+    class_number SMALLINT UNSIGNED NULL,
+    session_status ENUM('PLANNED','CONDUCTED','CANCELLED','RESCHEDULED') NOT NULL DEFAULT 'PLANNED',
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT chk_class_session_time CHECK (end_time > start_time),
+    CONSTRAINT uq_class_session UNIQUE (course_offering_section_id, session_date, start_time),
+    CONSTRAINT uq_class_session_owner UNIQUE (class_session_id, course_offering_section_id),
+    CONSTRAINT fk_class_session_section FOREIGN KEY (course_offering_section_id) REFERENCES course_offering_section(course_offering_section_id),
+    CONSTRAINT fk_class_session_faculty FOREIGN KEY (faculty_assignment_id) REFERENCES faculty_course_assignment(faculty_assignment_id),
+    CONSTRAINT fk_class_session_timetable FOREIGN KEY (timetable_session_id) REFERENCES timetable_session(timetable_session_id),
+    CONSTRAINT fk_class_session_room FOREIGN KEY (room_id) REFERENCES room(room_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+ 
+CREATE TABLE attendance_status (
+    attendance_status_id TINYINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    status_code VARCHAR(20) NOT NULL UNIQUE,
+    status_name VARCHAR(50) NOT NULL UNIQUE,
+    counts_as_present BOOLEAN NOT NULL DEFAULT FALSE,
+    is_active BOOLEAN NOT NULL DEFAULT TRUE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+ 
+CREATE TABLE student_attendance (
+    class_session_id BIGINT UNSIGNED NOT NULL,
+    course_offering_section_student_id BIGINT UNSIGNED NOT NULL,
+    course_offering_section_id BIGINT UNSIGNED NOT NULL,
+    attendance_status_id TINYINT UNSIGNED NOT NULL,
+    marked_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    marked_by_user_id BIGINT UNSIGNED NULL,
+    remarks VARCHAR(500) NULL,
+    PRIMARY KEY (class_session_id, course_offering_section_student_id),
+    CONSTRAINT fk_student_attendance_session_owner FOREIGN KEY (class_session_id, course_offering_section_id)
+        REFERENCES class_session(class_session_id, course_offering_section_id),
+    CONSTRAINT fk_student_attendance_roster_owner FOREIGN KEY (course_offering_section_student_id, course_offering_section_id)
+        REFERENCES course_offering_section_student(course_offering_section_student_id, course_offering_section_id),
+    CONSTRAINT fk_student_attendance_status FOREIGN KEY (attendance_status_id) REFERENCES attendance_status(attendance_status_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+ 
+CREATE TABLE attendance_correction_request (
+    attendance_correction_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    class_session_id BIGINT UNSIGNED NOT NULL,
+    course_offering_section_student_id BIGINT UNSIGNED NOT NULL,
+    old_status_id TINYINT UNSIGNED NOT NULL,
+    requested_status_id TINYINT UNSIGNED NOT NULL,
+    reason VARCHAR(1000) NOT NULL,
+    request_status ENUM('PENDING','APPROVED','REJECTED','CANCELLED') NOT NULL DEFAULT 'PENDING',
+    requested_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    resolved_at TIMESTAMP NULL,
+    CONSTRAINT fk_attendance_correction_attendance FOREIGN KEY (class_session_id, course_offering_section_student_id)
+        REFERENCES student_attendance(class_session_id, course_offering_section_student_id),
+    CONSTRAINT fk_attendance_correction_old FOREIGN KEY (old_status_id) REFERENCES attendance_status(attendance_status_id),
+    CONSTRAINT fk_attendance_correction_requested FOREIGN KEY (requested_status_id) REFERENCES attendance_status(attendance_status_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+Final integrated build prompt
+Act as a senior full-stack Python web developer and software architect. Implement Module 9 of the SIMS platform as part of an enterprise plugin-ready modular monolith.
+Use Django 5.x, Django REST Framework, MySQL 8.0.16 or later, React with TypeScript, Material UI, Vite, and @vite-pwa/plugin, with Gunicorn behind Nginx. The Django custom User model is the authentication authority. Retain the SIMS authorization extension for institution membership, scoped roles, campus and department scope, module activation, workflow authority, confidentiality, and record-level access.
+Reuse the established institution, academic calendar, curriculum, student and staff, admission, term-registration, teaching-allocation, and timetable modules. Do not duplicate users, employees, rooms, courses, offerings, sections, rosters, timetable sessions, or academic periods. Derive ownership scope on the server, keep attendance and lesson-plan rules in explicit services, use transaction.atomic and select_for_update for collision-prone updates, and expose stable versioned APIs.
+Using the reviewed outputs from Prompts 1 through 12, implement Module 9 end to end in the current repository. First summarize the accepted architecture and list the files to create or modify. Generate production-ready artifacts in dependency order: revised schema, models and migrations; session and lesson-plan services; roster-aware attendance and correction workflows; DRF APIs; reports, events, notifications, and exports; React and PWA components; automated tests; migration tools; deployment configuration; monitoring; runbooks; and handover documentation.
+Do not omit code behind ellipses. Preserve existing naming and project conventions unless a change is justified. Enforce institution, section, roster-date, faculty-assignment, and reviewer scope on the server. Use atomic transactions, deterministic locking, request idempotency, and stale-version checks for bulk marking, finalization, reopening, and corrections. Preserve historical interpretation of attendance, keep lesson plans distinct from actual topic coverage, and never let timetable or roster changes silently rewrite completed registers.
+Conclude with: implemented files; schema changes; API inventory; permission matrix; frontend routes; attendance policy; calculation examples; integration events; automated test results; manual acceptance checks; legacy migration and reconciliation status; monitoring readiness; known limitations; rollback status; and recommended next module integrations.
+Final acceptance checklist
+Revised schema passes MySQL validation and Django migration checks.
+Class sessions cannot cross section, faculty-assignment, timetable, room, term, or institution ownership.
+Attendance registers include only roster memberships valid for the session date.
+Concurrent tests prove that bulk marking, finalization, reopening, and correction cannot lose updates.
+Every status change preserves actor, reason where required, timestamp, version, and immutable audit history.
+Attendance percentage and shortage results match documented policy edge cases and remain reproducible.
+Lesson-plan progress distinguishes planned topics, conducted sessions, partial coverage, and revisions.
+Every API operation is institution-scoped, workflow-authorized, idempotent where required, and protected from stale writes.
+Frontend workflows are keyboard accessible, responsive, and explicit about unsaved, stale, offline, and finalized states.
+Imports, reports, exports, notifications, audit, reconciliation, monitoring, deployment, and rollback are verified.

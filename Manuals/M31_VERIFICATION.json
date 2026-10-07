@@ -1,0 +1,89 @@
+{
+  "module": "M31 Professional Memberships and Academic Bodies",
+  "date": "2026-09-28",
+  "checks": [
+    {
+      "area": "Database",
+      "status": "PASS",
+      "evidence": "Canonical eleven-column source, five FKs, unique/date/ENUM constraints and exact unsigned master fields; M31_SCHEMA_INVENTORY.json"
+    },
+    {
+      "area": "Backend focused",
+      "status": "PASS",
+      "evidence": ".tmp/m31-final-backend.txt: 27 tests and 18 subtests passed in 51.44 seconds, covering final lifecycle metadata updates, invalid master-ID route handling, admin governance, imports and expiry policy."
+    },
+    {
+      "area": "Full backend",
+      "status": "PASS",
+      "evidence": ".tmp/m31-full-backend.txt: 681 tests and 139 subtests passed, one pre-existing M13 warning; 752.84 seconds. Final focused run covers the subsequent master-ID route guard and message cleanup."
+    },
+    {
+      "area": "API",
+      "status": "PASS",
+      "evidence": "OpenAPI validated after derived-field type annotations; .tmp/m31-openapi.yaml; strict create/PATCH/lifecycle/import validation"
+    },
+    {
+      "area": "UI/PWA",
+      "status": "PASS",
+      "evidence": ".tmp/m31-full-ui.txt: 113 tests across 23 suites passed in 276.08s. Final historical-date/status presentation .tmp/m31-final-focused-ui.txt: 12 tests passed in 17.38s; one additional historical-date test was added after the full run."
+    },
+    {
+      "area": "Build",
+      "status": "PASS",
+      "evidence": ".tmp/m31-final-build.txt: TypeScript/Vite/PWA build passed, 46 precache entries"
+    },
+    {
+      "area": "Transport/PWA contracts",
+      "status": "PASS",
+      "evidence": "npm test: 12 passed"
+    },
+    {
+      "area": "Security",
+      "status": "PASS",
+      "evidence": "Final focused and full regression: scoped/DENY/export/IDOR/strict-field/private-evidence/import rollback/admin checks; invalid master-ID PATCH returns 404."
+    },
+    {
+      "area": "Audit",
+      "status": "PASS",
+      "evidence": "M15 lifecycle snapshots, actor/time/source, immutable approval history; expiry/import batch counts; authorization-checked read-only timeline"
+    },
+    {
+      "area": "Reporting",
+      "status": "PASS",
+      "evidence": "Status/renewal/date-window aggregates, scoped CSV, safe spreadsheet cells, paginated collection and bounded group summaries"
+    },
+    {
+      "area": "Performance",
+      "status": "PASS",
+      "evidence": "M31_QUERY_PLANS.json: eight actual ORM EXPLAIN plans; constant list query count test; no speculative indexes"
+    },
+    {
+      "area": "Documentation",
+      "status": "PASS",
+      "evidence": "M31_DESIGN.md, M31_HANDOFF.md, M31_TRACEABILITY.json map all eighteen prompts"
+    },
+    {
+      "area": "Local deployment",
+      "status": "PASS",
+      "evidence": "Source/master/history migrations applied; no drift; seed_professional_memberships installed 8 permissions without user/role grants; runtime and expiry disabled"
+    },
+    {
+      "area": "Production acceptance",
+      "status": "NEEDS REVIEW",
+      "evidence": "Target-engine/backup rehearsal, representative load, institution-approved role grants, M13 storage/scanner configuration, device smoke tests, runtime enablement and optional scheduler/adapter setup remain operator steps; see handoff"
+    }
+  ],
+  "known_platform_warning": "Pre-existing M13 documents_exit.FileObject.storage_key mysql.W003; unrelated to M31.",
+  "resolved_findings": [
+    "Initial focused test used the predecessor date_from parameter; corrected to the documented M31 expiry_from filter.",
+    "Derived serializer fields initially emitted OpenAPI type warnings; explicit int/nullable/bool annotations resolved them.",
+    "Final form correction preserves an explicit dated assignment context for memberships predating employment."
+  ],
+  "runtime": {
+    "memberships_enabled": false,
+    "automatic_expiry_enabled": false,
+    "renewal_window_days": 30,
+    "event_adapter_configured": false
+  },
+  "implementation_status": "COMPLETE: implemented and locally verified; production activation remains an operational acceptance step."
+}

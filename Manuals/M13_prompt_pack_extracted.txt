@@ -1,0 +1,576 @@
+Structured Word Prompt Pack
+Module 13 - Document, Certificate and Exit Module
+SIMS Django Plugin-Ready Modular Monolith
+Module
+13 - Document, Certificate and Exit
+Architecture
+Django modular monolith with plugin-ready app boundaries
+Authorization
+Existing custom user + role/permission model; no duplicate auth model
+Database
+MySQL / InnoDB / utf8mb4; schema-first compatibility
+Implementation Style
+Service-layer business rules, thin APIs/views, transaction-safe workflows
+Primary Goal
+Implement secure student documents, certificate lifecycle, and exit processing
+
+Purpose of this pack
+Use the prompts in sequence to implement Module 13 without weakening the previously established SIMS architecture. Each prompt is designed to be pasted into an AI coding assistant together with the current repository context. The prompts explicitly protect existing schema ownership, custom-user authorization, auditability, and cross-module references.
+Non-negotiable implementation principles
+Preserve the supplied SQL semantics. Do not rename tables/columns or silently change nullability, uniqueness, enums, or foreign keys.
+Reuse existing Student, Document Type, Programme Enrolment, and custom User/Role/Permission models. Never create shadow master tables.
+Keep business rules in services/use-cases; keep serializers/forms/views thin; use atomic transactions for state-changing workflows.
+Treat uploaded files as sensitive objects: validate type/size, generate server-side names, avoid trusting client paths/URLs, and enforce authorization before download.
+Make certificate issue and student-exit operations idempotent, auditable, permission-checked, and safe under concurrent requests.
+Use soft deletion only where the supplied schema supports it (`file_object.deleted_at`); do not pretend hard-deleted business records still exist.
+Use migrations compatible with MySQL and the project migration history. Any unavoidable schema deviation must be clearly documented before implementation.
+
+Part I - Architecture, Ownership and Schema Mapping
+Run these prompts first. They establish ownership and prevent cross-module duplication before code generation begins.
+Prompt 1. Perform repository-aware module impact analysis
+Objective
+Identify every existing SIMS component that Module 13 must reuse or integrate with before creating new code.
+Copy-ready implementation prompt
+Act as the senior Django architect for an existing SIMS modular-monolith project. Analyze the repository before writing code. Map Module 13 dependencies to the existing models for student, document_type, student_programme_enrolment, custom user, employee/role/permission, audit/logging, notifications, and any common timestamp/base classes. Identify which Django app currently owns each referenced table. Propose the smallest set of new app boundaries for file/document handling, certificates, and exits. Do not duplicate master entities. Produce an integration map, model ownership table, required imports, migration dependencies, URL namespaces, permission touchpoints, and risks. Flag any conflict between the supplied SQL and current models instead of silently changing either side.
+Expected deliverables
+Repository integration/ownership matrix
+Dependency graph for migrations and services
+List of conflicts or assumptions requiring explicit handling
+Acceptance checks
+No new Student/User/DocumentType/Enrolment master models are proposed
+Every foreign-key target has a confirmed owning app
+Potential circular imports are addressed through app labels or service boundaries
+Guardrail: Architecture analysis must precede model generation.
+
+Prompt 2. Create Django app boundaries and package structure
+Objective
+Create plugin-ready module organization without turning the project into tightly coupled feature code.
+Copy-ready implementation prompt
+Design the Module 13 package structure for a Django modular monolith. Prefer cohesive app boundaries such as `file_registry` or `documents`, `certificates`, and `student_exit` only if they align with the repository’s established conventions; otherwise follow the existing naming pattern. For each app, define models.py or models/ package, services/, selectors/, api/serializers.py, api/views.py, urls.py, permissions.py, admin.py, tests/, and signals only where justified. Define public service interfaces between apps and prohibit direct cross-app mutation of another app’s aggregate. Show allowed dependency directions and where common file storage utilities belong. Include AppConfig and plugin/URL registration hooks consistent with the current project.
+Expected deliverables
+Proposed directory tree
+Allowed dependency rules
+Public service interfaces and URL namespace plan
+Acceptance checks
+Business services do not import HTTP request objects
+Cross-app writes occur through documented services
+No generic “utils.py” dumping ground is introduced
+
+Prompt 3. Map SQL schema to Django models exactly
+Objective
+Generate model definitions that preserve table and constraint semantics from the supplied schema.
+Copy-ready implementation prompt
+Implement Django models corresponding exactly to `file_object`, `student_document`, `certificate_type`, `certificate_request`, and `student_exit`. Use `db_table` explicitly where needed to preserve names. Match unsigned integer ranges as closely as Django/MySQL allows, decimal/date/datetime semantics, unique constraints, nullable fields, enum values, and foreign keys. Represent enum fields using TextChoices. Add database constraints that Django can safely express, including file_size_bytes > 0 and checksum format validation where supported; supplement with model/service validation when MySQL/Django portability makes a database expression unsuitable. Do not add database columns that are not in the SQL. If the existing project uses unmanaged legacy models, explain and follow that convention rather than improvising.
+Expected deliverables
+Model classes with TextChoices
+Meta constraints/index notes
+Migration compatibility notes
+Acceptance checks
+`storage_key` remains unique
+`certificate_number` remains nullable + unique
+`student_exit.enrolment_id` remains one exit per enrolment
+No timestamps are invented for tables that do not have them
+Guardrail: Do not use `OneToOneField` merely for convenience unless it maps exactly to the unique foreign-key behavior and matches project conventions.
+
+Prompt 4. Generate safe migrations and migration plan
+Objective
+Create reversible MySQL-compatible migrations while respecting dependencies on earlier SIMS modules.
+Copy-ready implementation prompt
+Prepare Django migrations for Module 13. Order them so referenced tables already exist. If exact SQL tables already exist, use a state/database strategy only when verified and explain why; otherwise create normal migrations. Ensure constraint and index names are stable and MySQL-compatible. Include a pre-migration checklist for existing duplicate storage keys, duplicate student documents with same non-null document_number, and duplicate exits per enrolment. Provide rollback considerations. Do not mark a migration complete unless `makemigrations --check`, `migrate --plan`, and MySQL execution are expected to succeed.
+Expected deliverables
+Migration sequence and dependencies
+Preflight data-quality checks
+Rollback/forward-fix plan
+Acceptance checks
+No destructive migration without explicit reason
+No fake migration unless the physical schema is confirmed
+Constraint names stay within MySQL limits
+
+Part II - Secure File Object and Student Document Handling
+These prompts implement the shared file registry and student-document lifecycle. File authorization is treated as a business rule, not merely a storage concern.
+Prompt 5. Implement storage adapter and FileObject service
+Objective
+Create a storage-provider-neutral service that records file metadata safely in `file_object`.
+Copy-ready implementation prompt
+Implement a storage abstraction for Module 13 supporting the project’s configured storage backend (local media, S3-compatible object storage, or existing provider). Build a `FileObjectService` responsible for generating non-guessable storage keys, server-side stored file names, calculating SHA-256, recording MIME type, extension, size, provider, optional URL, confidentiality level, encryption flag, uploader user id, and timestamps. Persist database metadata only after storage succeeds, and clean up orphaned physical files if the database transaction fails. Provide delete/soft-delete behavior using `deleted_at`; define whether physical purge is immediate or deferred by retention policy. Never trust client-supplied `storage_key`, `storage_url`, MIME type, or extension.
+Expected deliverables
+Storage backend interface
+Upload/register service
+Soft-delete and optional purge service
+Failure-cleanup behavior
+Acceptance checks
+Zero-byte files are rejected
+SHA-256 is 64 hex chars when present
+Generated storage keys are unique
+Uploader is taken from authenticated context, not request payload
+Guardrail: Database rows must never become a substitute for object-level authorization.
+
+Prompt 6. Implement secure upload validation
+Objective
+Block unsafe, oversized, mislabeled, or policy-disallowed uploads before they become student documents.
+Copy-ready implementation prompt
+Create reusable upload validators driven by settings/policy rather than hard-coded controller logic. Validate maximum file size, extension allow-list, MIME allow-list, filename normalization, Unicode/path traversal hazards, executable/script content where applicable, and optional malware scanning integration. Compare claimed metadata against detected/validated metadata when the project stack supports it. Return stable domain errors suitable for both REST APIs and HTML forms. Define policy profiles for student documents and generated certificates. Do not expose internal storage paths in validation messages.
+Expected deliverables
+Validator functions/classes
+Settings-driven allowed types and limits
+Domain error catalogue
+Tests for traversal/double-extension/content-type mismatch cases
+Acceptance checks
+`../` and absolute-path tricks are rejected
+Executable types are rejected under document policy
+Oversized files fail before persistent metadata is created
+
+Prompt 7. Implement student document workflow
+Objective
+Provide create/list/detail/update/verification flows for `student_document` using existing document types.
+Copy-ready implementation prompt
+Implement the student-document use cases around `student_document`: upload/register a document for a student, list authorized documents, retrieve metadata, replace a file through a safe service if business policy permits, update document number/issue/expiry dates, and maintain verification status. Reuse the existing `document_type` master. Enforce uniqueness semantics for `(student_id, document_type_id, document_number)` while correctly handling nullable document_number behavior in MySQL. Validate expiry_date is not earlier than issue_date when both are present as a service rule unless the existing domain explicitly allows it. Do not automatically mark documents EXPIRED solely from a view request; if expiration is automated, implement it through a scheduled domain job.
+Expected deliverables
+StudentDocumentService methods
+Selectors for student/staff views
+REST endpoints or project-standard views
+Validation and domain exceptions
+Acceptance checks
+Student can access only own documents unless explicitly privileged
+Verifier can change verification state through a dedicated action
+Rejected verification requires remarks if policy says so
+Replacing a document does not silently lose auditability
+
+Prompt 8. Implement document verification state machine
+Objective
+Make verification transitions explicit, validated, and auditable.
+Copy-ready implementation prompt
+Define and implement allowed `verification_status` transitions for PENDING, VERIFIED, REJECTED, and EXPIRED. Put transition rules in a domain service, not in serializer `update()`. On VERIFIED set `verified_at`; on return to a non-verified state clear or preserve it according to a documented policy. Record verifier identity in the existing audit mechanism because the schema has no verifier column. Block illegal transitions and return conflict-style domain errors. Include a policy for expiry-date driven EXPIRED transitions and for resubmission after REJECTED.
+Expected deliverables
+Transition matrix
+Verification service action
+Audit event definitions
+Transition unit tests
+Acceptance checks
+Illegal direct status edits are blocked
+VERIFIED produces a verification timestamp
+Audit event identifies actor and before/after state
+
+Prompt 9. Implement authorized file download and preview
+Objective
+Ensure possession of an ID or URL never bypasses confidentiality rules.
+Copy-ready implementation prompt
+Implement a file access service and download/preview endpoint for `file_object`. Authorization must be evaluated against the owning business object (for example a StudentDocument or CertificateRequest) plus user role/scope and confidentiality level. Do not allow generic unrestricted `/files/<id>` access. Use streaming responses or short-lived signed URLs as appropriate to the configured storage provider. Set safe `Content-Disposition`, content type, caching, and anti-sniff headers. Block deleted files. Log access to RESTRICTED and HIGHLY_RESTRICTED files using the project audit mechanism.
+Expected deliverables
+Object-level authorization policy
+Download/preview endpoint
+Signed URL or streaming strategy
+Security headers and audit logging
+Acceptance checks
+Guessing file IDs does not grant access
+Deleted files cannot be downloaded
+Highly restricted access is auditable
+Original filenames are safely encoded in responses
+
+Part III - Certificate Request and Issuance
+Certificate actions are modeled as a lifecycle. Issuance is a controlled domain operation that may generate a PDF/file object and certificate number exactly once.
+Prompt 10. Implement certificate type master
+Objective
+Provide administratively controlled certificate definitions without exposing unrestricted master-data edits.
+Copy-ready implementation prompt
+Implement `certificate_type` as a master-data feature with list/create/update/activate/deactivate operations following the project’s master-data conventions. Enforce unique code and name, normalize codes consistently, and prevent ordinary students from editing this master. Inactive types must not accept new requests, but existing requests remain readable. Add admin integration and API endpoints only if consistent with the project. Do not hard-delete certificate types referenced by certificate requests.
+Expected deliverables
+Model/admin/API integration
+Master-data service
+Permissions and tests
+Acceptance checks
+Inactive type rejected for new request
+Duplicate code/name handled cleanly
+Referenced type is protected from destructive deletion
+
+Prompt 11. Implement certificate request submission
+Objective
+Allow eligible students/staff to create certificate requests with safe request numbering and duplicate controls.
+Copy-ready implementation prompt
+Implement a `CertificateRequestService.submit(...)` use case. Generate `request_number` server-side using the project numbering convention with concurrency safety; never accept it from the client. Validate student eligibility and active certificate type. Store optional purpose. Set status SUBMITTED and requested_at from the server. Define a duplicate-request policy: for the same student and certificate type, block or warn on another active request in SUBMITTED/UNDER_REVIEW/APPROVED unless the institution permits multiple concurrent requests. Because this policy is not encoded by the provided SQL, implement it in the service and document it explicitly rather than adding an unauthorized unique constraint.
+Expected deliverables
+Submission service
+Request-number generator
+Duplicate-active-request policy
+Submission endpoint/form and tests
+Acceptance checks
+Request number remains unique under concurrent submissions
+Client cannot set initial status or issue fields
+Inactive certificate type is rejected
+
+Prompt 12. Implement certificate approval workflow
+Objective
+Control SUBMITTED -> UNDER_REVIEW -> APPROVED/REJECTED/CANCELLED transitions with role-based permissions.
+Copy-ready implementation prompt
+Create a certificate workflow service with explicit transition methods such as start_review, approve, reject, and cancel. Define who can perform each action using the existing custom-user authorization system. Students may cancel only under institution policy and only before terminal/issuance states. Rejection must capture a reason in the existing audit/event system because the table has no rejection_reason column; do not add a column unless schema change is approved. Use database transactions and row locking for conflicting transitions. Expose action endpoints rather than generic arbitrary `status` PATCH operations.
+Expected deliverables
+Status transition matrix
+Role/permission matrix
+Workflow service using transaction.atomic
+Action APIs and audit events
+Acceptance checks
+APPROVED cannot be reached from arbitrary states
+REJECTED and CANCELLED are terminal unless policy explicitly permits reopen
+Concurrent approvals do not corrupt state
+
+Prompt 13. Implement certificate generation and one-time issuance
+Objective
+Issue approved certificates exactly once with a unique certificate number and stored generated file.
+Copy-ready implementation prompt
+Implement the issuance use case for an APPROVED certificate request. Within a transaction and appropriate row lock, allocate a unique `certificate_number`, render the certificate using the project’s approved document/PDF generation mechanism, store it through FileObjectService, assign `file_object_id`, set `issued_at`, and change status to ISSUED. Make the operation idempotent: retrying an already issued request must return the existing result rather than generating a second certificate. If rendering/storage fails, the request must not become ISSUED. If metadata save fails after physical upload, clean up the orphan object. Keep certificate numbering configurable by institution/academic year if the project has a numbering service.
+Expected deliverables
+Issuer service
+Certificate-number allocator
+Template renderer integration point
+Idempotency and cleanup tests
+Acceptance checks
+Only APPROVED can be issued
+`certificate_number`, `issued_at`, `file_object_id`, and ISSUED status become consistent atomically
+Repeated issue call does not create a duplicate certificate
+Guardrail: Generated certificate PDFs should be treated as controlled records, not public media.
+
+Prompt 14. Implement certificate retrieval, verification and controlled reissue policy
+Objective
+Support authorized access to issued certificates and define how corrections/reissues are handled without overwriting history.
+Copy-ready implementation prompt
+Implement selectors/endpoints for students and authorized staff to list certificate requests and download an issued certificate. Define a verification lookup mechanism based on certificate_number only if institution policy permits public verification; expose the minimum necessary fields and no sensitive student data. Define a reissue/correction policy. Since the SQL has one certificate_number/file per request, do not overwrite an issued certificate silently. If reissue history is required, first propose a schema extension or use the project’s immutable audit/version mechanism with explicit approval.
+Expected deliverables
+List/detail/download flows
+Optional minimal verification endpoint
+Documented reissue/correction policy
+Acceptance checks
+Non-issued requests have no downloadable certificate
+Public verification, if enabled, reveals minimal data only
+An issued file is not silently replaced
+
+Part IV - Student Exit Processing
+The exit record is one-per-enrolment and should be coordinated with clearance and certificate processes without creating hidden schema assumptions.
+Prompt 15. Implement student exit domain service
+Objective
+Create one validated exit record per programme enrolment with explicit exit-type rules.
+Copy-ready implementation prompt
+Implement `StudentExitService` for `student_exit`. Reuse the existing `student_programme_enrolment` model. Validate that the enrolment is eligible for exit and that only one exit exists per enrolment. Support COMPLETION, TRANSFER, WITHDRAWAL, TERMINATION, and OTHER with type-specific validation: destination institution is relevant for TRANSFER; old_registration_number may be used where required by institutional procedure; remarks may be mandatory for TERMINATION/OTHER based on policy. Validate exit_date against enrolment dates where those dates exist. Put all rules in the service. Use `transaction.atomic` and handle duplicate concurrent exit creation using the database unique constraint.
+Expected deliverables
+Exit service and validation policy
+Create/detail/list endpoints
+Type-specific rules and tests
+Acceptance checks
+Second exit for same enrolment is rejected
+Invalid future/past dates are handled according to explicit policy
+Ordinary users cannot terminate an enrolment without authorization
+
+Prompt 16. Coordinate exit with enrolment status and clearance dependencies
+Objective
+Prevent an exit record from causing inconsistent programme-enrolment state or bypassing institutional clearances.
+Copy-ready implementation prompt
+Integrate StudentExitService with the existing enrolment lifecycle through the owning module’s public service, not by directly mutating foreign app models. Define whether creating an exit should update enrolment status immediately or only after clearances. Inspect whether a no-dues/clearance module already exists. If not, do not invent clearance tables inside Module 13; expose a policy hook such as `can_finalize_exit(enrolment)` and document the future integration point. Make the workflow idempotent and auditable. If COMPLETION requires final-result completion or certificate eligibility, query those modules through selectors/services without introducing reverse circular dependencies.
+Expected deliverables
+Exit finalization orchestration
+Cross-module service calls
+Clearance/policy hook
+Audit events
+Acceptance checks
+No direct cross-app state mutation where an owning service exists
+Failed clearance leaves enrolment and exit state consistent
+Repeated finalize call is safe
+
+Prompt 17. Implement transfer/withdrawal/termination safeguards
+Objective
+Apply stricter authorization and evidence rules for high-impact exits.
+Copy-ready implementation prompt
+For TRANSFER, WITHDRAWAL, and TERMINATION, define action-specific permissions and required confirmations. Staff termination must require an explicitly privileged permission and a mandatory audit reason. Student withdrawal initiation, if supported, should be separated from final approval. Transfer details should not be exposed to unrelated users. Because the supplied table has no workflow-status column, do not fake a multi-step workflow by overloading `remarks`; either keep `student_exit` as the finalized record and use an existing request/workflow engine, or propose a separate approved schema for pre-exit requests.
+Expected deliverables
+Safeguard rules
+Permission definitions
+Finalized-record versus request-workflow design note
+Acceptance checks
+Termination is never available through a generic student update API
+Audit trail records actor/reason
+No hidden pseudo-status is encoded in remarks
+
+Part V - Authorization, APIs, Audit, Admin and Testing
+These prompts harden the module and make it operationally complete.
+Prompt 18. Integrate custom-user authorization and object-level scope
+Objective
+Map Module 13 actions to the existing user-role-permission model with least privilege.
+Copy-ready implementation prompt
+Create Module 13 permissions using the project’s existing custom-user authorization approach. Define granular permissions for student document upload/view, document verification, confidential file access, certificate master administration, certificate review/approval/issue, exit view/create/finalize/terminate, and audit access. Students are scoped to their own student record. Faculty/mentor access must be based on existing relationship rules rather than broad student access. Department/programme staff must be scoped to assigned organizational units if that concept exists. Superuser behavior should follow project conventions but must still respect restricted-file auditing.
+Expected deliverables
+Permission catalogue
+Role-to-permission mapping template
+Object-scope helper/policy classes
+Negative authorization tests
+Acceptance checks
+A user with list permission does not automatically gain all-object detail permission
+Student cannot approve own certificate request
+Unauthorized file access returns a non-leaking response
+
+Prompt 19. Design REST/API contracts and thin controllers
+Objective
+Expose consistent endpoints without allowing generic mutation of protected lifecycle fields.
+Copy-ready implementation prompt
+Design REST endpoints (or the project’s existing API style) for Module 13. Separate resource CRUD from domain actions. Suggested action endpoints include document verify/reject, certificate submit/start-review/approve/reject/cancel/issue, and exit finalize. Use serializers for input shape and representation, but call services for business transitions. Mark server-controlled fields read-only: storage metadata, uploaded_by_user_id, verification timestamps, requested_at, request_number, issued_at, certificate_number, generated file id, and lifecycle statuses except through action endpoints. Add pagination/filtering for staff lists and enforce scoped querysets.
+Expected deliverables
+Endpoint table with method/path/permission/input/output
+Serializer read-only/write-only decisions
+Error mapping for validation/conflict/permission/not-found
+Acceptance checks
+No mass-assignment of lifecycle fields
+Action endpoint is idempotent where appropriate
+List endpoints are scope-filtered before serialization
+
+Prompt 20. Implement audit events and security logging
+Objective
+Create an evidence trail for sensitive document and lifecycle actions without logging confidential contents.
+Copy-ready implementation prompt
+Integrate Module 13 with the existing audit framework. Record events for file upload/register/delete/download of restricted content, student-document verification/rejection, certificate request submission/transitions/issuance/download, and student-exit creation/finalization/termination. Capture actor user id, object identifiers, event type, timestamp, request correlation id/IP if the existing audit policy allows, and before/after business state. Never log file contents, document numbers beyond what policy permits, signed URLs, tokens, or secrets. Define high-severity security events for repeated unauthorized file access attempts.
+Expected deliverables
+Audit event taxonomy
+Instrumentation points
+Redaction rules
+Security-event tests
+Acceptance checks
+Sensitive payloads are absent from logs
+Every privileged terminal action has an audit event
+Audit failures follow the project’s chosen fail-open/fail-closed policy explicitly
+
+Prompt 21. Build Django admin operations safely
+Objective
+Give authorized administrators operational visibility without bypassing workflow services.
+Copy-ready implementation prompt
+Configure Django admin for Module 13 using list_display/search/filter/read-only fields appropriate to each model. Prevent admin from freely editing server-controlled lifecycle fields and file storage keys. Implement admin actions only when they call the same domain services used by APIs. Add safe links for authorized file access rather than exposing raw storage URLs. For certificate issuance, prefer a service-backed action with confirmation and permission checks. For student exits, do not allow bulk termination without an explicitly designed safeguarded workflow.
+Expected deliverables
+Admin classes
+Safe service-backed admin actions
+Read-only and search/filter configuration
+Acceptance checks
+Raw storage URLs are not exposed as unrestricted hyperlinks
+Admin cannot bypass status transition rules
+Bulk destructive actions are disabled unless explicitly justified
+
+Prompt 22. Create comprehensive automated test suite
+Objective
+Prove schema rules, permissions, state machines, concurrency safety, storage cleanup, and APIs.
+Copy-ready implementation prompt
+Create tests for Module 13 using the project’s testing framework. Include model/constraint tests, service unit tests, API integration tests, permission/object-scope tests, storage adapter tests with a fake backend, and transaction/concurrency tests where feasible. Cover duplicate storage keys, zero-size files, checksum validation, student document uniqueness, illegal verification transitions, unauthorized download, concurrent certificate request-number allocation, duplicate issuance attempts, storage failure during issuance, duplicate student exit creation, and restricted termination permissions. Use factories/fixtures from existing modules rather than creating duplicate test masters.
+Expected deliverables
+Test matrix
+Factories/fixtures integration
+Happy path and failure tests
+Concurrency/idempotency tests
+Acceptance checks
+Critical services reach meaningful branch coverage
+Every privileged action has at least one deny test
+Failure paths verify no orphaned database/file state
+
+Prompt 23. Create scheduled jobs, retention tasks and operational checks
+Objective
+Handle expiry and cleanup safely without embedding time-driven changes in request/response paths.
+Copy-ready implementation prompt
+Implement scheduled tasks only where required by institutional policy and existing infrastructure (Celery, cron/management command, or scheduler). Candidate jobs: mark qualifying student documents EXPIRED based on expiry_date, purge physically deleted file objects after retention period, verify storage/database orphan mismatches, and report certificate requests stuck in workflow. Jobs must be idempotent, batch-safe, observable, and scoped. Do not physically delete files merely because a document becomes EXPIRED. Add dry-run/report mode for destructive cleanup.
+Expected deliverables
+Scheduled task/management command design
+Idempotency strategy
+Dry-run mode and operational metrics
+Acceptance checks
+Rerunning a job does not duplicate effects
+Retention purge skips records not yet eligible
+Errors are logged without leaking sensitive metadata
+
+Part VI - End-to-End Integration and Completion
+Prompt 24. Run end-to-end integration scenarios
+Objective
+Validate complete student and staff journeys across documents, certificates, and exits.
+Copy-ready implementation prompt
+Create end-to-end integration tests or scripted scenarios for Module 13. Scenario A: student uploads a required document, authorized staff verifies it, student downloads it. Scenario B: student submits a certificate request, staff reviews/approves, authorized issuer issues a generated certificate exactly once, student downloads it. Scenario C: authorized staff finalizes a completion exit only when cross-module policy permits. Scenario D: transfer/withdrawal/termination rejection paths. Verify audit events, permissions, file-object links, timestamps, and final statuses at each step. Include rollback/failure injection around storage and database writes.
+Expected deliverables
+Scenario scripts/tests
+Expected state snapshots after each step
+Failure injection cases
+Acceptance checks
+All lifecycle fields match expected final states
+No unauthorized cross-student access
+No orphan files after injected failure
+
+Prompt 25. Perform production-readiness review
+Objective
+Check security, schema fidelity, operability, migrations, documentation, and unresolved decisions before release.
+Copy-ready implementation prompt
+Perform a final production-readiness review of Module 13 against the supplied SQL and existing SIMS architecture. Verify migrations, foreign keys, unique constraints, status enums, storage security, file access authorization, generated certificate integrity, request/certificate number concurrency, exit uniqueness, audit events, tests, admin hardening, API documentation, settings, environment variables, backup/restore implications, and monitoring. Produce a release checklist with PASS/FAIL/NEEDS-DECISION. Any NEEDS-DECISION item must explain the exact institutional policy required; do not silently choose policy. Also produce a concise list of schema extensions that may be useful later (for example reissue history, verifier FK, certificate template/version, exit workflow/clearance), but keep them outside the current implementation unless approved.
+Expected deliverables
+Production readiness checklist
+Open policy decisions
+Deferred enhancement/schema-extension list
+Deployment and rollback checklist
+Acceptance checks
+Current implementation works without unapproved schema additions
+All open decisions are visible
+Rollback and backup strategy is documented
+
+Implementation Sequence and Dependency Matrix
+Order
+Work Package
+Depends On
+Gate
+1
+Impact analysis + ownership
+All prior SIMS modules
+Required
+2
+App/package structure
+1
+Required
+3
+Models + migrations
+1-2
+Required
+4
+File storage + validation
+3
+Required
+5
+Student documents
+4 + existing document_type/student
+Required
+6
+Certificate master + request
+3-4 + student
+Required
+7
+Certificate approval + issuance
+6 + file service
+Required
+8
+Student exit
+3 + enrolment service
+Required
+9
+Authorization + API + admin
+5-8
+Required
+10
+Audit + jobs + tests
+4-9
+Required
+11
+E2E + production review
+All
+Release gate
+
+Suggested Domain Permission Codes
+Permission
+Purpose
+documents.view_own_document
+Student sees own document metadata/file
+documents.upload_own_document
+Student uploads allowed document types
+documents.verify_document
+Authorized staff verifies/rejects
+documents.access_restricted_file
+Privileged access to restricted file objects
+certificates.manage_type
+Maintain certificate type master
+certificates.review_request
+Move request into/review state
+certificates.approve_request
+Approve/reject certificate request
+certificates.issue_certificate
+Generate and issue approved certificate
+student_exit.view_exit
+View authorized exit records
+student_exit.create_exit
+Create/finalize permitted exit
+student_exit.terminate_enrolment
+Highly privileged termination action
+
+Appendix A - Source SQL Schema (Implementation Baseline)
+The following schema is the baseline supplied for Module 13. Implementation prompts above assume these columns and relationships remain authoritative unless a separately approved schema migration changes them.
+-- =============================================================
+-- 13. DOCUMENT, CERTIFICATE AND EXIT MODULE
+-- =============================================================
+CREATE TABLE file_object (
+    file_object_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    storage_provider VARCHAR(30) NOT NULL,
+    storage_key VARCHAR(500) NOT NULL UNIQUE,
+    original_file_name VARCHAR(255) NOT NULL,
+    mime_type VARCHAR(100) NOT NULL,
+    file_size_bytes BIGINT UNSIGNED NOT NULL,
+    checksum_sha256 CHAR(64) NULL,
+    stored_file_name VARCHAR(255) NULL,
+    storage_url VARCHAR(1000) NULL,
+    file_extension VARCHAR(20) NULL,
+    confidentiality_level ENUM('PUBLIC','INTERNAL','CONFIDENTIAL','RESTRICTED','HIGHLY_RESTRICTED') NOT NULL DEFAULT 'INTERNAL',
+    is_encrypted BOOLEAN NOT NULL DEFAULT FALSE,
+    uploaded_by_user_id BIGINT UNSIGNED NULL,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    deleted_at TIMESTAMP NULL,
+    CONSTRAINT chk_file_object_size CHECK (file_size_bytes > 0),
+    CONSTRAINT chk_file_object_checksum CHECK (checksum_sha256 IS NULL OR checksum_sha256 REGEXP '^[0-9A-Fa-f]{64}$')
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE student_document (
+    student_document_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    student_id BIGINT UNSIGNED NOT NULL,
+    document_type_id SMALLINT UNSIGNED NOT NULL,
+    file_object_id BIGINT UNSIGNED NOT NULL,
+    document_number VARCHAR(100) NULL,
+    issue_date DATE NULL,
+    expiry_date DATE NULL,
+    verification_status ENUM('PENDING','VERIFIED','REJECTED','EXPIRED') NOT NULL DEFAULT 'PENDING',
+    verified_at DATETIME NULL,
+    remarks VARCHAR(500) NULL,
+    CONSTRAINT uq_student_document UNIQUE (student_id, document_type_id, document_number),
+    CONSTRAINT fk_student_document_student FOREIGN KEY (student_id) REFERENCES student(student_id),
+    CONSTRAINT fk_student_document_type FOREIGN KEY (document_type_id) REFERENCES document_type(document_type_id),
+    CONSTRAINT fk_student_document_file FOREIGN KEY (file_object_id) REFERENCES file_object(file_object_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE certificate_type (
+    certificate_type_id SMALLINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    certificate_code VARCHAR(30) NOT NULL UNIQUE,
+    certificate_name VARCHAR(100) NOT NULL UNIQUE,
+    is_active BOOLEAN NOT NULL DEFAULT TRUE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE certificate_request (
+    certificate_request_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    request_number VARCHAR(30) NOT NULL UNIQUE,
+    student_id BIGINT UNSIGNED NOT NULL,
+    certificate_type_id SMALLINT UNSIGNED NOT NULL,
+    requested_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    purpose VARCHAR(500) NULL,
+    request_status ENUM('SUBMITTED','UNDER_REVIEW','APPROVED','REJECTED','ISSUED','CANCELLED') NOT NULL DEFAULT 'SUBMITTED',
+    issued_at DATETIME NULL,
+    certificate_number VARCHAR(50) NULL UNIQUE,
+    file_object_id BIGINT UNSIGNED NULL,
+    CONSTRAINT fk_certificate_request_student FOREIGN KEY (student_id) REFERENCES student(student_id),
+    CONSTRAINT fk_certificate_request_type FOREIGN KEY (certificate_type_id) REFERENCES certificate_type(certificate_type_id),
+    CONSTRAINT fk_certificate_request_file FOREIGN KEY (file_object_id) REFERENCES file_object(file_object_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE student_exit (
+    student_exit_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    enrolment_id BIGINT UNSIGNED NOT NULL,
+    exit_type ENUM('COMPLETION','TRANSFER','WITHDRAWAL','TERMINATION','OTHER') NOT NULL,
+    exit_date DATE NOT NULL,
+    destination_institution VARCHAR(250) NULL,
+    old_registration_number VARCHAR(50) NULL,
+    remarks TEXT NULL,
+    CONSTRAINT uq_student_exit_enrolment UNIQUE (enrolment_id),
+    CONSTRAINT fk_student_exit_enrolment FOREIGN KEY (enrolment_id) REFERENCES student_programme_enrolment(enrolment_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+Appendix B - Master Instruction to Prepend to Every Coding Prompt
+You are implementing one feature inside an existing production-style Django SIMS modular monolith. Inspect the repository and reuse existing models/services before adding anything. Preserve the supplied database schema and existing custom-user authorization design. Keep business rules in service/use-case classes, selectors for reads, and thin serializers/views. Use transaction.atomic and row-level locking for concurrency-sensitive transitions. Enforce object-level authorization before returning data or files. Never trust client-supplied IDs or lifecycle fields beyond validated references. Do not add or rename database columns silently. Do not create duplicate master entities. Generate code with imports, migrations, URLs, permissions, tests, and concise integration notes. If repository reality conflicts with the requested feature, clearly report the conflict and choose the least invasive compatible implementation.
+
+Definition of Done
+All five source tables are represented correctly and migrations are compatible with the live project.
+Uploads are validated, stored through an abstraction, checksum-capable, authorization-protected, and cleanup-safe.
+Student documents support explicit verification transitions and restricted access.
+Certificate requests follow controlled transitions and issuance is atomic/idempotent.
+Student exit creation is one-per-enrolment, permission-controlled, and integrated through owning services.
+Custom-user permissions and object scoping are tested for both allow and deny paths.
+Privileged actions are auditable without leaking confidential content.
+Admin and APIs cannot bypass domain services.
+Automated tests cover constraints, workflows, failures, permissions, and concurrency.
+No unapproved schema extensions or duplicate master data have been introduced.

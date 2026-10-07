@@ -1,0 +1,27 @@
+﻿[Unit]
+Description=SIMS Django API
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=sims
+Group=sims
+WorkingDirectory=/srv/sims/current/backend
+EnvironmentFile=/etc/sims/runtime.env
+Environment=DJANGO_SETTINGS_MODULE=config.settings.production
+Environment=PYTHONDONTWRITEBYTECODE=1
+ExecStart=/srv/sims/venv/bin/gunicorn config.wsgi:application --bind 127.0.0.1:8000 --workers 3 --timeout 60 --graceful-timeout 30 --access-logfile - --error-logfile - --access-logformat "%%(m)s %%(U)s %%(s)s %%(L)s"
+ExecReload=/bin/kill -HUP $MAINPID
+Restart=on-failure
+RestartSec=5
+TimeoutStopSec=45
+UMask=0027
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectHome=true
+ProtectSystem=strict
+ReadWritePaths=/var/lib/sims /var/log/sims
+
+[Install]
+WantedBy=multi-user.target

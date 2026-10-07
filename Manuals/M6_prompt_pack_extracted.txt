@@ -1,0 +1,303 @@
+﻿Admission and Enrolment Transaction Module Prompt Pack
+SIMS Module 6  Django DRF MySQL React TypeScript PWA
+
+Implementation prompts for a plugin ready modular monolith
+
+Purpose  This pack converts the supplied SQL module into an ordered implementation programme. It guides architecture review, Django modelling, transactional admission, enrolment lifecycle management, secure APIs, a React PWA interface, testing, data migration, and production readiness.
+Core decision  Use Django’s custom user model and security framework while retaining SIMS-specific institution membership, scoped roles, module activation, campus and department scope, workflow authority, confidentiality, and record-level access.
+How to use this pack
+Run Prompt 1 first and approve the corrected data model before generating migrations.
+Use Prompts 2 through 8 in order for backend, workflow, API, and frontend implementation.
+Use Prompts 9 through 12 as release gates for security, testing, migration, deployment, and documentation.
+Give the AI the common context and approved schema whenever a prompt is used in a separate chat.
+
+Prompt sequence
+No
+Prompt focus
+1
+Schema audit and revised DDL
+2
+Django application architecture
+3
+Models migrations and constraints
+4
+Applicant and application workflow
+5
+Atomic admission conversion
+6
+Enrolment lifecycle and history
+7
+DRF API and authorization
+8
+React PWA user experience
+9
+Security privacy and auditability
+10
+Testing and quality gates
+11
+Data migration and seed strategy
+12
+Deployment operations and handover
+
+Common implementation context
+Architecture  Plugin-ready modular monolith. Keep admission and enrolment cohesive, but expose stable interfaces and avoid direct coupling to unrelated modules.
+Backend  Django 5.x, Django REST Framework, MySQL 8.0.16 or later, transactional service layer, explicit domain validation, and OpenAPI documentation.
+Frontend  React with TypeScript, Material UI, Vite, and @vite-pwa/plugin. Build accessible, responsive, installable workflows with safe offline behaviour.
+Authorization  Custom Django User from project inception. Extend it with institution membership, institution-scoped roles, campus and department scope, workflow authority, confidentiality, and object-level access.
+Data principles  Use normalized relational data, deterministic identifiers, immutable audit events, idempotency where retries are possible, row-level locking for conversion, and no silent data repair.
+Output standard  Generate production-oriented code with filenames, dependencies, migrations, tests, commands, assumptions, and acceptance criteria. Avoid pseudocode unless explicitly labelled.
+Prompt 1  Audit the SQL schema and produce revised DDL
+Objective  Validate the supplied tables against MySQL, Django ORM behaviour, domain integrity, concurrency, and the wider SIMS ownership model.
+Prompt
+Role  Act as a senior Django and MySQL data architect reviewing Module 6 of SIMS.
+Task  Audit every column, key, index, ENUM, uniqueness rule, nullability choice, delete/update action, and cross-table relationship. Produce corrected MySQL DDL without discarding valid intent.
+Mandatory checks  Verify applicant deduplication strategy; caste and sub-caste hierarchy; programme-specialization ownership; curriculum-scheme ownership by programme; semester validity; academic-year admission rules; one application to one admitted student; one admission conversion to one enrolment; nullable composite foreign-key behaviour; repeat admission and programme-transfer cases; status history consistency; created/updated/by metadata; soft-retention requirements; and indexes for expected search and reporting paths.
+Important  Explain that a nullable specialization in a composite foreign key does not validate programme ownership when specialization_id is NULL. Recommend a deterministic enforcement strategy in the database and service layer.
+Output  Provide: findings by severity, revised DDL, added indexes and constraints, deletion policy, transition rules, and a migration impact note.
+Required deliverables
+Issue matrix with severity, evidence, impact, and correction
+Revised MySQL 8 DDL for all four tables
+Recommended auxiliary tables or fields, only where justified
+Explicit invariants that require service-layer enforcement
+Backward-compatible migration plan
+Completion rule  Do not omit code, migrations, validation rules, permissions, tests, or file paths. State assumptions and unresolved dependencies explicitly.
+Prompt 2  Design the Django module architecture
+Objective  Define a maintainable Django app boundary and dependency direction for admissions and enrolments.
+Prompt
+Task  Design the admission_enrolment Django app within the SIMS modular monolith. Separate models, selectors, commands/services, policies, serializers, API views, signals only when unavoidable, admin, tasks, and tests.
+Boundaries  Identify allowed dependencies on people/student master, academic calendar, programme and specialization, curriculum scheme, reference data, finance, documents, notifications, and audit logging. Define public interfaces so future plugins can subscribe without importing internal models.
+Transactions  Place admission conversion and enrolment-status changes in explicit service functions using transaction.atomic, select_for_update, validation, idempotency keys, and on_commit events.
+Deliver  Show the file tree, purpose of each file, dependency rules, domain events, and sequence of calls for the principal use cases.
+Required deliverables
+Recommended Django app tree
+Domain boundary and dependency matrix
+Public service and selector interfaces
+Domain-event catalogue
+Architecture decisions with alternatives rejected
+Completion rule  Do not omit code, migrations, validation rules, permissions, tests, or file paths. State assumptions and unresolved dependencies explicitly.
+Prompt 3  Generate models migrations and database constraints
+Objective  Translate the approved schema into robust Django models and deterministic migrations.
+Prompt
+Task  Write complete Django model classes for AdmissionApplicant, AdmissionApplication, StudentProgrammeEnrolment, and EnrolmentStatusHistory. Use TextChoices, db_table, explicit indexes, database constraints, related_name, validation, and appropriate on_delete behaviour.
+MySQL details  Map unsigned SQL identifiers safely, discuss Django/MySQL CHECK and partial-unique limitations, and implement deterministic alternatives for nullable uniqueness or single-current rules.
+Integrity  Add clean() and service validation for programme-specialization, programme-curriculum-scheme, semester, category, applicant identity, and status combinations. Do not rely on model clean() alone for API or concurrent writes.
+Migration  Provide initial or incremental migrations, including RunSQL only when the ORM cannot express a required invariant. Include reversible operations and schema-state alignment.
+Required deliverables
+Complete model code
+Migration files in execution order
+Constraint and index rationale
+Admin registration suitable for controlled support use
+Model and migration tests
+Completion rule  Do not omit code, migrations, validation rules, permissions, tests, or file paths. State assumptions and unresolved dependencies explicitly.
+Prompt 4  Implement applicant and application workflow
+Objective  Build safe applicant capture, application submission, eligibility review, selection, waitlisting, rejection, and cancellation.
+Prompt
+States  Define an explicit application transition map for DRAFT, SUBMITTED, UNDER_REVIEW, ELIGIBLE, INELIGIBLE, SELECTED, WAITLISTED, REJECTED, ADMITTED, and CANCELLED. Deny invalid skips and terminal-state mutation.
+Applicant data  Normalize email and phone; define duplicate-candidate matching without automatically merging people; validate caste/sub-caste and reference data; preserve corrections in audit history.
+Workflow  Implement command services for draft creation, submission, review assignment, eligibility decision, selection/waitlist decision, rejection, cancellation, and controlled reopening. Record actor, timestamp, reason, request ID, and previous/new values.
+Concurrency  Use optimistic or pessimistic safeguards where two reviewers might act simultaneously. Return stable domain error codes for API clients.
+Required deliverables
+Transition table and authorization matrix
+Service-layer code for every command
+Validation and domain error catalogue
+Audit-event payload examples
+Unit and concurrency tests
+Completion rule  Do not omit code, migrations, validation rules, permissions, tests, or file paths. State assumptions and unresolved dependencies explicitly.
+Prompt 5  Implement atomic admission conversion
+Objective  Convert a selected and eligible application into student and enrolment records exactly once.
+Prompt
+Task  Design and implement admit_application(application_id, actor, payload, idempotency_key). Lock the application, re-read authoritative data, validate eligibility and selection, create or link the student, create the programme enrolment, update admitted_student_id and status, and emit an event only after commit.
+Rules  Prevent duplicate students, duplicate enrolments, double admission, cross-programme specialization, invalid curriculum scheme, invalid admission semester, stale application decisions, and partial commits. Define when an existing student may be linked.
+Failure handling  Return deterministic conflict and validation responses. Demonstrate retry behaviour after timeout or duplicate client submission. Never emit notifications before commit.
+Finance interface  If fees are required, define a clear precondition or saga boundary with the finance module; do not create hidden cross-module writes.
+Required deliverables
+Transaction sequence diagram in Mermaid
+Production-ready service code
+Idempotency storage and retry strategy
+Race-condition and rollback tests
+Post-commit event contract
+Completion rule  Do not omit code, migrations, validation rules, permissions, tests, or file paths. State assumptions and unresolved dependencies explicitly.
+Prompt 6  Implement enrolment lifecycle and status history
+Objective  Manage enrolment state changes with complete, immutable and queryable history.
+Prompt
+Transitions  Define valid transitions among ACTIVE, ON_BREAK, WITHDRAWN, TRANSFERRED, COMPLETED, and TERMINATED, including required dates, reasons, evidence, approvals, and reactivation policy.
+History  Write a single command service that locks the enrolment, validates the transition, updates the current row, and appends immutable history with actor, occurred_at, effective_date, reason, source, and request ID.
+Special cases  Address programme transfer, specialization change, curriculum migration, break in study, completion, termination, and correction of wrongly recorded effective dates. Distinguish a new enrolment from a status update.
+Reporting  Provide selectors for current enrolments, status as of a date, duration in each status, and transition audit trail.
+Required deliverables
+Transition and approval matrix
+Lifecycle command services
+Immutable history model recommendation
+As-of-date selectors and SQL considerations
+Lifecycle tests including concurrent updates
+Completion rule  Do not omit code, migrations, validation rules, permissions, tests, or file paths. State assumptions and unresolved dependencies explicitly.
+Prompt 7  Build DRF APIs and scoped authorization
+Objective  Expose secure, versioned and workflow-aware APIs without leaking sensitive applicant data.
+Prompt
+API  Create serializers, viewsets or APIViews, routes, filters, pagination, ordering, error schema, and OpenAPI annotations for applicants, applications, admission conversion, enrolments, and status history.
+Authorization  Use Django authentication plus SIMS membership and scope policies. Demonstrate institution, campus, department, programme, action, field, and object-level checks. Separate view, create, review, select, admit, change-status, export, and view-sensitive-demographics permissions.
+Data exposure  Use separate read/write/detail serializers; mask or omit DOB, phone, email, caste, and social-category data unless justified. Prevent bulk export by ordinary reviewers.
+Performance  Use select_related, prefetch_related, annotated counts, database indexes, bounded filters, and query-count tests. Do not allow unbounded listing.
+Required deliverables
+Endpoint catalogue with methods and permissions
+Complete serializer view policy and URL code
+Standard success and error examples
+OpenAPI schema configuration
+API permission and query-performance tests
+Completion rule  Do not omit code, migrations, validation rules, permissions, tests, or file paths. State assumptions and unresolved dependencies explicitly.
+Prompt 8  Build the React TypeScript PWA interface
+Objective  Create accessible application processing and enrolment operations for applicants, reviewers, admission officers, and authorized administrators.
+Prompt
+Frontend  Use React TypeScript, MUI, React Router, a typed API client, server-state caching, form validation, and Vite PWA. Provide the feature folder tree and complete key components.
+Screens  Applicant list and deduplication warnings; application wizard; review queue; eligibility decision; selection/waitlist board; admission confirmation; enrolment profile; lifecycle action dialog; and immutable history timeline.
+Safety  Use confirmation summaries for irreversible actions, display server-calculated eligibility and version data, handle 409 conflicts, prevent double submission, and refresh after state-changing commands.
+PWA  Cache only non-sensitive static assets and explicitly safe reference data. Do not cache applicant PII, authentication responses, admission commands, or enrolment records. Define offline messaging and update behaviour.
+Required deliverables
+Frontend directory structure
+Routes role-aware navigation and screen specifications
+Typed API contracts and form schemas
+Complete code for critical workflows
+Accessibility responsive and PWA acceptance tests
+Completion rule  Do not omit code, migrations, validation rules, permissions, tests, or file paths. State assumptions and unresolved dependencies explicitly.
+Prompt 9  Harden security privacy and auditability
+Objective  Protect personally identifiable and socially sensitive admissions data across storage, APIs, logs, exports, and support workflows.
+Prompt
+Threat model  Assess broken access control, IDOR, mass assignment, enumeration, duplicate admission, forged status changes, CSRF, XSS, injection, insecure exports, log leakage, offline-cache leakage, privilege escalation, and insider misuse.
+Controls  Apply least privilege, secure sessions or tokens, CSRF strategy, rate limits, field allowlists, object policies, encrypted transport, secret management, structured redaction, export controls, audit trails, retention, and incident traceability.
+Privacy  Classify each field and specify purpose, visibility, retention, correction, archival, and deletion/anonymization constraints. Treat caste, sub-caste, social category, DOB, contact data, eligibility, and decisions as sensitive.
+Audit  Make domain audit records append-only and tamper-evident where practical; distinguish operational logs from authoritative audit events.
+Required deliverables
+Threat model and abuse cases
+Field-level data classification matrix
+Control implementation checklist with code examples
+Audit schema and event catalogue
+Security test plan
+Completion rule  Do not omit code, migrations, validation rules, permissions, tests, or file paths. State assumptions and unresolved dependencies explicitly.
+Prompt 10  Create comprehensive automated tests and quality gates
+Objective  Prove the module’s state integrity, authorization, transaction safety, API behaviour, and frontend workflows.
+Prompt
+Backend  Write model, service, API, policy, migration, database-constraint, property-based, and concurrency tests. Cover every state transition and negative path.
+Transactions  Test simultaneous admission attempts, simultaneous lifecycle changes, idempotent retries, rollback after mid-transaction failure, and on_commit event behaviour using the real MySQL test service where locking semantics matter.
+Frontend  Use component and end-to-end tests for wizard validation, stale-version conflicts, forbidden actions, masked data, confirmation, offline state, and failed network retries.
+Quality  Define coverage expectations, linting, type checks, migration checks, schema drift checks, OpenAPI validation, accessibility audits, dependency scanning, and CI gates.
+Required deliverables
+Test matrix mapped to invariants and permissions
+Representative complete backend tests
+Representative frontend and E2E tests
+MySQL concurrency-test setup
+CI pipeline and release gate configuration
+Completion rule  Do not omit code, migrations, validation rules, permissions, tests, or file paths. State assumptions and unresolved dependencies explicitly.
+Prompt 11  Plan data migration reference seeding and reconciliation
+Objective  Move legacy admissions and enrolments without losing provenance or inventing relationships.
+Prompt
+Discovery  Profile identifiers, duplicates, missing references, invalid specializations, scheme mismatches, contradictory statuses, reused application numbers, and incomplete history.
+Mapping  Define source-to-target mappings, canonicalization, reference-data crosswalks, deterministic application numbers, student linking rules, and quarantine tables for unresolved rows.
+Execution  Design repeatable extract, stage, validate, transform, load, reconcile, and rollback phases. Record source keys, batch IDs, hashes, decisions, and exception reasons.
+Reconciliation  Specify control totals, uniqueness checks, orphan checks, status counts, sample verification, sign-off reports, and a zero-unexplained-difference rule.
+Required deliverables
+Migration runbook and staging design
+Mapping and exception-handling tables
+Idempotent Django management command structure
+Pre/post migration SQL checks
+Reconciliation and sign-off report template
+Completion rule  Do not omit code, migrations, validation rules, permissions, tests, or file paths. State assumptions and unresolved dependencies explicitly.
+Prompt 12  Prepare deployment operations and handover
+Objective  Release the module safely and provide administrators and developers with operational guidance.
+Prompt
+Deployment  Provide environment configuration, migration order, pre-flight checks, backups, maintenance strategy, Gunicorn and Nginx considerations, static assets, PWA cache versioning, health checks, and rollback.
+Operations  Define structured logs, metrics, traces, alerts, dashboards, dead-letter handling for events, failed-admission investigation, audit searches, data repair through approved commands, and disaster recovery.
+Documentation  Create administrator workflows, permission catalogue, API guide, developer architecture guide, troubleshooting guide, and release checklist.
+Acceptance  Provide measurable functional, security, performance, accessibility, recoverability, and data-integrity acceptance criteria.
+Required deliverables
+Production deployment checklist
+Observability and alert catalogue
+Backup restore and rollback procedure
+Administrator and developer handover outline
+Final acceptance and go-live sign-off checklist
+Completion rule  Do not omit code, migrations, validation rules, permissions, tests, or file paths. State assumptions and unresolved dependencies explicitly.
+
+Source schema supplied for Module 6
+Use this appendix as the baseline input to Prompt 1. Replace it with the approved revised DDL for all later prompts.
+-- 6. ADMISSION AND ENROLMENT TRANSACTION MODULE
+ 
+CREATE TABLE admission_applicant (
+    admission_applicant_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    first_name VARCHAR(100) NOT NULL,
+    middle_name VARCHAR(100) NULL,
+    last_name VARCHAR(100) NULL,
+    display_name VARCHAR(250) NOT NULL,
+    date_of_birth DATE NULL,
+    gender_id TINYINT UNSIGNED NULL,
+    primary_email VARCHAR(254) NULL,
+    primary_phone VARCHAR(25) NULL,
+    nationality_country_id SMALLINT UNSIGNED NULL,
+    social_category_id SMALLINT UNSIGNED NULL,
+    caste_id INT UNSIGNED NULL,
+    sub_caste_id INT UNSIGNED NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CONSTRAINT fk_admission_applicant_gender FOREIGN KEY (gender_id) REFERENCES gender(gender_id),
+    CONSTRAINT fk_admission_applicant_nationality FOREIGN KEY (nationality_country_id) REFERENCES country(country_id),
+    CONSTRAINT fk_admission_applicant_social_category FOREIGN KEY (social_category_id) REFERENCES social_category(social_category_id),
+    CONSTRAINT fk_admission_applicant_caste FOREIGN KEY (caste_id) REFERENCES caste(caste_id),
+    CONSTRAINT fk_admission_applicant_sub_caste FOREIGN KEY (sub_caste_id) REFERENCES sub_caste(sub_caste_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+ 
+CREATE TABLE admission_application (
+    application_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    application_number VARCHAR(30) NOT NULL UNIQUE,
+    admission_applicant_id BIGINT UNSIGNED NOT NULL,
+    admitted_student_id BIGINT UNSIGNED NULL UNIQUE,
+    programme_id SMALLINT UNSIGNED NOT NULL,
+    specialization_id SMALLINT UNSIGNED NULL,
+    academic_year_id SMALLINT UNSIGNED NOT NULL,
+    admission_category_id SMALLINT UNSIGNED NULL,
+    application_date DATE NOT NULL,
+    application_status ENUM('DRAFT','SUBMITTED','UNDER_REVIEW','ELIGIBLE','INELIGIBLE','SELECTED','WAITLISTED','REJECTED','ADMITTED','CANCELLED') NOT NULL DEFAULT 'DRAFT',
+    eligibility_status ENUM('PENDING','ELIGIBLE','INELIGIBLE') NOT NULL DEFAULT 'PENDING',
+    remarks TEXT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CONSTRAINT fk_application_applicant FOREIGN KEY (admission_applicant_id) REFERENCES admission_applicant(admission_applicant_id),
+    CONSTRAINT fk_application_admitted_student FOREIGN KEY (admitted_student_id) REFERENCES student(student_id),
+    CONSTRAINT fk_application_programme FOREIGN KEY (programme_id) REFERENCES programme(programme_id),
+    CONSTRAINT fk_application_specialization_programme FOREIGN KEY (specialization_id, programme_id)
+        REFERENCES programme_specialization(specialization_id, programme_id),
+    CONSTRAINT fk_application_year FOREIGN KEY (academic_year_id) REFERENCES academic_year(academic_year_id),
+    CONSTRAINT fk_application_category FOREIGN KEY (admission_category_id) REFERENCES admission_category(admission_category_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+ 
+CREATE TABLE student_programme_enrolment (
+    enrolment_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    student_id BIGINT UNSIGNED NOT NULL,
+    programme_id SMALLINT UNSIGNED NOT NULL,
+    specialization_id SMALLINT UNSIGNED NULL,
+    curriculum_scheme_id INT UNSIGNED NOT NULL,
+    admission_academic_year_id SMALLINT UNSIGNED NOT NULL,
+    admission_category_id SMALLINT UNSIGNED NULL,
+    admission_date DATE NOT NULL,
+    admission_semester_id TINYINT UNSIGNED NOT NULL,
+    expected_completion_date DATE NULL,
+    enrolment_status ENUM('ACTIVE','ON_BREAK','WITHDRAWN','TRANSFERRED','COMPLETED','TERMINATED') NOT NULL DEFAULT 'ACTIVE',
+    CONSTRAINT uq_student_programme_enrolment UNIQUE (student_id, programme_id, admission_academic_year_id),
+    CONSTRAINT fk_enrolment_student FOREIGN KEY (student_id) REFERENCES student(student_id),
+    CONSTRAINT fk_enrolment_programme FOREIGN KEY (programme_id) REFERENCES programme(programme_id),
+    CONSTRAINT fk_enrolment_specialization_programme FOREIGN KEY (specialization_id, programme_id)
+        REFERENCES programme_specialization(specialization_id, programme_id),
+    CONSTRAINT fk_enrolment_scheme FOREIGN KEY (curriculum_scheme_id) REFERENCES curriculum_scheme(curriculum_scheme_id),
+    CONSTRAINT fk_enrolment_year FOREIGN KEY (admission_academic_year_id) REFERENCES academic_year(academic_year_id),
+    CONSTRAINT fk_enrolment_category FOREIGN KEY (admission_category_id) REFERENCES admission_category(admission_category_id),
+    CONSTRAINT fk_enrolment_semester FOREIGN KEY (admission_semester_id) REFERENCES semester(semester_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+ 
+CREATE TABLE enrolment_status_history (
+    enrolment_status_history_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    enrolment_id BIGINT UNSIGNED NOT NULL,
+    old_status VARCHAR(30) NULL,
+    new_status VARCHAR(30) NOT NULL,
+    effective_date DATE NOT NULL,
+    reason VARCHAR(500) NULL,
+    CONSTRAINT fk_enrolment_history_enrolment FOREIGN KEY (enrolment_id) REFERENCES student_programme_enrolment(enrolment_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+Final integrated build prompt
+Using the approved outputs of Prompts 1 through 12, generate an integrated, production-ready Module 6 implementation. Preserve the SIMS plugin-ready modular-monolith boundaries and Django custom-user authorization model. Return the final file tree, complete code in dependency order, migrations, configuration, API documentation, frontend implementation, tests, deployment commands, and acceptance checklist. Highlight any dependency on another SIMS module and do not fabricate missing table definitions. Use atomic transactions and explicit policies for every state-changing operation. Ensure that application admission is idempotent and creates or links the student and programme enrolment exactly once.

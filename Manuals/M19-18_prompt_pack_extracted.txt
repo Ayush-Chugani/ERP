@@ -1,0 +1,101 @@
+SIMS V6Module 18 — Performance Indexes
+Structured Django Implementation Prompt Pack
+Plugin-ready modular monolith • MySQL/InnoDB • custom user/RBAC • migration-safe indexing
+
+1. Architecture Guardrails
+Use the supplied SQL as the authoritative performance-index intent for SIMS V6. Preserve existing Django app boundaries, db_table/db_column mappings, MySQL/InnoDB semantics, and the project’s custom user-account/RBAC architecture.
+Do not change field types, nullability, foreign keys, unique/check constraints, soft-delete rules, or business behavior merely to add indexes. Inspect primary keys, unique constraints, FK indexes, Meta.indexes and migration history before creating anything. Preserve composite-index column order exactly.
+2. Master Prompt — Implement Module 18
+Implement SIMS V6 Module 18: PERFORMANCE INDEXES in the existing Django modular-monolith project.
+First map every supplied SQL index to its owning Django app/model and produce a gap analysis. For every required non-redundant index, use models.Index plus migrations.AddIndex when appropriate, preserve the supplied index name and exact ordered columns, keep migrations in the owning app, and create correct dependencies.
+Do not introduce uniqueness or unrelated schema changes. Validate on a clean database and an upgraded pre-Module-18 database. Verify physical indexes using SHOW INDEX or INFORMATION_SCHEMA.STATISTICS. Run Django checks and affected tests.
+Return a line-by-line matrix with: index name, table, ordered columns, app, model, existing coverage, action, migration, and final status: CREATED, EXISTING EXACT MATCH, ALREADY COVERED, or BLOCKED. Never guess unresolved mappings.
+3. Core Academic / HR Prompt
+Implement and verify the following exact index intents. Preserve names and ordered columns. Check existing coverage first:
+idx_student_name → student(last_name, first_name)
+idx_employee_name → employee(last_name, first_name)
+idx_admission_applicant_name → admission_applicant(last_name, first_name)
+idx_student_status → student(student_status)
+idx_employee_status → employee(employment_status)
+idx_employee_institution_source → employee(institution_id, employment_source_id, employment_status)
+idx_employee_external_agency → employee(external_agency_id, employment_status)
+idx_employee_assignment_location → employee_assignment(campus_id, department_id, designation_id, is_primary)
+idx_staff_category_type → staff_category(staff_type_id, is_active)
+idx_designation_category → designation(staff_category_id, is_active)
+idx_external_agency_institution → external_agency(institution_id, is_active)
+idx_application_status → admission_application(application_status, academic_year_id)
+idx_enrolment_status → student_programme_enrolment(enrolment_status)
+idx_term_registration_section → student_term_registration(class_section_id, registration_status)
+idx_course_registration_status → student_course_registration(course_offering_id, registration_status)
+idx_class_session_date → class_session(session_date, course_offering_section_id)
+idx_student_attendance_roster → student_attendance(course_offering_section_student_id, attendance_status_id)
+idx_assessment_event_date → assessment_event(assessment_date)
+idx_course_result_status → student_course_result(result_status)
+4. Workflow / RBAC / Audit Prompt
+Implement and verify the following exact index intents. Preserve names and ordered columns. Check existing coverage first:
+idx_grievance_status → grievance(status, priority, submitted_at)
+idx_announcement_publish → announcement(approval_status, publish_from, publish_to)
+idx_activity_audit_entity → activity_audit(entity_name, entity_id, activity_at)
+idx_user_account_status → user_account(account_status, username)
+idx_user_role_active → user_role_assignment(user_id, assignment_status, valid_from, valid_to)
+idx_user_role_scope → user_role_assignment(scope_type, scope_entity_id)
+idx_role_permission_effect → role_permission(role_id, permission_effect)
+idx_permission_lookup → permission(access_resource_id, access_action_id, is_active)
+idx_login_audit_user_time → login_audit(user_id, login_at)
+idx_password_history_user_time → password_history(user_id, changed_at)
+5. Finance Prompt
+Implement and verify the following exact index intents. Preserve names and ordered columns. Check existing coverage first:
+idx_fee_structure_scope → fee_structure(academic_year_id, programme_id, admission_category_id, approval_status)
+idx_fee_assessment_account_status → student_fee_assessment(student_account_id, assessment_status, due_date)
+idx_fee_assessment_year_term → student_fee_assessment(academic_year_id, academic_term_id, assessment_type)
+idx_fee_item_balance → student_fee_assessment_item(item_status, due_date, balance_amount)
+idx_payment_account_date → payment_transaction(student_account_id, transaction_date)
+idx_payment_gateway_reference → payment_transaction(gateway_transaction_id)
+idx_payment_status_date → payment_transaction(payment_status, transaction_date)
+idx_payment_allocation_item → payment_allocation(assessment_item_id)
+idx_receipt_date_status → fee_receipt(receipt_date, receipt_status)
+idx_concession_student_year → student_fee_concession(student_id, academic_year_id, approval_status)
+idx_scholarship_student_year → student_scholarship(student_id, academic_year_id, application_status)
+idx_refund_status_date → refund_request(request_status, request_date)
+idx_fee_audit_entity → fee_activity_audit(entity_name, entity_id, performed_at)
+6. Employee HR / Security Extension Prompt
+Implement and verify the following exact index intents. Preserve names and ordered columns. Check existing coverage first:
+idx_education_institution_lookup → education_institution(institution_name, city, country_id, is_active)
+idx_awarding_body_lookup → awarding_body(awarding_body_name, university_type, country_id, is_active)
+idx_employee_qualification_employee → employee_qualification(employee_id, qualification_level_id, qualification_status, deleted_at)
+idx_employee_qualification_passing → employee_qualification(passing_year, is_highest_qualification)
+idx_previous_organization_lookup → previous_organization(organization_name, previous_organization_type_id, city, country_id)
+idx_employee_previous_employment_employee → employee_previous_employment(employee_id, employment_start_date, employment_end_date, deleted_at)
+idx_employee_bank_employee_status → employee_bank_account(employee_id, account_status, verification_status, is_primary, deleted_at)
+idx_employee_bank_ifsc → employee_bank_account(ifsc_code, bank_name)
+idx_employee_pan_status → employee_pan(employee_id, verification_status, deleted_at)
+idx_employee_aadhaar_status → employee_aadhaar(employee_id, verification_status, deleted_at)
+idx_employee_document_owner_scope → employee_document(employee_id, document_scope, is_active, deleted_at)
+idx_employee_document_qualification → employee_document(employee_qualification_id, verification_status, approval_status)
+idx_employee_document_experience → employee_document(employee_previous_employment_id, verification_status, approval_status)
+idx_employee_document_bank → employee_document(employee_bank_account_id, verification_status, approval_status)
+idx_employee_document_pan → employee_document(employee_pan_id, verification_status, approval_status)
+idx_employee_document_aadhaar → employee_document(employee_aadhaar_id, verification_status, approval_status)
+idx_employee_document_category_type → employee_document(employee_document_category_id, document_type_id, confidentiality_level)
+idx_employee_document_file → employee_document(file_object_id)
+idx_employee_document_access_role → employee_document_access_rule(role_id, valid_from, valid_to)
+idx_employee_document_access_user → employee_document_access_rule(user_id, valid_from, valid_to)
+idx_employee_sensitive_audit_employee → employee_sensitive_access_audit(employee_id, entity_type, accessed_at)
+idx_employee_sensitive_audit_user → employee_sensitive_access_audit(user_id, accessed_at)
+idx_file_object_confidentiality → file_object(confidentiality_level, is_encrypted, deleted_at)
+Security rule: never expose real PAN, Aadhaar, bank-account, or confidential-document values in logs, fixtures, tests, or reports. Use synthetic data only.
+7. Migration Engineering Prompt
+Generate migrations only for indexes not already satisfied. Prefer migrations.AddIndex with models.Index(fields=[...], name='...'). Keep each migration in the app owning the table and depend on the latest migration that establishes all referenced fields.
+Respect Django/MySQL index-name limits. If an exact supplied name cannot be represented, report a controlled rename requirement rather than silently renaming it. For unmanaged or legacy tables, use the smallest safe RunSQL or SeparateDatabaseAndState solution and explain why. Forward migration must create only the intended indexes; reverse migration must remove only those indexes.
+8. Redundancy and Query-Plan Prompt
+Compare every requested index with PRIMARY KEY, UNIQUE, FK-supporting and existing composite indexes using MySQL leftmost-prefix rules. Do not automatically delete existing indexes.
+Produce a redundancy-review table with requested index, existing candidate, exact ordered columns, coverage assessment, decision and evidence. Use EXPLAIN/EXPLAIN ANALYZE for representative safe SELECT queries where useful. Do not claim performance improvement solely because an index exists.
+9. Verification Prompt
+Run: python manage.py makemigrations --check; python manage.py check; clean-database migration; upgrade-path migration; affected unit/integration tests; and reverse-migration testing in a disposable database.
+For every affected table, verify SHOW INDEX or INFORMATION_SCHEMA.STATISTICS output for index name, ordered columns and uniqueness. Confirm no accidental UNIQUE constraint was created. Return a pass/fail checklist and exact remediation for any mismatch.
+10. Performance Validation Prompt
+Select representative ORM queries corresponding to the supplied indexes and capture query plans on a non-production dataset of meaningful size. Record predicates, ordering, row counts and plans. Measure latency only under comparable conditions and never invent percentage gains.
+Also document write/storage overhead and flag overlapping indexes for later DBA review. Recommendations must remain separate from required Module 18 implementation.
+11. Final Delivery Prompt
+Return: files changed by app; migration names/dependencies; complete Module 18 reconciliation matrix; status of every supplied index; evidence for non-created indexes; database verification summary; Django check/test results; controlled deviations; and optional DBA recommendations.
+Acceptance criteria: every supplied index is accounted for; composite order is exact; no business semantics changed; no known duplicate equivalent index introduced; custom RBAC remains authoritative; sensitive HR data is protected; forward/reverse migrations work; clean-install and upgrade-path tests pass; and physical MySQL metadata matches the approved implementation.

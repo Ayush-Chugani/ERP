@@ -1,0 +1,94 @@
+{
+  "module": "M28 Co-Curricular Activities",
+  "verified_at": "2026-09-28T00:34:26.936425+00:00",
+  "status": "Implementation and local verification complete; runtime disabled",
+  "backend_full": {
+    "result": "passed",
+    "tests": 605,
+    "subtests": 76,
+    "seconds": 514.47,
+    "log": ".tmp/m28-full-backend.txt",
+    "database": "Fresh isolated MySQL test database",
+    "note": "Full regression before final M28-only validation test and service refinements."
+  },
+  "backend_final_m28": {
+    "result": "passed",
+    "tests": 20,
+    "subtests": 6,
+    "seconds": 17.54,
+    "log": ".tmp/m28-final-tests.txt",
+    "coverage": [
+      "atomic writes and rollback",
+      "idempotency and revoked permissions",
+      "stale/ABA versions",
+      "concurrent edits",
+      "independent workflow reviewers",
+      "all source fields",
+      "active references and country/state integrity",
+      "scoped reports and formula-safe CSV",
+      "constant list query counts",
+      "M13 evidence replacement/download authorization/content/size",
+      "native history retention",
+      "empty migration reversal/reinstallation",
+      "after-commit notification retry/rollback"
+    ]
+  },
+  "frontend_full": {
+    "result": "passed",
+    "files": 20,
+    "tests": 88,
+    "seconds": 98.93,
+    "note": "Full suite before adding the complete M28 form journey."
+  },
+  "frontend_final_m28": {
+    "result": "passed",
+    "tests": 6,
+    "seconds": 9.02,
+    "coverage": [
+      "safe text rendering",
+      "permission-driven controls",
+      "offline and no persistent private drafts",
+      "labelled form",
+      "stable create/workflow retries",
+      "complete form journey with dependent country/state selectors and all fields"
+    ]
+  },
+  "frontend_transport_pwa": {
+    "result": "passed",
+    "tests": 12
+  },
+  "build": {
+    "result": "passed",
+    "checks": [
+      "TypeScript noEmit",
+      "Vite production assets",
+      "43 static PWA precache entries"
+    ]
+  },
+  "django_checks": {
+    "system_check": "0 issues",
+    "migration_drift": "No changes detected",
+    "pending_migrations": "None",
+    "openapi_validation": "0 warnings and 0 errors",
+    "ruff": "Passed for M28 code and new category migration helpers"
+  },
+  "database_evidence": {
+    "schema": "Manuals/M28_SCHEMA_INVENTORY.json",
+    "plans": "Manuals/M28_QUERY_PLANS.json",
+    "query_plans": 6,
+    "warning": "Existing documents_exit.FileObject.storage_key mysql.W003 warning remains; not introduced by M28."
+  },
+  "runtime": {
+    "M28_enabled": false,
+    "IAM_enabled": false,
+    "IAM_security_enabled": false,
+    "notification_adapter_configured": false,
+    "new_user_or_role_grants": false
+  },
+  "limitations": [
+    "No live-server browser or physical-device acceptance run; frontend tests use mocked APIs.",
+    "Production scanner/storage/role grants and deduplicating notification adapter remain operational setup.",
+    "MySQL local query plans are not a production load benchmark."
+  ],
+  "M29": "Not started, per user instruction"
+}

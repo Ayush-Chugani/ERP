@@ -1,0 +1,1373 @@
+SIMS
+GPT IMPLEMENTATIONPROMPT PACK
+Module 17Student Fees and Financial Management
+Django + Django REST Framework + MySQLPlugin-ready modular monolith | Custom-user authorization
+Structured implementation sequence • v1.0 • September 2026
+
+How to use this prompt pack
+Run the prompts in order in a coding-capable GPT session connected to the SIMS repository. Each prompt is deliberately scoped so that generated changes remain reviewable, testable, and compatible with the existing modular-monolith architecture.
+Paste the Global Project Context once at the start of the GPT session.
+Use Prompt 01 for discovery before any implementation. Supply the repository tree and relevant existing models when requested.
+Run one implementation prompt at a time. Apply and test its changes before moving to the next prompt.
+Treat the SQL appendix as the schema contract. Adapt names only where the existing Django project already has an established convention.
+Require complete file paths, migrations, tests, and commands from GPT; reject placeholders, pseudo-code, or omitted error handling.
+Commit after each successful prompt so each stage can be reviewed or rolled back independently.
+Recommended execution stages
+Stage
+Prompts
+Outcome
+Foundation
+01-05
+Discovery, app boundaries, models, migrations, seed data
+Core domain
+06-11
+Structures, assessment, benefits, instalments, penalties, holds
+Payments
+12-15
+Transactions, allocation, receipts, refunds, gateway safety
+Delivery
+16-20
+APIs, authorization, UI/PWA, reports, notifications
+Assurance
+21-25
+Audit, tests, performance, deployment, final review
+
+Global Project Context
+PROJECT: Student Information Management System (SIMS)
+BACK END: Django + Django REST Framework
+DATABASE: MySQL 8 / InnoDB / utf8mb4_unicode_ci
+ARCHITECTURE: Plugin-ready modular monolith
+AUTHORIZATION: Existing Django custom user model and database-driven RBAC
+FRONT END: Existing SIMS client; expose versioned REST APIs and PWA-safe workflows
+MODULE: fees (Module 17 - Student Fees and Financial Management)
+ 
+NON-NEGOTIABLE RULES
+1. Reuse AUTH_USER_MODEL; never create a second user table or use auth.User directly.
+2. Preserve module boundaries. Integrate through stable service interfaces, events, and foreign keys.
+3. Money uses Decimal only. Never use float.
+4. Multi-step financial writes use transaction.atomic(), row locking where needed, and idempotency controls.
+5. Posted financial facts are immutable. Corrections use reversal/adjustment records with audit history.
+6. Keep business logic in domain/application services, not serializers, views, signals, or model save methods.
+7. Use explicit database constraints, indexes, validation, permissions, and audit events.
+8. APIs must be tenant/institution/campus scoped according to the existing SIMS access model.
+9. Generate production-quality code, migrations, tests, OpenAPI documentation, and verification commands.
+10. The SQL appendix is authoritative for required entities and relationships; reconcile it with existing project conventions before coding.
+
+PROMPT 01
+Repository discovery and implementation map
+Purpose: Inspect the existing SIMS repository and produce a safe, dependency-aware implementation plan.
+Copy-and-paste prompt
+You are a senior Django/DRF architect and financial-systems engineer. Implement the requested part of Module 17: Student Fees and Financial Management for the SIMS platform.
+Architecture contract
+Use a plugin-ready modular-monolith Django architecture. Keep the fees domain in its own installable app/package and expose narrow integration interfaces.
+Reuse the project custom user model through settings.AUTH_USER_MODEL and existing RBAC entities. Do not create parallel authentication or role systems.
+Use MySQL 8, Decimal values, timezone-aware datetimes, database constraints, explicit indexes, and transaction-safe services.
+The supplied SQL schema is the functional contract. Map it to Django idioms without silently dropping fields, constraints, states, or relationships.
+Tasks
+Inspect settings, app layout, custom user model, RBAC, institution/campus/programme/student/admission/academic models, shared base classes, API conventions, tests, and deployment configuration.
+Map every external table referenced by the fee schema to its existing Django model and app label.
+Identify naming conflicts, missing composite uniqueness support, existing money/currency utilities, audit infrastructure, and payment integrations.
+Produce a dependency graph and migration sequence. Do not modify code in this prompt.
+Required output
+Repository findings table: schema reference, existing model, app label, field/type compatibility, action required.
+Proposed fees app/package tree and public service interfaces.
+Risk register covering data integrity, authorization, concurrency, migrations, and gateway callbacks.
+Numbered implementation order aligned to Prompts 02-25.
+Acceptance criteria
+No code changes are made.
+Every external foreign key is resolved or explicitly listed as a blocker.
+The plan preserves existing project conventions and the custom-user model.
+Before writing code, state assumptions and identify missing cross-module models or settings. Do not invent incompatible fields. Then provide complete, runnable code grouped by file path, migration order, tests, and verification commands.
+
+PROMPT 02
+Fees app scaffold and domain boundaries
+Purpose: Create the fees module skeleton and define clean boundaries before implementing business behavior.
+Copy-and-paste prompt
+You are a senior Django/DRF architect and financial-systems engineer. Implement the requested part of Module 17: Student Fees and Financial Management for the SIMS platform.
+Architecture contract
+Use a plugin-ready modular-monolith Django architecture. Keep the fees domain in its own installable app/package and expose narrow integration interfaces.
+Reuse the project custom user model through settings.AUTH_USER_MODEL and existing RBAC entities. Do not create parallel authentication or role systems.
+Use MySQL 8, Decimal values, timezone-aware datetimes, database constraints, explicit indexes, and transaction-safe services.
+The supplied SQL schema is the functional contract. Map it to Django idioms without silently dropping fields, constraints, states, or relationships.
+Tasks
+Create the Django app/package, apps.py, admin package, api package, services, selectors, domain, integrations, tasks, tests, and migrations structure.
+Register the app and DRF routes using existing project conventions.
+Define enums/text choices for all workflow states and types. Group them by domain responsibility.
+Add shared exceptions, money validation helpers, reference-number interfaces, and event contracts without implementing workflows yet.
+Required output
+Complete code by file path.
+Settings and URL changes.
+Import-boundary explanation and a minimal app-loading test.
+Commands to run checks and tests.
+Acceptance criteria
+Django system checks pass.
+The app has no circular imports.
+No duplicate authentication or RBAC model is introduced.
+Before writing code, state assumptions and identify missing cross-module models or settings. Do not invent incompatible fields. Then provide complete, runnable code grouped by file path, migration order, tests, and verification commands.
+
+PROMPT 03
+Master-data and ledger models
+Purpose: Implement fee categories, ledger accounts, fee types, payment modes, concession types, scholarship schemes, and installment plans.
+Copy-and-paste prompt
+You are a senior Django/DRF architect and financial-systems engineer. Implement the requested part of Module 17: Student Fees and Financial Management for the SIMS platform.
+Architecture contract
+Use a plugin-ready modular-monolith Django architecture. Keep the fees domain in its own installable app/package and expose narrow integration interfaces.
+Reuse the project custom user model through settings.AUTH_USER_MODEL and existing RBAC entities. Do not create parallel authentication or role systems.
+Use MySQL 8, Decimal values, timezone-aware datetimes, database constraints, explicit indexes, and transaction-safe services.
+The supplied SQL schema is the functional contract. Map it to Django idioms without silently dropping fields, constraints, states, or relationships.
+Tasks
+Create Django models matching fee_category, financial_ledger_account, fee_type, payment_mode, concession_type, scholarship_scheme, and installment_plan.
+Use TextChoices, DecimalField precision matching the schema, self-referential ledger hierarchy, clean() validation where SQL CHECK logic needs application-level clarity, and database constraints.
+Add useful indexes, __str__ methods, admin configuration, read selectors, and factories.
+Keep ledger integration narrow: this module defines account references but does not become a complete general ledger.
+Required output
+Models, migrations, admin, selectors, factories, and tests.
+Schema-to-model mapping notes for any deliberate Django differences.
+MySQL verification SQL.
+Acceptance criteria
+All uniqueness, activation flags, ranges, and hierarchy rules are enforced.
+Money and percentages reject invalid values.
+Tests cover duplicate codes and invalid configurations.
+Before writing code, state assumptions and identify missing cross-module models or settings. Do not invent incompatible fields. Then provide complete, runnable code grouped by file path, migration order, tests, and verification commands.
+
+PROMPT 04
+Fee structure versioning and approval
+Purpose: Implement versioned fee structures, items, late-fee rules, approval workflow, and effective-date selection.
+Copy-and-paste prompt
+You are a senior Django/DRF architect and financial-systems engineer. Implement the requested part of Module 17: Student Fees and Financial Management for the SIMS platform.
+Architecture contract
+Use a plugin-ready modular-monolith Django architecture. Keep the fees domain in its own installable app/package and expose narrow integration interfaces.
+Reuse the project custom user model through settings.AUTH_USER_MODEL and existing RBAC entities. Do not create parallel authentication or role systems.
+Use MySQL 8, Decimal values, timezone-aware datetimes, database constraints, explicit indexes, and transaction-safe services.
+The supplied SQL schema is the functional contract. Map it to Django idioms without silently dropping fields, constraints, states, or relationships.
+Tasks
+Implement fee_structure, fee_structure_item, late_fee_rule, and late_fee_slab.
+Represent nullable semester/term uniqueness safely in MySQL, equivalent to generated COALESCE keys in the SQL contract.
+Create services to draft, submit, approve, reject, supersede, clone, and resolve the effective structure for a student/context/date.
+Prevent edits after approval; new changes create a new version. Validate programme/specialization ownership and non-overlapping effective versions.
+Implement fixed, per-day, percentage, and slab late-fee calculation with caps and grace periods.
+Required output
+Models, migrations, services, selectors, admin, API-ready DTOs, and tests.
+State-transition table and calculation examples.
+Concurrency strategy for version creation and approval.
+Acceptance criteria
+Only authorized roles can approve.
+Approved versions are immutable.
+Resolution is deterministic.
+Boundary tests cover grace day, final slab, cap, and null term/semester uniqueness.
+Before writing code, state assumptions and identify missing cross-module models or settings. Do not invent incompatible fields. Then provide complete, runnable code grouped by file path, migration order, tests, and verification commands.
+
+PROMPT 05
+Seed data and database-driven permissions
+Purpose: Create idempotent seed migrations/commands for fees reference data, roles, resources, actions, and permissions.
+Copy-and-paste prompt
+You are a senior Django/DRF architect and financial-systems engineer. Implement the requested part of Module 17: Student Fees and Financial Management for the SIMS platform.
+Architecture contract
+Use a plugin-ready modular-monolith Django architecture. Keep the fees domain in its own installable app/package and expose narrow integration interfaces.
+Reuse the project custom user model through settings.AUTH_USER_MODEL and existing RBAC entities. Do not create parallel authentication or role systems.
+Use MySQL 8, Decimal values, timezone-aware datetimes, database constraints, explicit indexes, and transaction-safe services.
+The supplied SQL schema is the functional contract. Map it to Django idioms without silently dropping fields, constraints, states, or relationships.
+Tasks
+Seed the fee categories and payment modes exactly as supplied in the SQL appendix.
+Integrate FINANCE_OFFICER, ACCOUNTANT, CASHIER, FEE_VERIFICATION_OFFICER, and SCHOLARSHIP_OFFICER with the existing role model.
+Seed FEES resources and action permissions using the existing RBAC schema. Do not assume action IDs.
+Make seeding repeatable, reversible where safe, and environment-independent.
+Required output
+Data migration or management command with tests.
+Permission matrix table.
+Verification queries and rollback notes.
+Acceptance criteria
+Repeated execution creates no duplicates.
+Codes remain stable.
+No broad privilege is granted beyond the supplied matrix.
+Before writing code, state assumptions and identify missing cross-module models or settings. Do not invent incompatible fields. Then provide complete, runnable code grouped by file path, migration order, tests, and verification commands.
+
+PROMPT 06
+Student financial accounts and assessment engine
+Purpose: Implement student accounts, fee assessments, assessment items, and charge-source traceability.
+Copy-and-paste prompt
+You are a senior Django/DRF architect and financial-systems engineer. Implement the requested part of Module 17: Student Fees and Financial Management for the SIMS platform.
+Architecture contract
+Use a plugin-ready modular-monolith Django architecture. Keep the fees domain in its own installable app/package and expose narrow integration interfaces.
+Reuse the project custom user model through settings.AUTH_USER_MODEL and existing RBAC entities. Do not create parallel authentication or role systems.
+Use MySQL 8, Decimal values, timezone-aware datetimes, database constraints, explicit indexes, and transaction-safe services.
+The supplied SQL schema is the functional contract. Map it to Django idioms without silently dropping fields, constraints, states, or relationships.
+Tasks
+Implement student_financial_account, student_fee_assessment, student_fee_assessment_item, and fee_charge_source.
+Create services to open one account per student, assess admission or academic fees from an approved structure, and attach originating module/entity references.
+Calculate header totals from items; callers must not submit trusted totals. Quantize currency consistently.
+Support draft, assessed, partial, paid, overdue, cancelled, and waived transitions with explicit guards.
+Use atomic transactions and idempotency keys/business references to prevent duplicate assessment.
+Required output
+Models, migrations, assessment services, selectors, serializers/DTOs, factories, and tests.
+Examples for admission, semester, examination, and service assessments.
+Error codes for conflict and invalid state.
+Acceptance criteria
+Database totals remain consistent with item totals.
+At least one account/application context is required.
+Duplicate assessment retries are safe.
+Posted assessments cannot be destructively edited.
+Before writing code, state assumptions and identify missing cross-module models or settings. Do not invent incompatible fields. Then provide complete, runnable code grouped by file path, migration order, tests, and verification commands.
+
+PROMPT 07
+Concessions, scholarships, sponsorships, and benefits
+Purpose: Implement student financial benefits with approval and source integrity.
+Copy-and-paste prompt
+You are a senior Django/DRF architect and financial-systems engineer. Implement the requested part of Module 17: Student Fees and Financial Management for the SIMS platform.
+Architecture contract
+Use a plugin-ready modular-monolith Django architecture. Keep the fees domain in its own installable app/package and expose narrow integration interfaces.
+Reuse the project custom user model through settings.AUTH_USER_MODEL and existing RBAC entities. Do not create parallel authentication or role systems.
+Use MySQL 8, Decimal values, timezone-aware datetimes, database constraints, explicit indexes, and transaction-safe services.
+The supplied SQL schema is the functional contract. Map it to Django idioms without silently dropping fields, constraints, states, or relationships.
+Tasks
+Implement student_fee_concession, student_scholarship, student_sponsorship, and fee_assessment_benefit.
+Enforce exactly one benefit source according to benefit_type.
+Create application, verification, approval/rejection, sanction/receipt, expiry/cancellation, and application-to-assessment services.
+Prevent benefit amounts from exceeding eligible item balances or scheme/concession limits.
+Recalculate assessment totals atomically and retain full approval/audit evidence.
+Required output
+Models, migrations, workflow services, selectors, permission checks, API DTOs, and tests.
+Eligibility extension interface so rules can be added without editing core services.
+Benefit allocation examples.
+Acceptance criteria
+Only approved/valid benefits reduce payable balances.
+Exactly-one-source constraint is tested.
+Concurrent benefit application cannot over-credit an item.
+Before writing code, state assumptions and identify missing cross-module models or settings. Do not invent incompatible fields. Then provide complete, runnable code grouped by file path, migration order, tests, and verification commands.
+
+PROMPT 08
+Installment scheduling and overdue processing
+Purpose: Implement installment plans, student schedules, payment application, and overdue-state processing.
+Copy-and-paste prompt
+You are a senior Django/DRF architect and financial-systems engineer. Implement the requested part of Module 17: Student Fees and Financial Management for the SIMS platform.
+Architecture contract
+Use a plugin-ready modular-monolith Django architecture. Keep the fees domain in its own installable app/package and expose narrow integration interfaces.
+Reuse the project custom user model through settings.AUTH_USER_MODEL and existing RBAC entities. Do not create parallel authentication or role systems.
+Use MySQL 8, Decimal values, timezone-aware datetimes, database constraints, explicit indexes, and transaction-safe services.
+The supplied SQL schema is the functional contract. Map it to Django idioms without silently dropping fields, constraints, states, or relationships.
+Tasks
+Generate installment schedules from a fee assessment and plan, handling rounding so installments sum exactly to the assessment balance.
+Validate installment count, initial percentage, due-date order, positive amounts, and approval requirements.
+Apply allocated payments to installments using an explicit policy and lock rows during updates.
+Provide an idempotent scheduled job to mark overdue installments and assessments; use the project task framework if present.
+Required output
+Services, task/job, selectors, API DTOs, tests, and operational command.
+Rounding policy and allocation examples.
+Retry and locking strategy.
+Acceptance criteria
+Schedule totals reconcile exactly.
+The overdue job is safe to rerun.
+Partial/full status transitions are correct under concurrent payment allocation.
+Before writing code, state assumptions and identify missing cross-module models or settings. Do not invent incompatible fields. Then provide complete, runnable code grouped by file path, migration order, tests, and verification commands.
+
+PROMPT 09
+Penalties and late-fee assessment
+Purpose: Implement manual penalties and automatic late-fee charges without duplicate posting.
+Copy-and-paste prompt
+You are a senior Django/DRF architect and financial-systems engineer. Implement the requested part of Module 17: Student Fees and Financial Management for the SIMS platform.
+Architecture contract
+Use a plugin-ready modular-monolith Django architecture. Keep the fees domain in its own installable app/package and expose narrow integration interfaces.
+Reuse the project custom user model through settings.AUTH_USER_MODEL and existing RBAC entities. Do not create parallel authentication or role systems.
+Use MySQL 8, Decimal values, timezone-aware datetimes, database constraints, explicit indexes, and transaction-safe services.
+The supplied SQL schema is the functional contract. Map it to Django idioms without silently dropping fields, constraints, states, or relationships.
+Tasks
+Implement student_fee_penalty and services for assessing, approving, waiving, cancelling, and linking penalties to assessment items.
+Generate late fees from configured rules and overdue balances using deterministic calculation dates.
+Record automatic charges using fee_charge_source/idempotency references so reruns cannot duplicate penalties.
+Enforce waived_amount <= penalty_amount and net_penalty_amount = penalty_amount - waived_amount.
+Required output
+Models, constraints, services, scheduled job, API DTOs, admin, and tests.
+Examples for every calculation method.
+Audit events and reconciliation query.
+Acceptance criteria
+No duplicate late fee is created for the same source and calculation period.
+All amounts reconcile.
+Waivers require appropriate approval permission.
+Before writing code, state assumptions and identify missing cross-module models or settings. Do not invent incompatible fields. Then provide complete, runnable code grouped by file path, migration order, tests, and verification commands.
+
+PROMPT 10
+Service-fee requests and cross-module integration
+Purpose: Implement generic service charges and integrate certificate/document requests safely.
+Copy-and-paste prompt
+You are a senior Django/DRF architect and financial-systems engineer. Implement the requested part of Module 17: Student Fees and Financial Management for the SIMS platform.
+Architecture contract
+Use a plugin-ready modular-monolith Django architecture. Keep the fees domain in its own installable app/package and expose narrow integration interfaces.
+Reuse the project custom user model through settings.AUTH_USER_MODEL and existing RBAC entities. Do not create parallel authentication or role systems.
+Use MySQL 8, Decimal values, timezone-aware datetimes, database constraints, explicit indexes, and transaction-safe services.
+The supplied SQL schema is the functional contract. Map it to Django idioms without silently dropping fields, constraints, states, or relationships.
+Tasks
+Implement service_fee_request and its lifecycle from draft to completed/cancelled.
+Create an integration interface allowing certificate and future modules to request an assessment without importing fees internals.
+Validate quantity, unit amount, total amount, student ownership, fee type, and source request.
+Make request-to-assessment creation idempotent and publish a payment-completed domain event for the source module.
+Required output
+Model, migration, public integration service, event payloads, API endpoints, and contract tests.
+Example integration from certificate_request.
+Failure/retry behavior.
+Acceptance criteria
+Source modules do not write fee tables directly.
+Duplicate calls return the original assessment.
+Events contain stable IDs and no sensitive payment data.
+Before writing code, state assumptions and identify missing cross-module models or settings. Do not invent incompatible fields. Then provide complete, runnable code grouped by file path, migration order, tests, and verification commands.
+
+PROMPT 11
+Financial holds and release rules
+Purpose: Implement holds that protect registration, examination, result, certificate, and graduation workflows.
+Copy-and-paste prompt
+You are a senior Django/DRF architect and financial-systems engineer. Implement the requested part of Module 17: Student Fees and Financial Management for the SIMS platform.
+Architecture contract
+Use a plugin-ready modular-monolith Django architecture. Keep the fees domain in its own installable app/package and expose narrow integration interfaces.
+Reuse the project custom user model through settings.AUTH_USER_MODEL and existing RBAC entities. Do not create parallel authentication or role systems.
+Use MySQL 8, Decimal values, timezone-aware datetimes, database constraints, explicit indexes, and transaction-safe services.
+The supplied SQL schema is the functional contract. Map it to Django idioms without silently dropping fields, constraints, states, or relationships.
+Tasks
+Implement student_financial_hold and services to place, release, cancel, and query active holds.
+Provide a narrow policy API other modules can call: assert_action_allowed(student, action, context).
+Support manual and rules-based holds while requiring actor, reason, timestamps, and release evidence.
+Design an idempotent reconciliation job based on overdue/outstanding thresholds configurable outside code.
+Required output
+Model, services, policy interface, task, endpoints, permissions, and tests.
+Integration examples for hall ticket, result, certificate, and registration checks.
+Hold priority and error contract.
+Acceptance criteria
+Only active holds block actions.
+Releasing a hold does not erase history.
+Other modules depend only on the public policy interface.
+Before writing code, state assumptions and identify missing cross-module models or settings. Do not invent incompatible fields. Then provide complete, runnable code grouped by file path, migration order, tests, and verification commands.
+
+PROMPT 12
+Payment transaction intake and gateway safety
+Purpose: Implement cash/offline/online transaction intake with robust idempotency and callback verification.
+Copy-and-paste prompt
+You are a senior Django/DRF architect and financial-systems engineer. Implement the requested part of Module 17: Student Fees and Financial Management for the SIMS platform.
+Architecture contract
+Use a plugin-ready modular-monolith Django architecture. Keep the fees domain in its own installable app/package and expose narrow integration interfaces.
+Reuse the project custom user model through settings.AUTH_USER_MODEL and existing RBAC entities. Do not create parallel authentication or role systems.
+Use MySQL 8, Decimal values, timezone-aware datetimes, database constraints, explicit indexes, and transaction-safe services.
+The supplied SQL schema is the functional contract. Map it to Django idioms without silently dropping fields, constraints, states, or relationships.
+Tasks
+Implement payment_transaction and admission_payment.
+Create initiation, pending, success, failure, cancellation, reversal, partial-refund, and refund transition services.
+For gateways, verify signatures, amount, currency, merchant/order reference, and replay protection before accepting callbacks.
+Use a unique idempotency key/order reference. Never mark success from a browser redirect alone.
+Mask sensitive values in logs and responses. Do not store card credentials.
+Required output
+Models, constraints/indexes, gateway adapter protocol, webhook endpoint, offline payment service, tests, and sequence description.
+Provider-neutral callback payload contract.
+Security checklist and failure modes.
+Acceptance criteria
+Duplicate callbacks are harmless.
+Invalid signatures/amounts are rejected.
+State transitions are monotonic except explicit reversal/refund.
+Admission linkage preserves application ownership.
+Before writing code, state assumptions and identify missing cross-module models or settings. Do not invent incompatible fields. Then provide complete, runnable code grouped by file path, migration order, tests, and verification commands.
+
+PROMPT 13
+Atomic payment allocation and balance updates
+Purpose: Allocate successful payments across assessment items and maintain consistent balances.
+Copy-and-paste prompt
+You are a senior Django/DRF architect and financial-systems engineer. Implement the requested part of Module 17: Student Fees and Financial Management for the SIMS platform.
+Architecture contract
+Use a plugin-ready modular-monolith Django architecture. Keep the fees domain in its own installable app/package and expose narrow integration interfaces.
+Reuse the project custom user model through settings.AUTH_USER_MODEL and existing RBAC entities. Do not create parallel authentication or role systems.
+Use MySQL 8, Decimal values, timezone-aware datetimes, database constraints, explicit indexes, and transaction-safe services.
+The supplied SQL schema is the functional contract. Map it to Django idioms without silently dropping fields, constraints, states, or relationships.
+Tasks
+Implement payment_allocation and an allocation service supporting explicit and policy-based allocation.
+Lock the payment, target assessment items, and related assessment/account rows in a consistent order.
+Reject allocation above unallocated payment amount or item balance.
+Update item/header paid amounts, balances, and statuses within one atomic transaction.
+Support credit balances and later reallocation through explicit adjustment records, never silent mutation.
+Required output
+Models/migrations, allocation service, selectors, tests, and reconciliation SQL.
+Deadlock-avoidance lock order.
+Examples for partial, multi-item, excess, and retry cases.
+Acceptance criteria
+Sum of allocations never exceeds a successful payment.
+Balance invariants hold after every transaction.
+Concurrent requests cannot double-allocate.
+Before writing code, state assumptions and identify missing cross-module models or settings. Do not invent incompatible fields. Then provide complete, runnable code grouped by file path, migration order, tests, and verification commands.
+
+PROMPT 14
+Receipt issuance, cancellation, and replacement
+Purpose: Generate tamper-resistant, sequential fee receipts tied to successful allocated payments.
+Copy-and-paste prompt
+You are a senior Django/DRF architect and financial-systems engineer. Implement the requested part of Module 17: Student Fees and Financial Management for the SIMS platform.
+Architecture contract
+Use a plugin-ready modular-monolith Django architecture. Keep the fees domain in its own installable app/package and expose narrow integration interfaces.
+Reuse the project custom user model through settings.AUTH_USER_MODEL and existing RBAC entities. Do not create parallel authentication or role systems.
+Use MySQL 8, Decimal values, timezone-aware datetimes, database constraints, explicit indexes, and transaction-safe services.
+The supplied SQL schema is the functional contract. Map it to Django idioms without silently dropping fields, constraints, states, or relationships.
+Tasks
+Implement fee_receipt with issue, cancel, replace, and reverse services.
+Generate receipt numbers using the project reference-number service with concurrency safety and campus/institution scope if required.
+Render a receipt payload/PDF integration contract containing payer, payment mode/reference, allocations, totals, issuer, and verification identifier.
+Never delete or overwrite issued receipts; link replacements to originals and record reasons/actors.
+Required output
+Model, services, serializer, endpoint, template context, tests, and sample receipt JSON.
+Numbering and verification strategy.
+Permission rules.
+Acceptance criteria
+Receipts only cover successful transactions.
+Numbers are unique under concurrency.
+Cancellation/replacement history is complete and auditable.
+Before writing code, state assumptions and identify missing cross-module models or settings. Do not invent incompatible fields. Then provide complete, runnable code grouped by file path, migration order, tests, and verification commands.
+
+PROMPT 15
+Adjustments and refund processing
+Purpose: Implement controlled corrections, waivers, transfers, write-offs, and refunds.
+Copy-and-paste prompt
+You are a senior Django/DRF architect and financial-systems engineer. Implement the requested part of Module 17: Student Fees and Financial Management for the SIMS platform.
+Architecture contract
+Use a plugin-ready modular-monolith Django architecture. Keep the fees domain in its own installable app/package and expose narrow integration interfaces.
+Reuse the project custom user model through settings.AUTH_USER_MODEL and existing RBAC entities. Do not create parallel authentication or role systems.
+Use MySQL 8, Decimal values, timezone-aware datetimes, database constraints, explicit indexes, and transaction-safe services.
+The supplied SQL schema is the functional contract. Map it to Django idioms without silently dropping fields, constraints, states, or relationships.
+Tasks
+Implement fee_adjustment, refund_request, and fee_refund.
+Create maker-checker approval services where requester/approver separation is supported by project policy.
+Validate refundable balance from original payments minus prior successful refunds, reversals, and allocations.
+Process refunds through a provider-neutral adapter and update payment state only from verified results.
+Use compensating records; never rewrite original payment facts.
+Required output
+Models, migrations, services, gateway refund adapter, endpoints, permission checks, audit events, and tests.
+State diagrams for adjustment and refund workflows.
+Reconciliation and retry strategy.
+Acceptance criteria
+Total successful refunds cannot exceed eligible amount.
+Rejected/failed requests do not alter balances.
+Duplicate provider responses do not duplicate refunds.
+Before writing code, state assumptions and identify missing cross-module models or settings. Do not invent incompatible fields. Then provide complete, runnable code grouped by file path, migration order, tests, and verification commands.
+
+PROMPT 16
+DRF API design and OpenAPI contract
+Purpose: Expose secure, consistent, versioned APIs for all fees use cases.
+Copy-and-paste prompt
+You are a senior Django/DRF architect and financial-systems engineer. Implement the requested part of Module 17: Student Fees and Financial Management for the SIMS platform.
+Architecture contract
+Use a plugin-ready modular-monolith Django architecture. Keep the fees domain in its own installable app/package and expose narrow integration interfaces.
+Reuse the project custom user model through settings.AUTH_USER_MODEL and existing RBAC entities. Do not create parallel authentication or role systems.
+Use MySQL 8, Decimal values, timezone-aware datetimes, database constraints, explicit indexes, and transaction-safe services.
+The supplied SQL schema is the functional contract. Map it to Django idioms without silently dropping fields, constraints, states, or relationships.
+Tasks
+Implement routers/viewsets or APIViews according to existing conventions.
+Separate commands from query endpoints; use service functions for writes and selectors for reads.
+Add filtering, search, ordering, pagination, date/status/context filters, and institution/campus scoping.
+Return stable machine-readable validation/conflict/permission errors.
+Document request/response schemas, transitions, idempotency headers, and webhook behavior in OpenAPI.
+Required output
+URL map, serializers, views, permissions, filters, OpenAPI annotations, and API tests.
+Endpoint matrix by actor and action.
+Example requests/responses for critical flows.
+Acceptance criteria
+No serializer/view contains financial business logic.
+Object-level scoping prevents cross-campus access.
+OpenAPI generation succeeds without warnings.
+Before writing code, state assumptions and identify missing cross-module models or settings. Do not invent incompatible fields. Then provide complete, runnable code grouped by file path, migration order, tests, and verification commands.
+
+PROMPT 17
+Custom-user RBAC and separation of duties
+Purpose: Enforce database-driven authorization using the existing SIMS custom user and permission model.
+Copy-and-paste prompt
+You are a senior Django/DRF architect and financial-systems engineer. Implement the requested part of Module 17: Student Fees and Financial Management for the SIMS platform.
+Architecture contract
+Use a plugin-ready modular-monolith Django architecture. Keep the fees domain in its own installable app/package and expose narrow integration interfaces.
+Reuse the project custom user model through settings.AUTH_USER_MODEL and existing RBAC entities. Do not create parallel authentication or role systems.
+Use MySQL 8, Decimal values, timezone-aware datetimes, database constraints, explicit indexes, and transaction-safe services.
+The supplied SQL schema is the functional contract. Map it to Django idioms without silently dropping fields, constraints, states, or relationships.
+Tasks
+Implement DRF permission classes and service-level authorization guards for FEES resources/actions.
+Apply institution/campus/data-scope filters in selectors, not only UI controls.
+Enforce sensitive actions: configure, approve, verify, delete/cancel, and export.
+Add separation-of-duties rules for fee structure approval, benefit approval, refund approval, and high-value adjustments.
+Record permission denials and sensitive approvals appropriately without leaking financial data.
+Required output
+Permission classes, policy functions, scope selectors, tests, and final role-permission matrix.
+Examples using settings.AUTH_USER_MODEL.
+Denied-action error format.
+Acceptance criteria
+No direct role-name checks are scattered through views.
+Service calls are protected even when invoked outside HTTP.
+Negative tests cover horizontal and vertical privilege escalation.
+Before writing code, state assumptions and identify missing cross-module models or settings. Do not invent incompatible fields. Then provide complete, runnable code grouped by file path, migration order, tests, and verification commands.
+
+PROMPT 18
+Finance UI and PWA workflows
+Purpose: Design implementation-ready front-end workflows for finance staff, students, and approvers.
+Copy-and-paste prompt
+You are a senior Django/DRF architect and financial-systems engineer. Implement the requested part of Module 17: Student Fees and Financial Management for the SIMS platform.
+Architecture contract
+Use a plugin-ready modular-monolith Django architecture. Keep the fees domain in its own installable app/package and expose narrow integration interfaces.
+Reuse the project custom user model through settings.AUTH_USER_MODEL and existing RBAC entities. Do not create parallel authentication or role systems.
+Use MySQL 8, Decimal values, timezone-aware datetimes, database constraints, explicit indexes, and transaction-safe services.
+The supplied SQL schema is the functional contract. Map it to Django idioms without silently dropping fields, constraints, states, or relationships.
+Tasks
+Produce screens/components for dashboards, fee structures, assessment, student ledger, benefits, installments, collections, receipts, adjustments, refunds, holds, and reports.
+Define API integration, form validation, status chips, role-aware actions, confirmation dialogs, and accessible error/empty/loading states.
+For payment pages, avoid offline submission and duplicate charges; use idempotency tokens and clear pending-state recovery.
+Allow read-only cached statements/receipts only if consistent with the project privacy and PWA caching policy.
+Required output
+Route/component map, TypeScript interfaces if applicable, query/mutation hooks, state behavior, and UI acceptance tests.
+Responsive workflow descriptions for desktop and mobile.
+Accessibility checklist.
+Acceptance criteria
+Financial mutations are never queued blindly offline.
+Double-submit is prevented.
+Unauthorized actions are absent and still rejected server-side.
+Before writing code, state assumptions and identify missing cross-module models or settings. Do not invent incompatible fields. Then provide complete, runnable code grouped by file path, migration order, tests, and verification commands.
+
+PROMPT 19
+Reports, statements, and reconciliation
+Purpose: Implement auditable financial reports without embedding business truth in presentation code.
+Copy-and-paste prompt
+You are a senior Django/DRF architect and financial-systems engineer. Implement the requested part of Module 17: Student Fees and Financial Management for the SIMS platform.
+Architecture contract
+Use a plugin-ready modular-monolith Django architecture. Keep the fees domain in its own installable app/package and expose narrow integration interfaces.
+Reuse the project custom user model through settings.AUTH_USER_MODEL and existing RBAC entities. Do not create parallel authentication or role systems.
+Use MySQL 8, Decimal values, timezone-aware datetimes, database constraints, explicit indexes, and transaction-safe services.
+The supplied SQL schema is the functional contract. Map it to Django idioms without silently dropping fields, constraints, states, or relationships.
+Tasks
+Implement equivalents of v_student_fee_balance and v_fee_collection_summary using selectors/querysets or managed database views based on project convention.
+Add student statement, outstanding dues, aging, daily collection, mode-wise collection, fee-head collection, scholarship/concession, refund, and reconciliation reports.
+Define opening, movement, and closing totals so reports reconcile to source transactions.
+Support CSV/XLSX/PDF export through asynchronous jobs for large data sets, with permission and audit controls.
+Required output
+Selectors/views, report services, export task contracts, endpoints, tests, and reconciliation formulas.
+Report data dictionary.
+Sample verification queries.
+Acceptance criteria
+Cancelled/failed transactions are excluded correctly.
+Every summary can be traced to source records.
+Exports respect data scope and do not exhaust memory.
+Before writing code, state assumptions and identify missing cross-module models or settings. Do not invent incompatible fields. Then provide complete, runnable code grouped by file path, migration order, tests, and verification commands.
+
+PROMPT 20
+Notifications and event-driven integration
+Purpose: Add reliable notifications and domain events for important financial lifecycle changes.
+Copy-and-paste prompt
+You are a senior Django/DRF architect and financial-systems engineer. Implement the requested part of Module 17: Student Fees and Financial Management for the SIMS platform.
+Architecture contract
+Use a plugin-ready modular-monolith Django architecture. Keep the fees domain in its own installable app/package and expose narrow integration interfaces.
+Reuse the project custom user model through settings.AUTH_USER_MODEL and existing RBAC entities. Do not create parallel authentication or role systems.
+Use MySQL 8, Decimal values, timezone-aware datetimes, database constraints, explicit indexes, and transaction-safe services.
+The supplied SQL schema is the functional contract. Map it to Django idioms without silently dropping fields, constraints, states, or relationships.
+Tasks
+Define events for assessment posted, due reminder, overdue, payment success/failure, receipt issued, benefit decision, installment due, refund decision/result, and hold placed/released.
+Use an outbox pattern or existing reliable event mechanism so database commit and event publication cannot diverge.
+Create user notification templates with non-sensitive content and deep links.
+Deduplicate events and reminders; make consumers idempotent.
+Required output
+Event schemas, outbox model/adapter if needed, producers, consumers/tasks, templates, and tests.
+Retry/dead-letter policy.
+Event versioning rules.
+Acceptance criteria
+No notification is sent for rolled-back transactions.
+Retries do not duplicate user messages.
+Payloads avoid unnecessary financial or personal data.
+Before writing code, state assumptions and identify missing cross-module models or settings. Do not invent incompatible fields. Then provide complete, runnable code grouped by file path, migration order, tests, and verification commands.
+
+PROMPT 21
+Audit trail and financial observability
+Purpose: Implement immutable fee activity auditing and operational metrics.
+Copy-and-paste prompt
+You are a senior Django/DRF architect and financial-systems engineer. Implement the requested part of Module 17: Student Fees and Financial Management for the SIMS platform.
+Architecture contract
+Use a plugin-ready modular-monolith Django architecture. Keep the fees domain in its own installable app/package and expose narrow integration interfaces.
+Reuse the project custom user model through settings.AUTH_USER_MODEL and existing RBAC entities. Do not create parallel authentication or role systems.
+Use MySQL 8, Decimal values, timezone-aware datetimes, database constraints, explicit indexes, and transaction-safe services.
+The supplied SQL schema is the functional contract. Map it to Django idioms without silently dropping fields, constraints, states, or relationships.
+Tasks
+Implement fee_activity_audit or integrate with the existing audit framework while preserving required fields.
+Record actor, action, entity, before/after values, IP/request correlation, and timestamp for sensitive state changes.
+Redact secrets, gateway signatures, and unnecessary PII from JSON snapshots and logs.
+Define metrics and alerts for callback failures, allocation mismatches, overdue-job failures, refund failures, and reconciliation variance.
+Required output
+Audit service/middleware hooks, redaction policy, metrics, alerts, dashboards/queries, and tests.
+Audited-action matrix.
+Retention and access recommendations.
+Acceptance criteria
+Audit records are append-only to normal users.
+Sensitive values are absent.
+Every approval/reversal/refund is traceable end-to-end.
+Before writing code, state assumptions and identify missing cross-module models or settings. Do not invent incompatible fields. Then provide complete, runnable code grouped by file path, migration order, tests, and verification commands.
+
+PROMPT 22
+Comprehensive automated test suite
+Purpose: Build a layered test suite that proves financial correctness, permissions, and concurrency behavior.
+Copy-and-paste prompt
+You are a senior Django/DRF architect and financial-systems engineer. Implement the requested part of Module 17: Student Fees and Financial Management for the SIMS platform.
+Architecture contract
+Use a plugin-ready modular-monolith Django architecture. Keep the fees domain in its own installable app/package and expose narrow integration interfaces.
+Reuse the project custom user model through settings.AUTH_USER_MODEL and existing RBAC entities. Do not create parallel authentication or role systems.
+Use MySQL 8, Decimal values, timezone-aware datetimes, database constraints, explicit indexes, and transaction-safe services.
+The supplied SQL schema is the functional contract. Map it to Django idioms without silently dropping fields, constraints, states, or relationships.
+Tasks
+Create unit tests for calculations and state machines; model/constraint tests; service transaction tests; API/permission tests; integration tests; and gateway contract tests.
+Use factories and deterministic Decimal/date fixtures.
+Test concurrent assessment version approval, payment callbacks, allocation, receipt numbering, benefit application, and refund responses.
+Add property-based tests for monetary invariants if the project permits Hypothesis.
+Define coverage gates focused on critical services, not superficial line coverage.
+Required output
+Test plan mapped to requirements, complete test code, fixtures/factories, commands, and CI configuration changes.
+Invariant catalog.
+Known test-environment limitations for MySQL locking.
+Acceptance criteria
+Tests run against MySQL for database-specific constraints/concurrency.
+Negative authorization paths are covered.
+All monetary invariants are asserted.
+Before writing code, state assumptions and identify missing cross-module models or settings. Do not invent incompatible fields. Then provide complete, runnable code grouped by file path, migration order, tests, and verification commands.
+
+PROMPT 23
+Data integrity, reconciliation, and repair commands
+Purpose: Create safe operational tools to detect drift and repair only through explicit financial entries.
+Copy-and-paste prompt
+You are a senior Django/DRF architect and financial-systems engineer. Implement the requested part of Module 17: Student Fees and Financial Management for the SIMS platform.
+Architecture contract
+Use a plugin-ready modular-monolith Django architecture. Keep the fees domain in its own installable app/package and expose narrow integration interfaces.
+Reuse the project custom user model through settings.AUTH_USER_MODEL and existing RBAC entities. Do not create parallel authentication or role systems.
+Use MySQL 8, Decimal values, timezone-aware datetimes, database constraints, explicit indexes, and transaction-safe services.
+The supplied SQL schema is the functional contract. Map it to Django idioms without silently dropping fields, constraints, states, or relationships.
+Tasks
+Implement checks for assessment header/item mismatch, payment/allocation mismatch, status/balance mismatch, orphaned source links, duplicate charge sources, receipt anomalies, and refund overrun.
+Provide dry-run-first management commands with institution/campus/date scoping.
+Repairs must create adjustments/reversals/audit evidence rather than silently rewriting posted facts.
+Emit machine-readable results and non-zero exit status when unresolved errors remain.
+Required output
+Management commands, selectors, repair services, tests, runbook, and sample output.
+Severity classification.
+Backup/approval requirements before repair.
+Acceptance criteria
+Dry run is the default.
+Commands are restartable.
+Every repair is traceable and preserves original records.
+Before writing code, state assumptions and identify missing cross-module models or settings. Do not invent incompatible fields. Then provide complete, runnable code grouped by file path, migration order, tests, and verification commands.
+
+PROMPT 24
+Performance, indexing, retention, and security hardening
+Purpose: Review the completed module for production scale and financial-data security.
+Copy-and-paste prompt
+You are a senior Django/DRF architect and financial-systems engineer. Implement the requested part of Module 17: Student Fees and Financial Management for the SIMS platform.
+Architecture contract
+Use a plugin-ready modular-monolith Django architecture. Keep the fees domain in its own installable app/package and expose narrow integration interfaces.
+Reuse the project custom user model through settings.AUTH_USER_MODEL and existing RBAC entities. Do not create parallel authentication or role systems.
+Use MySQL 8, Decimal values, timezone-aware datetimes, database constraints, explicit indexes, and transaction-safe services.
+The supplied SQL schema is the functional contract. Map it to Django idioms without silently dropping fields, constraints, states, or relationships.
+Tasks
+Analyze expected queries and propose indexes for account, assessment, item, transaction, allocation, receipt, benefit, hold, audit, and reporting access paths.
+Use EXPLAIN for critical queries and eliminate N+1 behavior with select_related/prefetch_related.
+Add rate limits for payment/webhook/export endpoints, secure headers, CSRF/authentication choices, webhook raw-body verification, and file export protections.
+Define retention/archive strategy for audit/events while keeping statutory financial records available.
+Review OWASP API risks and Django deployment settings relevant to this module.
+Required output
+Index migration, query changes, benchmark plan, security checklist, and tests.
+Before/after EXPLAIN notes.
+Retention and backup/restore recommendations.
+Acceptance criteria
+Indexes match real query predicates.
+Secrets and sensitive fields are not logged.
+No security control relies only on the client.
+Before writing code, state assumptions and identify missing cross-module models or settings. Do not invent incompatible fields. Then provide complete, runnable code grouped by file path, migration order, tests, and verification commands.
+
+PROMPT 25
+Final integration review and production handover
+Purpose: Perform a complete, evidence-based readiness review of Module 17.
+Copy-and-paste prompt
+You are a senior Django/DRF architect and financial-systems engineer. Implement the requested part of Module 17: Student Fees and Financial Management for the SIMS platform.
+Architecture contract
+Use a plugin-ready modular-monolith Django architecture. Keep the fees domain in its own installable app/package and expose narrow integration interfaces.
+Reuse the project custom user model through settings.AUTH_USER_MODEL and existing RBAC entities. Do not create parallel authentication or role systems.
+Use MySQL 8, Decimal values, timezone-aware datetimes, database constraints, explicit indexes, and transaction-safe services.
+The supplied SQL schema is the functional contract. Map it to Django idioms without silently dropping fields, constraints, states, or relationships.
+Tasks
+Compare implemented models and behavior against every table, constraint, seed row, permission, and view in the SQL appendix.
+Run Django checks, migrations from empty DB, upgrade migration test, full tests, OpenAPI validation, lint/type checks, security checks, and reconciliation commands.
+Verify end-to-end scenarios: fee setup, assessment, benefit, installment, payment, allocation, receipt, refund, hold/release, reporting, and audit.
+Produce deployment, rollback, data migration, monitoring, backup, and incident-response steps.
+List only genuine remaining gaps with severity, owner, and remediation.
+Required output
+Traceability matrix from schema requirement to code/test.
+Release checklist and command transcript template.
+Operational runbook and go/no-go recommendation.
+Final file inventory.
+Acceptance criteria
+No schema requirement is silently omitted.
+Fresh install and upgrade paths both work.
+Critical financial and authorization scenarios pass.
+Rollback avoids loss of posted financial records.
+Before writing code, state assumptions and identify missing cross-module models or settings. Do not invent incompatible fields. Then provide complete, runnable code grouped by file path, migration order, tests, and verification commands.
+
+Acceptance checklist for every GPT response
+Check
+Requirement
+☐
+Names every file created or changed.
+☐
+Uses the existing custom user model and RBAC.
+☐
+Contains runnable code, not pseudo-code or “same as above”.
+☐
+Includes migrations and migration-order notes.
+☐
+Uses Decimal and explicit rounding for money.
+☐
+Uses atomic transactions for multi-row financial changes.
+☐
+Defines idempotency behavior for retried commands/callbacks.
+☐
+Includes authorization and institution/campus data scoping.
+☐
+Adds positive, negative, boundary, and concurrency tests.
+☐
+Explains verification commands and expected results.
+☐
+Preserves posted history through reversals/adjustments.
+☐
+Updates OpenAPI and operational documentation when applicable.
+
+Appendix A - Authoritative SQL schema
+Use this supplied schema as the authoritative functional contract for Module 17. Reconcile it with existing Django conventions and external models identified during repository discovery. Do not execute it blindly against a Django-managed production database.
+-- =============================================================
+-- 17. STUDENT FEES AND FINANCIAL MANAGEMENT MODULE
+-- Supports admission, academic, examination, service and other fees.
+-- (Original fees module preserved; numbering shifted only because of the additive HR module.)
+-- =============================================================
+CREATE TABLE fee_category (
+    fee_category_id SMALLINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    category_code VARCHAR(30) NOT NULL UNIQUE,
+    category_name VARCHAR(100) NOT NULL UNIQUE,
+    description VARCHAR(500) NULL,
+    display_order SMALLINT UNSIGNED NOT NULL DEFAULT 0,
+    is_refundable BOOLEAN NOT NULL DEFAULT FALSE,
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+ 
+CREATE TABLE financial_ledger_account (
+    ledger_account_id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    parent_account_id INT UNSIGNED NULL,
+    account_code VARCHAR(40) NOT NULL UNIQUE,
+    account_name VARCHAR(150) NOT NULL,
+    account_type ENUM('ASSET','LIABILITY','EQUITY','REVENUE','EXPENSE') NOT NULL,
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,
+    CONSTRAINT fk_ledger_parent FOREIGN KEY (parent_account_id) REFERENCES financial_ledger_account(ledger_account_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+ 
+CREATE TABLE fee_type (
+    fee_type_id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    fee_category_id SMALLINT UNSIGNED NOT NULL,
+    fee_code VARCHAR(40) NOT NULL UNIQUE,
+    fee_name VARCHAR(150) NOT NULL,
+    description VARCHAR(500) NULL,
+    charge_frequency ENUM('ONE_TIME','ANNUAL','TERM','SEMESTER','MONTHLY','PER_APPLICATION','PER_EXAM','PER_COURSE','PER_SERVICE','OTHER') NOT NULL,
+    ledger_account_id INT UNSIGNED NULL,
+    is_mandatory BOOLEAN NOT NULL DEFAULT TRUE,
+    is_refundable BOOLEAN NOT NULL DEFAULT FALSE,
+    is_taxable BOOLEAN NOT NULL DEFAULT FALSE,
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CONSTRAINT fk_fee_type_category FOREIGN KEY (fee_category_id) REFERENCES fee_category(fee_category_id),
+    CONSTRAINT fk_fee_type_ledger FOREIGN KEY (ledger_account_id) REFERENCES financial_ledger_account(ledger_account_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+ 
+CREATE TABLE fee_structure (
+    fee_structure_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    structure_code VARCHAR(50) NOT NULL UNIQUE,
+    structure_name VARCHAR(200) NOT NULL,
+    institution_id SMALLINT UNSIGNED NOT NULL,
+    campus_id SMALLINT UNSIGNED NULL,
+    programme_id SMALLINT UNSIGNED NULL,
+    specialization_id SMALLINT UNSIGNED NULL,
+    academic_year_id SMALLINT UNSIGNED NOT NULL,
+    admission_category_id SMALLINT UNSIGNED NULL,
+    version_number SMALLINT UNSIGNED NOT NULL DEFAULT 1,
+    effective_from DATE NOT NULL,
+    effective_to DATE NULL,
+    approval_status ENUM('DRAFT','SUBMITTED','APPROVED','REJECTED','SUPERSEDED') NOT NULL DEFAULT 'DRAFT',
+    approved_by BIGINT UNSIGNED NULL,
+    approved_at DATETIME NULL,
+    remarks VARCHAR(500) NULL,
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CONSTRAINT chk_fee_structure_dates CHECK (effective_to IS NULL OR effective_to >= effective_from),
+    CONSTRAINT chk_fee_structure_specialization_programme CHECK (specialization_id IS NULL OR programme_id IS NOT NULL),
+    CONSTRAINT fk_fee_structure_institution FOREIGN KEY (institution_id) REFERENCES institution(institution_id),
+    CONSTRAINT fk_fee_structure_campus FOREIGN KEY (campus_id) REFERENCES campus(campus_id),
+    CONSTRAINT fk_fee_structure_programme FOREIGN KEY (programme_id) REFERENCES programme(programme_id),
+    CONSTRAINT fk_fee_structure_specialization_programme FOREIGN KEY (specialization_id, programme_id)
+        REFERENCES programme_specialization(specialization_id, programme_id),
+    CONSTRAINT fk_fee_structure_year FOREIGN KEY (academic_year_id) REFERENCES academic_year(academic_year_id),
+    CONSTRAINT fk_fee_structure_category FOREIGN KEY (admission_category_id) REFERENCES admission_category(admission_category_id),
+    CONSTRAINT fk_fee_structure_approver FOREIGN KEY (approved_by) REFERENCES user_account(user_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+ 
+CREATE TABLE late_fee_rule (
+    late_fee_rule_id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    rule_code VARCHAR(40) NOT NULL UNIQUE,
+    rule_name VARCHAR(150) NOT NULL,
+    calculation_method ENUM('FIXED','PER_DAY','PERCENTAGE','SLAB') NOT NULL,
+    grace_period_days SMALLINT UNSIGNED NOT NULL DEFAULT 0,
+    fixed_amount DECIMAL(12,2) NULL,
+    daily_amount DECIMAL(12,2) NULL,
+    percentage_rate DECIMAL(7,4) NULL,
+    maximum_amount DECIMAL(12,2) NULL,
+    effective_from DATE NOT NULL,
+    effective_to DATE NULL,
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,
+    CONSTRAINT chk_late_fee_dates CHECK (effective_to IS NULL OR effective_to >= effective_from)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+ 
+CREATE TABLE late_fee_slab (
+    late_fee_slab_id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    late_fee_rule_id INT UNSIGNED NOT NULL,
+    from_day SMALLINT UNSIGNED NOT NULL,
+    to_day SMALLINT UNSIGNED NULL,
+    late_fee_amount DECIMAL(12,2) NOT NULL,
+    CONSTRAINT uq_late_fee_slab UNIQUE (late_fee_rule_id, from_day),
+    CONSTRAINT chk_late_fee_slab_days CHECK (to_day IS NULL OR to_day >= from_day),
+    CONSTRAINT fk_late_fee_slab_rule FOREIGN KEY (late_fee_rule_id) REFERENCES late_fee_rule(late_fee_rule_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+ 
+CREATE TABLE fee_structure_item (
+    fee_structure_item_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    fee_structure_id BIGINT UNSIGNED NOT NULL,
+    fee_type_id INT UNSIGNED NOT NULL,
+    semester_id TINYINT UNSIGNED NULL,
+    academic_term_id INT UNSIGNED NULL,
+    semester_key TINYINT UNSIGNED GENERATED ALWAYS AS (COALESCE(semester_id, 0)) STORED,
+    academic_term_key INT UNSIGNED GENERATED ALWAYS AS (COALESCE(academic_term_id, 0)) STORED,
+    amount DECIMAL(12,2) NOT NULL,
+    due_date DATE NULL,
+    due_days_from_registration SMALLINT UNSIGNED NULL,
+    installment_allowed BOOLEAN NOT NULL DEFAULT FALSE,
+    waiver_allowed BOOLEAN NOT NULL DEFAULT FALSE,
+    late_fee_rule_id INT UNSIGNED NULL,
+    display_order SMALLINT UNSIGNED NOT NULL DEFAULT 0,
+    remarks VARCHAR(500) NULL,
+    CONSTRAINT chk_fee_structure_item_amount CHECK (amount >= 0),
+    CONSTRAINT uq_fee_structure_item UNIQUE (fee_structure_id, fee_type_id, semester_key, academic_term_key),
+    CONSTRAINT fk_fee_structure_item_header FOREIGN KEY (fee_structure_id) REFERENCES fee_structure(fee_structure_id),
+    CONSTRAINT fk_fee_structure_item_type FOREIGN KEY (fee_type_id) REFERENCES fee_type(fee_type_id),
+    CONSTRAINT fk_fee_structure_item_semester FOREIGN KEY (semester_id) REFERENCES semester(semester_id),
+    CONSTRAINT fk_fee_structure_item_term FOREIGN KEY (academic_term_id) REFERENCES academic_term(academic_term_id),
+    CONSTRAINT fk_fee_structure_item_late_rule FOREIGN KEY (late_fee_rule_id) REFERENCES late_fee_rule(late_fee_rule_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+ 
+CREATE TABLE student_financial_account (
+    student_account_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    student_id BIGINT UNSIGNED NOT NULL UNIQUE,
+    account_number VARCHAR(40) NOT NULL UNIQUE,
+    account_status ENUM('ACTIVE','ON_HOLD','CLOSED') NOT NULL DEFAULT 'ACTIVE',
+    opening_balance DECIMAL(12,2) NOT NULL DEFAULT 0.00,
+    credit_balance DECIMAL(12,2) NOT NULL DEFAULT 0.00,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CONSTRAINT fk_student_financial_account_student FOREIGN KEY (student_id) REFERENCES student(student_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+ 
+CREATE TABLE student_fee_assessment (
+    fee_assessment_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    assessment_number VARCHAR(50) NOT NULL UNIQUE,
+    student_account_id BIGINT UNSIGNED NULL,
+    application_id BIGINT UNSIGNED NULL,
+    enrolment_id BIGINT UNSIGNED NULL,
+    term_registration_id BIGINT UNSIGNED NULL,
+    academic_year_id SMALLINT UNSIGNED NOT NULL,
+    academic_term_id INT UNSIGNED NULL,
+    fee_structure_id BIGINT UNSIGNED NULL,
+    assessment_type ENUM('ADMISSION','ACADEMIC','EXAMINATION','HOSTEL','TRANSPORT','LIBRARY','CERTIFICATE','PENALTY','SERVICE','OTHER') NOT NULL,
+    assessment_date DATE NOT NULL,
+    gross_amount DECIMAL(12,2) NOT NULL DEFAULT 0.00,
+    concession_amount DECIMAL(12,2) NOT NULL DEFAULT 0.00,
+    scholarship_amount DECIMAL(12,2) NOT NULL DEFAULT 0.00,
+    adjustment_amount DECIMAL(12,2) NOT NULL DEFAULT 0.00,
+    net_payable_amount DECIMAL(12,2) NOT NULL DEFAULT 0.00,
+    amount_paid DECIMAL(12,2) NOT NULL DEFAULT 0.00,
+    balance_amount DECIMAL(12,2) NOT NULL DEFAULT 0.00,
+    due_date DATE NULL,
+    assessment_status ENUM('DRAFT','ASSESSED','PARTIALLY_PAID','PAID','OVERDUE','CANCELLED','WAIVED') NOT NULL DEFAULT 'DRAFT',
+    remarks VARCHAR(500) NULL,
+    created_by BIGINT UNSIGNED NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CONSTRAINT chk_fee_assessment_context CHECK (student_account_id IS NOT NULL OR application_id IS NOT NULL),
+    CONSTRAINT chk_fee_assessment_amounts CHECK (
+        gross_amount >= 0 AND concession_amount >= 0 AND scholarship_amount >= 0 AND
+        net_payable_amount >= 0 AND amount_paid >= 0 AND amount_paid <= net_payable_amount AND
+        net_payable_amount = gross_amount - concession_amount - scholarship_amount + adjustment_amount AND
+        balance_amount = net_payable_amount - amount_paid
+    ),
+    CONSTRAINT fk_fee_assessment_account FOREIGN KEY (student_account_id) REFERENCES student_financial_account(student_account_id),
+    CONSTRAINT fk_fee_assessment_application FOREIGN KEY (application_id) REFERENCES admission_application(application_id),
+    CONSTRAINT fk_fee_assessment_enrolment FOREIGN KEY (enrolment_id) REFERENCES student_programme_enrolment(enrolment_id),
+    CONSTRAINT fk_fee_assessment_term_registration FOREIGN KEY (term_registration_id) REFERENCES student_term_registration(term_registration_id),
+    CONSTRAINT fk_fee_assessment_year FOREIGN KEY (academic_year_id) REFERENCES academic_year(academic_year_id),
+    CONSTRAINT fk_fee_assessment_term FOREIGN KEY (academic_term_id) REFERENCES academic_term(academic_term_id),
+    CONSTRAINT fk_fee_assessment_structure FOREIGN KEY (fee_structure_id) REFERENCES fee_structure(fee_structure_id),
+    CONSTRAINT fk_fee_assessment_creator FOREIGN KEY (created_by) REFERENCES user_account(user_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+ 
+CREATE TABLE student_fee_assessment_item (
+    assessment_item_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    fee_assessment_id BIGINT UNSIGNED NOT NULL,
+    fee_type_id INT UNSIGNED NOT NULL,
+    fee_structure_item_id BIGINT UNSIGNED NULL,
+    description VARCHAR(250) NULL,
+    original_amount DECIMAL(12,2) NOT NULL,
+    concession_amount DECIMAL(12,2) NOT NULL DEFAULT 0.00,
+    scholarship_amount DECIMAL(12,2) NOT NULL DEFAULT 0.00,
+    adjustment_amount DECIMAL(12,2) NOT NULL DEFAULT 0.00,
+    net_amount DECIMAL(12,2) NOT NULL,
+    amount_paid DECIMAL(12,2) NOT NULL DEFAULT 0.00,
+    balance_amount DECIMAL(12,2) NOT NULL,
+    due_date DATE NULL,
+    item_status ENUM('ASSESSED','PARTIALLY_PAID','PAID','OVERDUE','CANCELLED','WAIVED') NOT NULL DEFAULT 'ASSESSED',
+    CONSTRAINT chk_fee_assessment_item_amounts CHECK (
+        original_amount >= 0 AND concession_amount >= 0 AND scholarship_amount >= 0 AND
+        net_amount >= 0 AND amount_paid >= 0 AND amount_paid <= net_amount AND
+        net_amount = original_amount - concession_amount - scholarship_amount + adjustment_amount AND
+        balance_amount = net_amount - amount_paid
+    ),
+    CONSTRAINT fk_fee_item_assessment FOREIGN KEY (fee_assessment_id) REFERENCES student_fee_assessment(fee_assessment_id),
+    CONSTRAINT fk_fee_item_type FOREIGN KEY (fee_type_id) REFERENCES fee_type(fee_type_id),
+    CONSTRAINT fk_fee_item_structure_item FOREIGN KEY (fee_structure_item_id) REFERENCES fee_structure_item(fee_structure_item_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+ 
+CREATE TABLE fee_charge_source (
+    charge_source_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    assessment_item_id BIGINT UNSIGNED NOT NULL,
+    source_module VARCHAR(50) NOT NULL,
+    source_entity VARCHAR(80) NOT NULL,
+    source_entity_id BIGINT UNSIGNED NOT NULL,
+    CONSTRAINT uq_fee_charge_source UNIQUE (assessment_item_id, source_module, source_entity, source_entity_id),
+    CONSTRAINT fk_fee_charge_source_item FOREIGN KEY (assessment_item_id) REFERENCES student_fee_assessment_item(assessment_item_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+ 
+CREATE TABLE concession_type (
+    concession_type_id SMALLINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    concession_code VARCHAR(40) NOT NULL UNIQUE,
+    concession_name VARCHAR(150) NOT NULL,
+    concession_basis ENUM('PERCENTAGE','FIXED_AMOUNT') NOT NULL,
+    maximum_percentage DECIMAL(5,2) NULL,
+    maximum_amount DECIMAL(12,2) NULL,
+    approval_required BOOLEAN NOT NULL DEFAULT TRUE,
+    is_active BOOLEAN NOT NULL DEFAULT TRUE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+ 
+CREATE TABLE student_fee_concession (
+    student_concession_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    student_id BIGINT UNSIGNED NOT NULL,
+    concession_type_id SMALLINT UNSIGNED NOT NULL,
+    academic_year_id SMALLINT UNSIGNED NOT NULL,
+    application_number VARCHAR(50) NULL,
+    application_date DATE NULL,
+    approved_percentage DECIMAL(5,2) NULL,
+    approved_amount DECIMAL(12,2) NULL,
+    valid_from DATE NULL,
+    valid_to DATE NULL,
+    approval_status ENUM('DRAFT','SUBMITTED','APPROVED','REJECTED','EXPIRED','CANCELLED') NOT NULL DEFAULT 'DRAFT',
+    approved_by BIGINT UNSIGNED NULL,
+    approved_at DATETIME NULL,
+    remarks VARCHAR(500) NULL,
+    CONSTRAINT fk_student_concession_student FOREIGN KEY (student_id) REFERENCES student(student_id),
+    CONSTRAINT fk_student_concession_type FOREIGN KEY (concession_type_id) REFERENCES concession_type(concession_type_id),
+    CONSTRAINT fk_student_concession_year FOREIGN KEY (academic_year_id) REFERENCES academic_year(academic_year_id),
+    CONSTRAINT fk_student_concession_approver FOREIGN KEY (approved_by) REFERENCES user_account(user_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+ 
+CREATE TABLE scholarship_scheme (
+    scholarship_scheme_id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    scheme_code VARCHAR(50) NOT NULL UNIQUE,
+    scheme_name VARCHAR(200) NOT NULL,
+    sponsoring_authority VARCHAR(200) NULL,
+    scheme_type ENUM('GOVERNMENT','INSTITUTIONAL','PRIVATE','CSR','OTHER') NOT NULL,
+    maximum_amount DECIMAL(12,2) NULL,
+    is_reimbursable BOOLEAN NOT NULL DEFAULT FALSE,
+    is_active BOOLEAN NOT NULL DEFAULT TRUE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+ 
+CREATE TABLE student_scholarship (
+    student_scholarship_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    student_id BIGINT UNSIGNED NOT NULL,
+    scholarship_scheme_id INT UNSIGNED NOT NULL,
+    academic_year_id SMALLINT UNSIGNED NOT NULL,
+    application_number VARCHAR(60) NULL,
+    sanction_number VARCHAR(60) NULL,
+    applied_amount DECIMAL(12,2) NULL,
+    sanctioned_amount DECIMAL(12,2) NULL,
+    received_amount DECIMAL(12,2) NOT NULL DEFAULT 0.00,
+    application_status ENUM('DRAFT','SUBMITTED','VERIFIED','SANCTIONED','REJECTED','RECEIVED','CANCELLED') NOT NULL DEFAULT 'DRAFT',
+    sanction_date DATE NULL,
+    received_date DATE NULL,
+    remarks VARCHAR(500) NULL,
+    CONSTRAINT fk_student_scholarship_student FOREIGN KEY (student_id) REFERENCES student(student_id),
+    CONSTRAINT fk_student_scholarship_scheme FOREIGN KEY (scholarship_scheme_id) REFERENCES scholarship_scheme(scholarship_scheme_id),
+    CONSTRAINT fk_student_scholarship_year FOREIGN KEY (academic_year_id) REFERENCES academic_year(academic_year_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+ 
+CREATE TABLE student_sponsorship (
+    student_sponsorship_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    student_id BIGINT UNSIGNED NOT NULL,
+    academic_year_id SMALLINT UNSIGNED NOT NULL,
+    sponsoring_authority VARCHAR(200) NOT NULL,
+    sanction_reference VARCHAR(100) NOT NULL,
+    sanctioned_amount DECIMAL(12,2) NOT NULL,
+    valid_from DATE NULL,
+    valid_to DATE NULL,
+    approval_status ENUM('PENDING','APPROVED','REJECTED','CANCELLED') NOT NULL DEFAULT 'PENDING',
+    approved_by BIGINT UNSIGNED NULL,
+    approved_at DATETIME NULL,
+    CONSTRAINT uq_student_sponsorship_reference UNIQUE (student_id, academic_year_id, sanction_reference),
+    CONSTRAINT chk_student_sponsorship_amount CHECK (sanctioned_amount > 0),
+    CONSTRAINT chk_student_sponsorship_dates CHECK (valid_to IS NULL OR valid_from IS NULL OR valid_to >= valid_from),
+    CONSTRAINT fk_student_sponsorship_student FOREIGN KEY (student_id) REFERENCES student(student_id),
+    CONSTRAINT fk_student_sponsorship_year FOREIGN KEY (academic_year_id) REFERENCES academic_year(academic_year_id),
+    CONSTRAINT fk_student_sponsorship_approver FOREIGN KEY (approved_by) REFERENCES user_account(user_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+ 
+CREATE TABLE fee_assessment_benefit (
+    assessment_benefit_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    assessment_item_id BIGINT UNSIGNED NOT NULL,
+    benefit_type ENUM('CONCESSION','SCHOLARSHIP','SPONSORSHIP') NOT NULL,
+    student_concession_id BIGINT UNSIGNED NULL,
+    student_scholarship_id BIGINT UNSIGNED NULL,
+    student_sponsorship_id BIGINT UNSIGNED NULL,
+    benefit_amount DECIMAL(12,2) NOT NULL,
+    applied_date DATE NOT NULL,
+    approved_by BIGINT UNSIGNED NULL,
+    CONSTRAINT chk_fee_benefit_amount CHECK (benefit_amount > 0),
+    CONSTRAINT chk_fee_benefit_source CHECK (
+        (benefit_type='CONCESSION' AND student_concession_id IS NOT NULL AND student_scholarship_id IS NULL AND student_sponsorship_id IS NULL) OR
+        (benefit_type='SCHOLARSHIP' AND student_concession_id IS NULL AND student_scholarship_id IS NOT NULL AND student_sponsorship_id IS NULL) OR
+        (benefit_type='SPONSORSHIP' AND student_concession_id IS NULL AND student_scholarship_id IS NULL AND student_sponsorship_id IS NOT NULL)
+    ),
+    CONSTRAINT fk_fee_benefit_item FOREIGN KEY (assessment_item_id) REFERENCES student_fee_assessment_item(assessment_item_id),
+    CONSTRAINT fk_fee_benefit_concession FOREIGN KEY (student_concession_id) REFERENCES student_fee_concession(student_concession_id),
+    CONSTRAINT fk_fee_benefit_scholarship FOREIGN KEY (student_scholarship_id) REFERENCES student_scholarship(student_scholarship_id),
+    CONSTRAINT fk_fee_benefit_sponsorship FOREIGN KEY (student_sponsorship_id) REFERENCES student_sponsorship(student_sponsorship_id),
+    CONSTRAINT fk_fee_benefit_approver FOREIGN KEY (approved_by) REFERENCES user_account(user_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+ 
+CREATE TABLE installment_plan (
+    installment_plan_id SMALLINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    plan_code VARCHAR(40) NOT NULL UNIQUE,
+    plan_name VARCHAR(120) NOT NULL,
+    number_of_installments TINYINT UNSIGNED NOT NULL,
+    minimum_initial_percentage DECIMAL(5,2) NULL,
+    approval_required BOOLEAN NOT NULL DEFAULT TRUE,
+    is_active BOOLEAN NOT NULL DEFAULT TRUE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+ 
+CREATE TABLE student_installment_schedule (
+    student_installment_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    fee_assessment_id BIGINT UNSIGNED NOT NULL,
+    installment_plan_id SMALLINT UNSIGNED NULL,
+    installment_number TINYINT UNSIGNED NOT NULL,
+    due_date DATE NOT NULL,
+    installment_amount DECIMAL(12,2) NOT NULL,
+    amount_paid DECIMAL(12,2) NOT NULL DEFAULT 0.00,
+    balance_amount DECIMAL(12,2) NOT NULL,
+    installment_status ENUM('PENDING','PARTIALLY_PAID','PAID','OVERDUE','WAIVED','CANCELLED') NOT NULL DEFAULT 'PENDING',
+    CONSTRAINT uq_student_installment UNIQUE (fee_assessment_id, installment_number),
+    CONSTRAINT fk_installment_assessment FOREIGN KEY (fee_assessment_id) REFERENCES student_fee_assessment(fee_assessment_id),
+    CONSTRAINT fk_installment_plan FOREIGN KEY (installment_plan_id) REFERENCES installment_plan(installment_plan_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+ 
+CREATE TABLE payment_mode (
+    payment_mode_id TINYINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    mode_code VARCHAR(30) NOT NULL UNIQUE,
+    mode_name VARCHAR(80) NOT NULL UNIQUE,
+    requires_reference BOOLEAN NOT NULL DEFAULT FALSE,
+    is_online BOOLEAN NOT NULL DEFAULT FALSE,
+    is_active BOOLEAN NOT NULL DEFAULT TRUE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+ 
+CREATE TABLE payment_transaction (
+    payment_transaction_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    transaction_number VARCHAR(60) NOT NULL UNIQUE,
+    student_account_id BIGINT UNSIGNED NULL,
+    application_id BIGINT UNSIGNED NULL,
+    transaction_date DATETIME NOT NULL,
+    payment_mode_id TINYINT UNSIGNED NOT NULL,
+    amount DECIMAL(12,2) NOT NULL,
+    currency_code CHAR(3) NOT NULL DEFAULT 'INR',
+    payment_status ENUM('INITIATED','PENDING','SUCCESS','FAILED','CANCELLED','REVERSED','PARTIALLY_REFUNDED','REFUNDED') NOT NULL,
+    gateway_name VARCHAR(80) NULL,
+    gateway_transaction_id VARCHAR(120) NULL,
+    bank_reference_number VARCHAR(120) NULL,
+    cheque_number VARCHAR(50) NULL,
+    cheque_date DATE NULL,
+    bank_name VARCHAR(150) NULL,
+    payer_name VARCHAR(150) NULL,
+    payer_contact VARCHAR(100) NULL,
+    received_by BIGINT UNSIGNED NULL,
+    remarks VARCHAR(500) NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT chk_payment_context CHECK (student_account_id IS NOT NULL OR application_id IS NOT NULL),
+    CONSTRAINT chk_payment_amount CHECK (amount > 0),
+    CONSTRAINT uq_payment_application_owner UNIQUE (payment_transaction_id, application_id),
+    CONSTRAINT fk_payment_account FOREIGN KEY (student_account_id) REFERENCES student_financial_account(student_account_id),
+    CONSTRAINT fk_payment_application FOREIGN KEY (application_id) REFERENCES admission_application(application_id),
+    CONSTRAINT fk_payment_mode FOREIGN KEY (payment_mode_id) REFERENCES payment_mode(payment_mode_id),
+    CONSTRAINT fk_payment_receiver FOREIGN KEY (received_by) REFERENCES user_account(user_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+ 
+-- Admission payments now use the same payment_transaction ledger as all other fees.
+CREATE TABLE admission_payment (
+    admission_payment_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    application_id BIGINT UNSIGNED NOT NULL,
+    payment_transaction_id BIGINT UNSIGNED NOT NULL UNIQUE,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_admission_payment_application FOREIGN KEY (application_id) REFERENCES admission_application(application_id),
+    CONSTRAINT fk_admission_payment_transaction_application FOREIGN KEY (payment_transaction_id, application_id)
+        REFERENCES payment_transaction(payment_transaction_id, application_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+ 
+CREATE TABLE payment_allocation (
+    payment_allocation_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    payment_transaction_id BIGINT UNSIGNED NOT NULL,
+    assessment_item_id BIGINT UNSIGNED NOT NULL,
+    allocated_amount DECIMAL(12,2) NOT NULL,
+    allocation_date DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    allocated_by BIGINT UNSIGNED NULL,
+    CONSTRAINT uq_payment_allocation UNIQUE (payment_transaction_id, assessment_item_id),
+    CONSTRAINT chk_allocated_amount CHECK (allocated_amount > 0),
+    CONSTRAINT fk_payment_allocation_payment FOREIGN KEY (payment_transaction_id) REFERENCES payment_transaction(payment_transaction_id),
+    CONSTRAINT fk_payment_allocation_item FOREIGN KEY (assessment_item_id) REFERENCES student_fee_assessment_item(assessment_item_id),
+    CONSTRAINT fk_payment_allocation_user FOREIGN KEY (allocated_by) REFERENCES user_account(user_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+ 
+CREATE TABLE fee_receipt (
+    fee_receipt_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    receipt_number VARCHAR(60) NOT NULL UNIQUE,
+    payment_transaction_id BIGINT UNSIGNED NOT NULL,
+    receipt_date DATETIME NOT NULL,
+    receipt_amount DECIMAL(12,2) NOT NULL,
+    receipt_status ENUM('ISSUED','CANCELLED','REPLACED','REVERSED') NOT NULL DEFAULT 'ISSUED',
+    issued_by BIGINT UNSIGNED NULL,
+    cancelled_by BIGINT UNSIGNED NULL,
+    cancelled_at DATETIME NULL,
+    cancellation_reason VARCHAR(500) NULL,
+    original_receipt_id BIGINT UNSIGNED NULL,
+    CONSTRAINT fk_fee_receipt_payment FOREIGN KEY (payment_transaction_id) REFERENCES payment_transaction(payment_transaction_id),
+    CONSTRAINT fk_fee_receipt_issuer FOREIGN KEY (issued_by) REFERENCES user_account(user_id),
+    CONSTRAINT fk_fee_receipt_canceller FOREIGN KEY (cancelled_by) REFERENCES user_account(user_id),
+    CONSTRAINT fk_fee_receipt_original FOREIGN KEY (original_receipt_id) REFERENCES fee_receipt(fee_receipt_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+ 
+CREATE TABLE fee_adjustment (
+    fee_adjustment_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    adjustment_number VARCHAR(60) NOT NULL UNIQUE,
+    student_account_id BIGINT UNSIGNED NOT NULL,
+    assessment_item_id BIGINT UNSIGNED NULL,
+    adjustment_type ENUM('CREDIT','DEBIT','WAIVER','WRITE_OFF','TRANSFER','CORRECTION') NOT NULL,
+    adjustment_date DATE NOT NULL,
+    adjustment_amount DECIMAL(12,2) NOT NULL,
+    reason VARCHAR(500) NOT NULL,
+    approval_status ENUM('DRAFT','SUBMITTED','APPROVED','REJECTED','CANCELLED') NOT NULL DEFAULT 'DRAFT',
+    approved_by BIGINT UNSIGNED NULL,
+    approved_at DATETIME NULL,
+    CONSTRAINT chk_adjustment_amount CHECK (adjustment_amount > 0),
+    CONSTRAINT fk_fee_adjustment_account FOREIGN KEY (student_account_id) REFERENCES student_financial_account(student_account_id),
+    CONSTRAINT fk_fee_adjustment_item FOREIGN KEY (assessment_item_id) REFERENCES student_fee_assessment_item(assessment_item_id),
+    CONSTRAINT fk_fee_adjustment_approver FOREIGN KEY (approved_by) REFERENCES user_account(user_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+ 
+CREATE TABLE refund_request (
+    refund_request_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    refund_request_number VARCHAR(60) NOT NULL UNIQUE,
+    student_account_id BIGINT UNSIGNED NOT NULL,
+    payment_transaction_id BIGINT UNSIGNED NULL,
+    request_date DATE NOT NULL,
+    refund_reason VARCHAR(500) NOT NULL,
+    requested_amount DECIMAL(12,2) NOT NULL,
+    approved_amount DECIMAL(12,2) NULL,
+    request_status ENUM('SUBMITTED','UNDER_REVIEW','APPROVED','REJECTED','PROCESSED','CANCELLED') NOT NULL DEFAULT 'SUBMITTED',
+    approved_by BIGINT UNSIGNED NULL,
+    approved_at DATETIME NULL,
+    CONSTRAINT chk_refund_request_amounts CHECK (
+        requested_amount > 0 AND (approved_amount IS NULL OR (approved_amount >= 0 AND approved_amount <= requested_amount))
+    ),
+    CONSTRAINT fk_refund_request_account FOREIGN KEY (student_account_id) REFERENCES student_financial_account(student_account_id),
+    CONSTRAINT fk_refund_request_payment FOREIGN KEY (payment_transaction_id) REFERENCES payment_transaction(payment_transaction_id),
+    CONSTRAINT fk_refund_request_approver FOREIGN KEY (approved_by) REFERENCES user_account(user_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+ 
+CREATE TABLE fee_refund (
+    fee_refund_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    refund_request_id BIGINT UNSIGNED NOT NULL,
+    refund_transaction_number VARCHAR(60) NOT NULL UNIQUE,
+    refund_date DATETIME NOT NULL,
+    refund_amount DECIMAL(12,2) NOT NULL,
+    refund_mode_id TINYINT UNSIGNED NOT NULL,
+    bank_reference_number VARCHAR(120) NULL,
+    processed_by BIGINT UNSIGNED NULL,
+    refund_status ENUM('INITIATED','PROCESSING','SUCCESS','FAILED','CANCELLED') NOT NULL,
+    remarks VARCHAR(500) NULL,
+    CONSTRAINT chk_refund_amount CHECK (refund_amount > 0),
+    CONSTRAINT fk_fee_refund_request FOREIGN KEY (refund_request_id) REFERENCES refund_request(refund_request_id),
+    CONSTRAINT fk_fee_refund_mode FOREIGN KEY (refund_mode_id) REFERENCES payment_mode(payment_mode_id),
+    CONSTRAINT fk_fee_refund_processor FOREIGN KEY (processed_by) REFERENCES user_account(user_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+ 
+CREATE TABLE student_fee_penalty (
+    fee_penalty_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    student_account_id BIGINT UNSIGNED NOT NULL,
+    assessment_item_id BIGINT UNSIGNED NULL,
+    fee_type_id INT UNSIGNED NOT NULL,
+    penalty_date DATE NOT NULL,
+    penalty_reason VARCHAR(500) NOT NULL,
+    penalty_amount DECIMAL(12,2) NOT NULL,
+    waived_amount DECIMAL(12,2) NOT NULL DEFAULT 0.00,
+    net_penalty_amount DECIMAL(12,2) NOT NULL,
+    penalty_status ENUM('ASSESSED','PARTIALLY_PAID','PAID','WAIVED','CANCELLED') NOT NULL DEFAULT 'ASSESSED',
+    approved_by BIGINT UNSIGNED NULL,
+    CONSTRAINT fk_fee_penalty_account FOREIGN KEY (student_account_id) REFERENCES student_financial_account(student_account_id),
+    CONSTRAINT fk_fee_penalty_item FOREIGN KEY (assessment_item_id) REFERENCES student_fee_assessment_item(assessment_item_id),
+    CONSTRAINT fk_fee_penalty_type FOREIGN KEY (fee_type_id) REFERENCES fee_type(fee_type_id),
+    CONSTRAINT fk_fee_penalty_approver FOREIGN KEY (approved_by) REFERENCES user_account(user_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+ 
+CREATE TABLE service_fee_request (
+    service_fee_request_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    request_number VARCHAR(50) NOT NULL UNIQUE,
+    student_id BIGINT UNSIGNED NOT NULL,
+    certificate_request_id BIGINT UNSIGNED NULL,
+    fee_type_id INT UNSIGNED NOT NULL,
+    request_date DATE NOT NULL,
+    service_description VARCHAR(500) NULL,
+    quantity SMALLINT UNSIGNED NOT NULL DEFAULT 1,
+    unit_amount DECIMAL(12,2) NOT NULL,
+    total_amount DECIMAL(12,2) NOT NULL,
+    fee_assessment_id BIGINT UNSIGNED NULL,
+    request_status ENUM('DRAFT','SUBMITTED','ASSESSED','PAID','PROCESSING','COMPLETED','REJECTED','CANCELLED') NOT NULL DEFAULT 'DRAFT',
+    processed_by BIGINT UNSIGNED NULL,
+    processed_at DATETIME NULL,
+    CONSTRAINT fk_service_fee_student FOREIGN KEY (student_id) REFERENCES student(student_id),
+    CONSTRAINT fk_service_fee_certificate FOREIGN KEY (certificate_request_id) REFERENCES certificate_request(certificate_request_id),
+    CONSTRAINT fk_service_fee_type FOREIGN KEY (fee_type_id) REFERENCES fee_type(fee_type_id),
+    CONSTRAINT fk_service_fee_assessment FOREIGN KEY (fee_assessment_id) REFERENCES student_fee_assessment(fee_assessment_id),
+    CONSTRAINT fk_service_fee_processor FOREIGN KEY (processed_by) REFERENCES user_account(user_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+ 
+CREATE TABLE student_financial_hold (
+    financial_hold_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    student_account_id BIGINT UNSIGNED NOT NULL,
+    hold_type ENUM('REGISTRATION','EXAMINATION','HALL_TICKET','RESULT','CERTIFICATE','HOSTEL_CHECKOUT','GRADUATION','OTHER') NOT NULL,
+    hold_reason VARCHAR(500) NOT NULL,
+    placed_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    placed_by BIGINT UNSIGNED NOT NULL,
+    released_at DATETIME NULL,
+    released_by BIGINT UNSIGNED NULL,
+    release_reason VARCHAR(500) NULL,
+    hold_status ENUM('ACTIVE','RELEASED','CANCELLED') NOT NULL DEFAULT 'ACTIVE',
+    CONSTRAINT fk_financial_hold_account FOREIGN KEY (student_account_id) REFERENCES student_financial_account(student_account_id),
+    CONSTRAINT fk_financial_hold_placed_by FOREIGN KEY (placed_by) REFERENCES user_account(user_id),
+    CONSTRAINT fk_financial_hold_released_by FOREIGN KEY (released_by) REFERENCES user_account(user_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+ 
+CREATE TABLE fee_activity_audit (
+    fee_audit_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    user_id BIGINT UNSIGNED NULL,
+    action_code VARCHAR(50) NOT NULL,
+    entity_name VARCHAR(80) NOT NULL,
+    entity_id BIGINT UNSIGNED NOT NULL,
+    old_values JSON NULL,
+    new_values JSON NULL,
+    ip_address VARCHAR(45) NULL,
+    performed_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_fee_audit_user FOREIGN KEY (user_id) REFERENCES user_account(user_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+ 
+INSERT INTO fee_category (category_code, category_name, display_order, is_refundable) VALUES
+('ADMISSION','Admission Fees',10,FALSE),('ACADEMIC','Academic Fees',20,FALSE),
+('EXAMINATION','Examination Fees',30,FALSE),('HOSTEL','Hostel Fees',40,TRUE),
+('TRANSPORT','Transport Fees',50,TRUE),('LIBRARY','Library Fees and Penalties',60,FALSE),
+('CERTIFICATE','Certificate and Document Fees',70,FALSE),('PENALTY','Fines and Penalties',80,FALSE),
+('OTHER','Other Fees',90,FALSE);
+ 
+INSERT INTO payment_mode (mode_code, mode_name, requires_reference, is_online) VALUES
+('CASH','Cash',FALSE,FALSE),('CARD','Card',TRUE,TRUE),('UPI','UPI',TRUE,TRUE),
+('NET_BANKING','Net Banking',TRUE,TRUE),('BANK_TRANSFER','Bank Transfer',TRUE,FALSE),
+('CHEQUE','Cheque',TRUE,FALSE),('DEMAND_DRAFT','Demand Draft',TRUE,FALSE),
+('PAYMENT_GATEWAY','Payment Gateway',TRUE,TRUE),('SCHOLARSHIP','Scholarship Credit',TRUE,FALSE),
+('SPONSOR','Sponsor Payment',TRUE,FALSE),('ADJUSTMENT','Account Adjustment',TRUE,FALSE);
+ 
+INSERT IGNORE INTO role (role_code, role_name, role_category, role_level, description, is_system_role) VALUES
+('FINANCE_OFFICER','Finance Officer','ADMINISTRATIVE','INSTITUTION','Approves fee structures, refunds and financial reports.',TRUE),
+('ACCOUNTANT','Accountant','ADMINISTRATIVE','CAMPUS','Maintains fee assessments, allocations and reconciliation.',TRUE),
+('CASHIER','Cashier','ADMINISTRATIVE','CAMPUS','Receives payments and issues receipts.',TRUE),
+('FEE_VERIFICATION_OFFICER','Fee Verification Officer','ADMINISTRATIVE','CAMPUS','Verifies concessions, scholarships and fee records.',TRUE),
+('SCHOLARSHIP_OFFICER','Scholarship Officer','ADMINISTRATIVE','INSTITUTION','Administers scholarships and sponsorships.',TRUE);
+ 
+INSERT IGNORE INTO access_module (module_code, module_name, description, display_order)
+VALUES ('FEES','Fees and Financial Management','Student fee structures, assessments, payments, concessions, refunds and audit.',160);
+ 
+INSERT IGNORE INTO access_resource (access_module_id, resource_code, resource_name, description)
+SELECT access_module_id, 'FEE_STRUCTURE', 'Fee Structure', 'Configure and approve programme fee structures.' FROM access_module WHERE module_code='FEES';
+INSERT IGNORE INTO access_resource (access_module_id, resource_code, resource_name, description)
+SELECT access_module_id, 'FEE_ASSESSMENT', 'Student Fee Assessment', 'Raise and maintain student fee demands.' FROM access_module WHERE module_code='FEES';
+INSERT IGNORE INTO access_resource (access_module_id, resource_code, resource_name, description)
+SELECT access_module_id, 'FEE_PAYMENT', 'Fee Payment and Receipt', 'Record payments, allocate collections and issue receipts.' FROM access_module WHERE module_code='FEES';
+INSERT IGNORE INTO access_resource (access_module_id, resource_code, resource_name, description)
+SELECT access_module_id, 'FEE_BENEFIT', 'Concession and Scholarship', 'Administer concessions, scholarships and sponsorships.' FROM access_module WHERE module_code='FEES';
+INSERT IGNORE INTO access_resource (access_module_id, resource_code, resource_name, description)
+SELECT access_module_id, 'FEE_REFUND', 'Refund and Adjustment', 'Approve and process refunds, waivers and adjustments.' FROM access_module WHERE module_code='FEES';
+INSERT IGNORE INTO access_resource (access_module_id, resource_code, resource_name, description)
+SELECT access_module_id, 'FEE_REPORT', 'Fee Reports and Audit', 'View outstanding dues, collections and audit reports.' FROM access_module WHERE module_code='FEES';
+ 
+INSERT IGNORE INTO permission (access_resource_id, access_action_id, permission_code, permission_name, is_sensitive)
+SELECT ar.access_resource_id, aa.access_action_id,
+       CONCAT('FEES.', ar.resource_code, '.', aa.action_code),
+       CONCAT(aa.action_name, ' ', ar.resource_name),
+       CASE WHEN aa.action_code IN ('APPROVE','DELETE','CONFIGURE','EXPORT') THEN TRUE ELSE FALSE END
+FROM access_resource ar
+JOIN access_module am ON am.access_module_id=ar.access_module_id AND am.module_code='FEES'
+CROSS JOIN access_action aa
+WHERE aa.action_code IN ('CREATE','READ','UPDATE','DELETE','APPROVE','VERIFY','EXPORT','CONFIGURE');
+ 
+INSERT IGNORE INTO role_permission (role_id, permission_id)
+SELECT r.role_id, p.permission_id FROM role r CROSS JOIN permission p
+WHERE r.role_code='FINANCE_OFFICER' AND p.permission_code LIKE 'FEES.%';
+ 
+INSERT IGNORE INTO role_permission (role_id, permission_id)
+SELECT r.role_id, p.permission_id FROM role r CROSS JOIN permission p
+JOIN access_action aa ON aa.access_action_id=p.access_action_id
+WHERE r.role_code='ACCOUNTANT' AND p.permission_code LIKE 'FEES.%'
+  AND aa.action_code IN ('CREATE','READ','UPDATE','VERIFY','EXPORT');
+ 
+INSERT IGNORE INTO role_permission (role_id, permission_id)
+SELECT r.role_id, p.permission_id FROM role r CROSS JOIN permission p
+JOIN access_resource ar ON ar.access_resource_id=p.access_resource_id
+JOIN access_action aa ON aa.access_action_id=p.access_action_id
+WHERE r.role_code='CASHIER' AND ar.resource_code='FEE_PAYMENT'
+  AND aa.action_code IN ('CREATE','READ','UPDATE','VERIFY');
+ 
+INSERT IGNORE INTO role_permission (role_id, permission_id)
+SELECT r.role_id, p.permission_id FROM role r CROSS JOIN permission p
+JOIN access_resource ar ON ar.access_resource_id=p.access_resource_id
+JOIN access_action aa ON aa.access_action_id=p.access_action_id
+WHERE r.role_code IN ('SCHOLARSHIP_OFFICER','FEE_VERIFICATION_OFFICER')
+  AND ar.resource_code IN ('FEE_BENEFIT','FEE_ASSESSMENT','FEE_REPORT')
+  AND aa.action_code IN ('CREATE','READ','UPDATE','APPROVE','VERIFY','EXPORT');
+ 
+CREATE OR REPLACE VIEW v_student_fee_balance AS
+SELECT sfa.student_account_id, sfa.student_id, sfa.account_number,
+       COALESCE(SUM(sfa2.net_payable_amount),0.00) AS total_assessed,
+       COALESCE(SUM(sfa2.amount_paid),0.00) AS total_paid,
+       COALESCE(SUM(sfa2.balance_amount),0.00) AS total_outstanding,
+       sfa.credit_balance
+FROM student_financial_account sfa
+LEFT JOIN student_fee_assessment sfa2 ON sfa2.student_account_id=sfa.student_account_id
+ AND sfa2.assessment_status NOT IN ('CANCELLED','WAIVED')
+GROUP BY sfa.student_account_id, sfa.student_id, sfa.account_number, sfa.credit_balance;
+ 
+CREATE OR REPLACE VIEW v_fee_collection_summary AS
+SELECT DATE(pt.transaction_date) AS collection_date, pm.mode_code,
+       COUNT(*) AS transaction_count, SUM(pt.amount) AS collected_amount
+FROM payment_transaction pt
+JOIN payment_mode pm ON pm.payment_mode_id=pt.payment_mode_id
+WHERE pt.payment_status='SUCCESS'
+GROUP BY DATE(pt.transaction_date), pm.mode_code;

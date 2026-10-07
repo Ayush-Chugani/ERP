@@ -1,0 +1,511 @@
+SIMS Module 18 Performance Indexes
+Django Implementation Prompt Pack
+Plugin ready modular monolith with custom user authorization
+Prepared for SIMS V6 Corrected and Enforced Schema
+
+Document field
+Value
+Module
+18 Performance Indexes
+Framework
+Django with MySQL or MariaDB
+Architecture
+Plugin-ready modular monolith
+Authorization
+Existing Django custom-user and RBAC implementation
+Index definitions
+65 named database indexes
+Delivery method
+Ordered prompts with acceptance gates
+
+
+Purpose and implementation position
+This pack instructs an AI coding agent or development team to implement the supplied performance indexes safely in the existing SIMS Django project. Performance indexes are a cross-cutting database concern. Do not create a new runtime business app solely for this module. Place each index on the Django model that owns the indexed table, generate migrations inside that model’s existing app, and coordinate deployment through the project migration workflow.
+The governing rule is fidelity: preserve every supplied index name, column order, table ownership, existing constraint, and custom-user authorization behavior. An index migration must not rename tables, alter fields, change nullability, modify foreign keys, or rewrite business logic unless a separately approved prerequisite demands it.
+How to use this pack
+Run Prompt 0 once to establish repository facts and stop on structural mismatches.
+Run Prompts 1 through 8 in order. Keep each change reviewable and migration-safe.
+Use Prompt 9 for verification in a production-like database with representative data.
+Run Prompt 10 before deployment and Prompt 11 after release.
+Do not apply a destructive or blocking production migration merely to satisfy the prompt. Escalate conflicts with evidence.
+Non negotiable guardrails
+Do not create duplicate indexes already provided by primary keys, unique constraints, foreign-key indexes, model field db_index declarations, or previous migrations without documenting the decision.
+Do not use raw RunSQL by default. Prefer migrations.AddIndex with models.Index unless the database capability requires a vendor-specific operation.
+Never log, display, copy, or expose PAN, Aadhaar, banking, password, or authentication data while testing.
+Use exact explicit index names. Confirm the target database permits every name and that names are unique in the required namespace.
+Preserve leftmost-column order. Reordering composite fields changes query support.
+Keep application behavior and API contracts unchanged; this module changes database access paths only.
+Architecture and ownership rules
+Concern
+Required approach
+Django apps
+Add each index to the model in its current domain app; do not centralize unrelated models.
+Custom user
+Map user_account and user_id fields to the existing custom user model and settings.AUTH_USER_MODEL. Never introduce auth.User.
+Migrations
+Generate one or more dependency-ordered migrations in owning apps. Explicitly handle cross-app dependencies.
+Database
+Target MySQL or MariaDB with InnoDB and utf8mb4. Record the tested server and Django versions.
+Soft deletion
+Retain deleted_at in the exact supplied composite position. Do not convert to a partial index because MySQL lacks general partial indexes.
+Security
+Treat HR identity, bank, document, login, and password-history tables as sensitive during query-plan analysis.
+Plugins
+Expose no new plugin contract unless the existing architecture requires a migration or health-check extension point.
+
+Definition of done
+All 65 supplied indexes are mapped, implemented, intentionally waived, or blocked with a documented reason.
+makemigrations --check reports no unintended model drift after committed migrations.
+migrate succeeds from the supported pre-module schema and reverse migration is tested in a disposable environment.
+Database metadata confirms exact index names and ordered columns.
+Representative EXPLAIN evidence is captured for high-value queries before and after indexing.
+Automated tests pass and no authorization, API, or business behavior changes.
+The deployment plan addresses locking, migration duration, observability, rollback, and duplicate-index risk.
+
+Prompt sequence
+Prompt 0 Repository discovery and stop gate
+Objective: Map the existing codebase before editing.
+You are implementing SIMS Module 18 Performance Indexes in an existing Django modular monolith. Inspect the repository and produce an evidence-based implementation map. Identify Django and database versions, settings modules, installed apps, custom user model, database routers, model-to-table mappings, migration heads, table naming overrides, existing indexes, unique constraints, foreign keys, soft-delete conventions, and test commands.For every supplied table, locate exactly one owning Django model and app. Compare model fields with the supplied column names. Flag missing tables, missing fields, renamed db_column values, unmanaged models, proxy models, swapped user models, and migration graph conflicts. Do not edit files yet. Stop if a table maps ambiguously, an index name exceeds the active database limit, or the current database is not the intended MySQL/MariaDB target.
+Required outputs: Repository map; environment matrix; model-to-table mapping; existing-index inventory; blockers; proposed migration grouping.
+Prompt 1 Canonical index manifest
+Objective: Create a machine-reviewable source of truth for all requested indexes.
+Create a canonical index manifest from the supplied specification. Each entry must include domain, app label, model name, db_table, exact index name, ordered Django field names, ordered physical column names, index purpose, likely query shape, sensitivity classification, existing equivalent index if any, and disposition: ADD, ALREADY_COVERED, NEEDS_REVIEW, or BLOCKED.Do not treat a wider or differently ordered composite index as automatically equivalent. Apply the leftmost-prefix rule. Distinguish an exact duplicate from partial coverage. Keep all 65 requested indexes accounted for and report the total by disposition.
+Required outputs: Manifest file or structured report; count reconciliation; duplicate/coverage analysis; unresolved mapping list.
+Prompt 2 Django model metadata
+Objective: Represent approved indexes in their owning Django models.
+For each manifest entry marked ADD, update the owning model Meta.indexes using models.Index(fields=[...], name='...'). Preserve the exact index name and field order. Use Django model field names in fields, not raw database column names. Respect db_column mappings. Do not add db_index=True when a named models.Index is required. Do not alter constraints, relationships, on_delete behavior, defaults, nullability, choices, managers, or authorization logic.If a model is unmanaged, explain whether state-only migrations, SeparateDatabaseAndState, or a database-owned migration is appropriate; do not guess. Keep formatting consistent with the project.
+Required outputs: Model changes grouped by app; explicit list of skipped entries and reasons; static validation results.
+Prompt 3 Migration generation and dependency design
+Objective: Create deterministic, reversible schema migrations.
+Generate Django migrations for the approved model index changes. Review every operation: it should be AddIndex or an explicitly justified alternative. Split migrations when necessary to respect app ownership, dependency ordering, deployment risk, or database locking constraints. Use exact index names. Ensure dependencies point to the current migration heads and include swappable_dependency(settings.AUTH_USER_MODEL) where genuinely required by existing model relationships.Do not combine unrelated field or constraint changes. Do not fake migrations. Do not edit historical migrations unless the repository policy explicitly requires a clean baseline and approval is recorded.
+Required outputs: Migration files; operation-to-index reconciliation; dependency graph; reversibility notes; sqlmigrate output summary.
+Prompt 4 Database compatibility and duplicate audit
+Objective: Prove that the migration is valid for the target server.
+Validate all index definitions against the actual MySQL or MariaDB version, InnoDB limits, character set, collation, index-name rules, maximum key length, nullable columns, and column data types. Query database metadata to identify exact, prefix-equivalent, redundant, or conflicting indexes. Pay special attention to long varchar columns such as names, organization names, bank names, entity names, and username.If a full-width index is not supported, stop and propose alternatives with tradeoffs; do not silently add prefix indexes or hashes. Document foreign-key-created indexes and unique indexes that may make a requested index redundant.
+Required outputs: Compatibility matrix; database metadata evidence; duplicate/redundancy decisions; blocking risks and recommendations.
+Prompt 5 Query alignment and repository integration
+Objective: Confirm that index order matches real ORM workloads.
+Search managers, services, selectors, repositories, admin filters, API filtersets, reports, scheduled jobs, and audit queries for filters, joins, ordering, and date ranges that correspond to each composite index. Map real QuerySets to candidate indexes. Identify low-selectivity leading columns, indexes used only for sorting, and supplied indexes that do not match current query order.Do not rewrite application queries merely to force index usage. Recommend a query change only when semantically equivalent, covered by tests, and separately listed for approval. Preserve tenant, campus, institution, and authorization scoping.
+Required outputs: Query-to-index traceability matrix; uncovered hot queries; supplied indexes with weak workload evidence; optional separately scoped query recommendations.
+Prompt 6 Automated schema and migration tests
+Objective: Add tests that verify structure without coupling to implementation noise.
+Implement tests appropriate to the repository. Verify that the Django model state contains every approved named index with exact field order. Add migration tests for forward application and reversal using a disposable database where the project supports them. Add database introspection assertions for exact names and column order on MySQL/MariaDB, guarded so unsupported local test engines do not create false confidence.Add checks for manifest count reconciliation and duplicate names. Never use production data or sensitive values in fixtures. Use synthetic PAN, Aadhaar, bank, login, and document metadata.
+Required outputs: Test files; commands; expected results; engine-specific skips with justification; coverage of all approved indexes.
+Prompt 7 Performance verification
+Objective: Measure useful access-path changes rather than assuming improvement.
+Select representative high-value queries from the traceability matrix. Create production-shaped, synthetic test data at meaningful cardinalities. Capture EXPLAIN or EXPLAIN ANALYZE where supported before and after indexes. Record access type, chosen key, key length, estimated and actual rows when available, filtered percentage, sort or temporary-table use, and latency distribution over repeated runs.Warm-up and measurement must be separated. Do not claim an improvement from one timing. Redact sensitive predicates. Treat write amplification, storage growth, buffer pressure, and slower bulk imports as costs. Do not force indexes in application code unless independently approved.
+Required outputs: Benchmark protocol; before/after query plans; results table; storage/write-cost estimate; keep/remove/review recommendation per tested index.
+Prompt 8 Security and privacy review
+Objective: Ensure optimization work does not weaken protections.
+Review all changes involving user_account, login_audit, password_history, employee_bank_account, employee_pan, employee_aadhaar, employee_document, employee_document_access_rule, employee_sensitive_access_audit, and file_object. Confirm that indexes do not introduce new endpoints, permissions, logs, exports, admin displays, or debug output. Verify that EXPLAIN capture and test fixtures contain no real identifiers, credentials, document keys, gateway references, or financial data.Preserve the existing custom-user authorization and scoped RBAC rules. Indexes improve lookup performance but never grant access; tests must still assert authorization boundaries.
+Required outputs: Security checklist; sensitive-table test evidence; redaction confirmation; authorization regression results.
+Prompt 9 Full verification gate
+Objective: Run the complete quality gate in a production-like environment.
+Run project checks, formatting/linting, type checks if configured, unit and integration tests, migration consistency checks, migration plan, sqlmigrate review, forward migration, metadata introspection, representative EXPLAIN tests, and reverse migration in a disposable production-like MySQL/MariaDB database. Reapply the migration after reversal and rerun critical tests.Compare the final database metadata to the canonical manifest. Fail the gate for a missing name, wrong order, duplicate operation, unintended schema drift, failed reversal, authorization regression, or unexplained test skip.
+Required outputs: Command log summary; pass/fail table; final 65-entry reconciliation; exceptions requiring approval.
+Prompt 10 Deployment plan
+Objective: Prepare a safe rollout for index creation.
+Produce a deployment plan based on table sizes, traffic, database version, replication topology, backup policy, maintenance window, and online DDL capability. Estimate risk for large attendance, audit, transaction, assessment, document, and login tables. Specify prechecks, backup/restore readiness, migration command, lock and replication monitoring, timeout thresholds, abort criteria, postchecks, and communication responsibilities.If normal Django AddIndex may cause unacceptable blocking, propose a vendor-supported online schema-change procedure and a state/database synchronization strategy. Do not execute production changes in this task.
+Required outputs: Runbook; risk-ranked migration batches; monitoring queries; abort criteria; rollback method; ownership and approvals.
+Prompt 11 Post deployment observation and cleanup
+Objective: Confirm real production value after release.
+After approved deployment, verify index presence, application health, error rates, lock waits, replica lag, database CPU and I/O, slow queries, index usage statistics where reliable, write latency, and storage growth. Compare representative query plans with the approved baseline. Observe for an agreed period before recommending removal of redundant legacy indexes.Never drop an index automatically. Any removal requires workload evidence, foreign-key review, a separate reversible migration, and explicit approval.
+Required outputs: Post-deployment report; incident thresholds; observed plan changes; follow-up recommendations; separately approved cleanup candidates.
+
+Canonical index catalogue
+The catalogue below is the authoritative reconciliation list for this prompt pack. Column order is significant. The implementation agent must map physical columns to Django field names without changing the physical order.
+No
+Domain
+Table
+Index name
+Ordered columns
+1
+Student and admission
+student
+idx_student_name
+last_name, first_name
+2
+Student and admission
+student
+idx_student_status
+student_status
+3
+Student and admission
+admission_applicant
+idx_admission_applicant_name
+last_name, first_name
+4
+Student and admission
+admission_application
+idx_application_status
+application_status, academic_year_id
+5
+Student and admission
+student_programme_enrolment
+idx_enrolment_status
+enrolment_status
+6
+Student and admission
+student_term_registration
+idx_term_registration_section
+class_section_id, registration_status
+7
+Student and admission
+student_course_registration
+idx_course_registration_status
+course_offering_id, registration_status
+8
+HR master
+employee
+idx_employee_name
+last_name, first_name
+9
+HR master
+employee
+idx_employee_status
+employment_status
+10
+HR master
+employee
+idx_employee_institution_source
+institution_id, employment_source_id, employment_status
+11
+HR master
+employee
+idx_employee_external_agency
+external_agency_id, employment_status
+12
+HR master
+employee_assignment
+idx_employee_assignment_location
+campus_id, department_id, designation_id, is_primary
+13
+HR master
+staff_category
+idx_staff_category_type
+staff_type_id, is_active
+14
+HR master
+designation
+idx_designation_category
+staff_category_id, is_active
+15
+HR master
+external_agency
+idx_external_agency_institution
+institution_id, is_active
+16
+Attendance and result
+class_session
+idx_class_session_date
+session_date, course_offering_section_id
+17
+Attendance and result
+student_attendance
+idx_student_attendance_roster
+course_offering_section_student_id, attendance_status_id
+18
+Attendance and result
+assessment_event
+idx_assessment_event_date
+assessment_date
+19
+Attendance and result
+student_course_result
+idx_course_result_status
+result_status
+20
+Communication and audit
+grievance
+idx_grievance_status
+status, priority, submitted_at
+21
+Communication and audit
+announcement
+idx_announcement_publish
+approval_status, publish_from, publish_to
+22
+Communication and audit
+activity_audit
+idx_activity_audit_entity
+entity_name, entity_id, activity_at
+23
+RBAC and security
+user_account
+idx_user_account_status
+account_status, username
+24
+RBAC and security
+user_role_assignment
+idx_user_role_active
+user_id, assignment_status, valid_from, valid_to
+25
+RBAC and security
+user_role_assignment
+idx_user_role_scope
+scope_type, scope_entity_id
+26
+RBAC and security
+role_permission
+idx_role_permission_effect
+role_id, permission_effect
+27
+RBAC and security
+permission
+idx_permission_lookup
+access_resource_id, access_action_id, is_active
+28
+RBAC and security
+login_audit
+idx_login_audit_user_time
+user_id, login_at
+29
+RBAC and security
+password_history
+idx_password_history_user_time
+user_id, changed_at
+30
+Finance
+fee_structure
+idx_fee_structure_scope
+academic_year_id, programme_id, admission_category_id, approval_status
+31
+Finance
+student_fee_assessment
+idx_fee_assessment_account_status
+student_account_id, assessment_status, due_date
+32
+Finance
+student_fee_assessment
+idx_fee_assessment_year_term
+academic_year_id, academic_term_id, assessment_type
+33
+Finance
+student_fee_assessment_item
+idx_fee_item_balance
+item_status, due_date, balance_amount
+34
+Finance
+payment_transaction
+idx_payment_account_date
+student_account_id, transaction_date
+35
+Finance
+payment_transaction
+idx_payment_gateway_reference
+gateway_transaction_id
+36
+Finance
+payment_transaction
+idx_payment_status_date
+payment_status, transaction_date
+37
+Finance
+payment_allocation
+idx_payment_allocation_item
+assessment_item_id
+38
+Finance
+fee_receipt
+idx_receipt_date_status
+receipt_date, receipt_status
+39
+Finance
+student_fee_concession
+idx_concession_student_year
+student_id, academic_year_id, approval_status
+40
+Finance
+student_scholarship
+idx_scholarship_student_year
+student_id, academic_year_id, application_status
+41
+Finance
+refund_request
+idx_refund_status_date
+request_status, request_date
+42
+Finance
+fee_activity_audit
+idx_fee_audit_entity
+entity_name, entity_id, performed_at
+43
+HR qualifications
+education_institution
+idx_education_institution_lookup
+institution_name, city, country_id, is_active
+44
+HR qualifications
+awarding_body
+idx_awarding_body_lookup
+awarding_body_name, university_type, country_id, is_active
+45
+HR qualifications
+employee_qualification
+idx_employee_qualification_employee
+employee_id, qualification_level_id, qualification_status, deleted_at
+46
+HR qualifications
+employee_qualification
+idx_employee_qualification_passing
+passing_year, is_highest_qualification
+47
+HR experience
+previous_organization
+idx_previous_organization_lookup
+organization_name, previous_organization_type_id, city, country_id
+48
+HR experience
+employee_previous_employment
+idx_employee_previous_employment_employee
+employee_id, employment_start_date, employment_end_date, deleted_at
+49
+Sensitive HR
+employee_bank_account
+idx_employee_bank_employee_status
+employee_id, account_status, verification_status, is_primary, deleted_at
+50
+Sensitive HR
+employee_bank_account
+idx_employee_bank_ifsc
+ifsc_code, bank_name
+51
+Sensitive HR
+employee_pan
+idx_employee_pan_status
+employee_id, verification_status, deleted_at
+52
+Sensitive HR
+employee_aadhaar
+idx_employee_aadhaar_status
+employee_id, verification_status, deleted_at
+53
+HR documents
+employee_document
+idx_employee_document_owner_scope
+employee_id, document_scope, is_active, deleted_at
+54
+HR documents
+employee_document
+idx_employee_document_qualification
+employee_qualification_id, verification_status, approval_status
+55
+HR documents
+employee_document
+idx_employee_document_experience
+employee_previous_employment_id, verification_status, approval_status
+56
+HR documents
+employee_document
+idx_employee_document_bank
+employee_bank_account_id, verification_status, approval_status
+57
+HR documents
+employee_document
+idx_employee_document_pan
+employee_pan_id, verification_status, approval_status
+58
+HR documents
+employee_document
+idx_employee_document_aadhaar
+employee_aadhaar_id, verification_status, approval_status
+59
+HR documents
+employee_document
+idx_employee_document_category_type
+employee_document_category_id, document_type_id, confidentiality_level
+60
+HR documents
+employee_document
+idx_employee_document_file
+file_object_id
+61
+HR documents
+employee_document_access_rule
+idx_employee_document_access_role
+role_id, valid_from, valid_to
+62
+HR documents
+employee_document_access_rule
+idx_employee_document_access_user
+user_id, valid_from, valid_to
+63
+Sensitive audit
+employee_sensitive_access_audit
+idx_employee_sensitive_audit_employee
+employee_id, entity_type, accessed_at
+64
+Sensitive audit
+employee_sensitive_access_audit
+idx_employee_sensitive_audit_user
+user_id, accessed_at
+65
+File security
+file_object
+idx_file_object_confidentiality
+confidentiality_level, is_encrypted, deleted_at
+
+Technical implementation patterns
+Standard Django model declaration
+Use the owning model’s field names. If a ForeignKey named academic_year stores academic_year_id, declare 'academic_year' in models.Index fields; Django resolves the database column.
+class Meta:    indexes = [        models.Index(            fields=['application_status', 'academic_year'],            name='idx_application_status',        ),    ]
+Expected migration operation
+migrations.AddIndex(    model_name='admissionapplication',    index=models.Index(        fields=['application_status', 'academic_year'],        name='idx_application_status',    ),)
+Database introspection
+Use Django connection introspection for portable assertions and INFORMATION_SCHEMA.STATISTICS for MySQL or MariaDB confirmation. Order rows by SEQ_IN_INDEX. Compare INDEX_NAME and COLUMN_NAME against the manifest. Parameterize queries and restrict access to schema metadata.
+SELECT TABLE_NAME, INDEX_NAME, SEQ_IN_INDEX, COLUMN_NAMEFROM INFORMATION_SCHEMA.STATISTICSWHERE TABLE_SCHEMA = DATABASE()ORDER BY TABLE_NAME, INDEX_NAME, SEQ_IN_INDEX;
+Review checklist
+Gate
+Acceptance criterion
+Scope
+Only index metadata and migrations changed; no accidental business-schema drift.
+Count
+All 65 requested definitions have a recorded disposition.
+Names
+Exact names are used and database limits were checked.
+Order
+Composite fields retain the supplied left-to-right order.
+Mapping
+Django field names correctly resolve to supplied physical columns.
+Duplicates
+Primary, unique, foreign-key, and legacy indexes were compared.
+Migrations
+Dependencies, forward application, and reversal were tested.
+Performance
+Representative plans and repeatable measurements support claims.
+Security
+Sensitive fixtures and logs contain synthetic or redacted values only.
+Authorization
+Custom user and scoped RBAC tests remain unchanged and pass.
+Operations
+Locking, replication, storage, monitoring, abort, and rollback are covered.
+Documentation
+Manifest, exceptions, commands, and environment versions are recorded.
+
+Final implementation report template
+Report section
+Evidence to record
+Environment and versions
+Commands, results, database metadata, decisions, and exceptions as applicable.
+Repository and app mapping
+Commands, results, database metadata, decisions, and exceptions as applicable.
+Index disposition summary
+Commands, results, database metadata, decisions, and exceptions as applicable.
+Files changed
+Commands, results, database metadata, decisions, and exceptions as applicable.
+Migration sequence
+Commands, results, database metadata, decisions, and exceptions as applicable.
+Automated test results
+Commands, results, database metadata, decisions, and exceptions as applicable.
+Database metadata verification
+Commands, results, database metadata, decisions, and exceptions as applicable.
+Performance evidence
+Commands, results, database metadata, decisions, and exceptions as applicable.
+Security and authorization verification
+Commands, results, database metadata, decisions, and exceptions as applicable.
+Deployment and rollback readiness
+Commands, results, database metadata, decisions, and exceptions as applicable.
+Open risks and approvals required
+Commands, results, database metadata, decisions, and exceptions as applicable.
+
+Completion rule: do not write “done” without verifiable commands, results, or database metadata.

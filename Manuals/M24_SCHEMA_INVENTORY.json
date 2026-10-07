@@ -1,0 +1,135 @@
+[
+  {
+    "table": "industry_sector",
+    "owner": "staff_profile.IndustrySector",
+    "source_line": 3846,
+    "source_ddl": "CREATE TABLE industry_sector (\n    industry_sector_id SMALLINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,\n    sector_code VARCHAR(50) NOT NULL UNIQUE,\n    sector_name VARCHAR(150) NOT NULL UNIQUE,\n    description VARCHAR(500) NULL,\n    is_active BOOLEAN NOT NULL DEFAULT TRUE\n) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;",
+    "installed_ddl": "CREATE TABLE `industry_sector` (\n  `industry_sector_id` smallint unsigned NOT NULL AUTO_INCREMENT,\n  `sector_code` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL,\n  `sector_name` varchar(150) COLLATE utf8mb4_unicode_ci NOT NULL,\n  `description` varchar(500) COLLATE utf8mb4_unicode_ci DEFAULT NULL,\n  `is_active` tinyint(1) NOT NULL DEFAULT '1',\n  PRIMARY KEY (`industry_sector_id`),\n  UNIQUE KEY `sector_code` (`sector_code`),\n  UNIQUE KEY `sector_name` (`sector_name`)\n) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci",
+    "columns": [
+      {
+        "column": "industry_sector_id",
+        "field": "industry_sector_id",
+        "type": "smallint unsigned"
+      },
+      {
+        "column": "sector_code",
+        "field": "sector_code",
+        "type": "varchar(50)"
+      },
+      {
+        "column": "sector_name",
+        "field": "sector_name",
+        "type": "varchar(150)"
+      },
+      {
+        "column": "description",
+        "field": "description",
+        "type": "varchar(500)"
+      },
+      {
+        "column": "is_active",
+        "field": "is_active",
+        "type": "bool"
+      }
+    ]
+  },
+  {
+    "table": "faculty_internship",
+    "owner": "faculty_internships.FacultyInternship",
+    "source_line": 4215,
+    "source_ddl": "CREATE TABLE faculty_internship (\n    staff_activity_id BIGINT UNSIGNED PRIMARY KEY,\n    organization_id BIGINT UNSIGNED NOT NULL,\n    internship_title VARCHAR(500) NOT NULL,\n    internship_domain VARCHAR(250) NULL,\n    industry_sector_id SMALLINT UNSIGNED NULL,\n    location_text VARCHAR(300) NULL,\n    mentor_name VARCHAR(200) NULL,\n    mentor_designation VARCHAR(150) NULL,\n    mentor_email VARCHAR(254) NULL,\n    work_undertaken TEXT NULL,\n    technologies_tools TEXT NULL,\n    outcomes TEXT NULL,\n    stipend_incentive_type ENUM('NONE','STIPEND','INCENTIVE','HONORARIUM','OTHER') NOT NULL DEFAULT 'NONE',\n    stipend_incentive_amount DECIMAL(14,2) NULL,\n    currency_code CHAR(3) NOT NULL DEFAULT 'INR',\n    funding_source VARCHAR(250) NULL,\n    mou_reference VARCHAR(150) NULL,\n    collaboration_reference VARCHAR(250) NULL,\n\n    CONSTRAINT chk_faculty_internship_amount CHECK (\n        stipend_incentive_amount IS NULL OR stipend_incentive_amount >= 0\n    ),\n    CONSTRAINT fk_faculty_internship_activity FOREIGN KEY (staff_activity_id)\n        REFERENCES staff_activity(staff_activity_id),\n    CONSTRAINT fk_faculty_internship_org FOREIGN KEY (organization_id)\n        REFERENCES external_organization(organization_id),\n    CONSTRAINT fk_faculty_internship_sector FOREIGN KEY (industry_sector_id)\n        REFERENCES industry_sector(industry_sector_id)\n) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;",
+    "installed_ddl": "CREATE TABLE `faculty_internship` (\n  `staff_activity_id` bigint unsigned NOT NULL,\n  `organization_id` bigint unsigned NOT NULL,\n  `internship_title` varchar(500) COLLATE utf8mb4_unicode_ci NOT NULL,\n  `internship_domain` varchar(250) COLLATE utf8mb4_unicode_ci DEFAULT NULL,\n  `industry_sector_id` smallint unsigned DEFAULT NULL,\n  `location_text` varchar(300) COLLATE utf8mb4_unicode_ci DEFAULT NULL,\n  `mentor_name` varchar(200) COLLATE utf8mb4_unicode_ci DEFAULT NULL,\n  `mentor_designation` varchar(150) COLLATE utf8mb4_unicode_ci DEFAULT NULL,\n  `mentor_email` varchar(254) COLLATE utf8mb4_unicode_ci DEFAULT NULL,\n  `work_undertaken` text COLLATE utf8mb4_unicode_ci,\n  `technologies_tools` text COLLATE utf8mb4_unicode_ci,\n  `outcomes` text COLLATE utf8mb4_unicode_ci,\n  `stipend_incentive_type` enum('NONE','STIPEND','INCENTIVE','HONORARIUM','OTHER') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'NONE',\n  `stipend_incentive_amount` decimal(14,2) DEFAULT NULL,\n  `currency_code` char(3) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'INR',\n  `funding_source` varchar(250) COLLATE utf8mb4_unicode_ci DEFAULT NULL,\n  `mou_reference` varchar(150) COLLATE utf8mb4_unicode_ci DEFAULT NULL,\n  `collaboration_reference` varchar(250) COLLATE utf8mb4_unicode_ci DEFAULT NULL,\n  PRIMARY KEY (`staff_activity_id`),\n  KEY `fk_faculty_internship_org` (`organization_id`),\n  KEY `fk_faculty_internship_sector` (`industry_sector_id`),\n  CONSTRAINT `fk_faculty_internship_activity` FOREIGN KEY (`staff_activity_id`) REFERENCES `staff_activity` (`staff_activity_id`),\n  CONSTRAINT `fk_faculty_internship_org` FOREIGN KEY (`organization_id`) REFERENCES `external_organization` (`organization_id`),\n  CONSTRAINT `fk_faculty_internship_sector` FOREIGN KEY (`industry_sector_id`) REFERENCES `industry_sector` (`industry_sector_id`),\n  CONSTRAINT `chk_faculty_internship_amount` CHECK (((`stipend_incentive_amount` is null) or (`stipend_incentive_amount` >= 0)))\n) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci",
+    "columns": [
+      {
+        "column": "staff_activity_id",
+        "field": "staff_activity",
+        "type": "bigint unsigned"
+      },
+      {
+        "column": "organization_id",
+        "field": "organization",
+        "type": "bigint unsigned"
+      },
+      {
+        "column": "industry_sector_id",
+        "field": "industry_sector",
+        "type": "smallint unsigned"
+      },
+      {
+        "column": "internship_title",
+        "field": "internship_title",
+        "type": "varchar(500)"
+      },
+      {
+        "column": "internship_domain",
+        "field": "internship_domain",
+        "type": "varchar(250)"
+      },
+      {
+        "column": "location_text",
+        "field": "location_text",
+        "type": "varchar(300)"
+      },
+      {
+        "column": "mentor_name",
+        "field": "mentor_name",
+        "type": "varchar(200)"
+      },
+      {
+        "column": "mentor_designation",
+        "field": "mentor_designation",
+        "type": "varchar(150)"
+      },
+      {
+        "column": "mentor_email",
+        "field": "mentor_email",
+        "type": "varchar(254)"
+      },
+      {
+        "column": "funding_source",
+        "field": "funding_source",
+        "type": "varchar(250)"
+      },
+      {
+        "column": "mou_reference",
+        "field": "mou_reference",
+        "type": "varchar(150)"
+      },
+      {
+        "column": "collaboration_reference",
+        "field": "collaboration_reference",
+        "type": "varchar(250)"
+      },
+      {
+        "column": "work_undertaken",
+        "field": "work_undertaken",
+        "type": "text"
+      },
+      {
+        "column": "technologies_tools",
+        "field": "technologies_tools",
+        "type": "text"
+      },
+      {
+        "column": "outcomes",
+        "field": "outcomes",
+        "type": "text"
+      },
+      {
+        "column": "stipend_incentive_type",
+        "field": "stipend_incentive_type",
+        "type": "enum('NONE','STIPEND','INCENTIVE','HONORARIUM','OTHER')"
+      },
+      {
+        "column": "stipend_incentive_amount",
+        "field": "stipend_incentive_amount",
+        "type": "numeric(14, 2)"
+      },
+      {
+        "column": "currency_code",
+        "field": "currency_code",
+        "type": "char(3)"
+      }
+    ]
+  }
+]

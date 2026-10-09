@@ -1,9 +1,0 @@
-# M24 implementation record
-
-Prompt 01 integration map: faculty_internship belongs to staff_activities.StaffActivity; employee and dated assignment belong to people_master; organization and new industry sector belong to staff_profile; academic year belongs to academic_calendar. M15 supplies scoped permissions and append-only audit. M13 supplies validated private managed files and durable cleanup. React uses the existing authenticated API client and NetworkOnly API policy.
-
-The existing shared parent has status masters but no reusable transition service. M24 will add a shared transition helper using these existing columns. Shared attachment links will retain managed FileObject versions without adding binaries or changing faculty_internship. These links are an explicit platform extension; the broader SQL evidence_document catalogue remains a separate unimplemented module. Existing M22 behavior must remain compatible.
-
-Prompts 02?16: application implementation and automated verification completed; production acceptance remains separate. See M24_HANDOFF.md for mapping, endpoints, permission matrix, correction/evidence policies and release limitations. Current delivery uses safe CSV and audit events; the shared communication module has no notification dispatch adapter. No outbound delivery was added.
-
-Prompt traceability: 02 models/native migration; 03 services and concurrency test; 04 M15 permission adapter; 05 API/schema; 06 form/retry tests; 07 cards/table/detail/report; 08 M13 managed links and evidence tests; 09 shared status helper; 10 scoped CSV/groups; 11 schema inventory/EXPLAIN/constant-query test; 12 negative tests/throttling/no-store; 13 memory-only drafts/NetworkOnly/stale versions; 14 backend/frontend suites; 15 idempotent seed; 16 handoff and local clean/upgrade checks. Operational release tasks are explicitly listed in the handoff.

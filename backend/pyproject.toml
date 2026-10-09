@@ -1,0 +1,77 @@
+[project]
+name = "sims-api"
+version = "1.0.0"
+description = "SIMS campus ERP - FastAPI backend (PostgreSQL / Supabase)"
+requires-python = ">=3.13,<3.14"
+dependencies = [
+    "fastapi>=0.142,<1",
+    "uvicorn[standard]>=0.54,<1",
+    "sqlalchemy>=2.1,<3",
+    "alembic>=1.20,<2",
+    "psycopg[binary,pool]>=3.3,<4",
+    "pydantic>=2.13,<3",
+    "pydantic-settings>=2.15,<3",
+    "email-validator>=2.3",
+    "pyjwt>=2.15,<3",
+    "argon2-cffi>=25.1",
+    "python-multipart>=0.0.32",
+    "cryptography>=50",
+    "pillow>=12.3",
+    "pypdf>=6.19",
+    "httpx2>=2.13",
+]
+
+[project.optional-dependencies]
+s3 = ["boto3>=1.43"]
+
+[dependency-groups]
+dev = [
+    "hypothesis>=6.168.5",
+    "locust>=2.46.7",
+    "pytest>=9.1",
+    "pytest-cov>=7.1",
+    "pytest-xdist>=3.8",
+    "ruff>=0.16",
+]
+
+[tool.uv]
+package = false
+default-groups = ["dev"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+addopts = "--strict-markers"
+filterwarnings = ["error::RuntimeWarning", "ignore:Computed default on:UserWarning"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py313"
+extend-exclude = ["alembic/versions", "app/models"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "S"]
+ignore = ["E501", "S101", "B008", "S311"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["S", "B"]
+# SQL text below interpolates only trusted identifiers (table/column names from the model registry), never user input.
+"app/resources/crud.py" = ["S608"]
+"app/resources/rules.py" = ["S608"]
+"app/seed/loader.py" = ["S608"]
+"app/api/routers/security.py" = ["S608", "S106"]
+"tools/*" = ["S608", "S105"]
+# Not secrets: a documented development default, a published demo password, and an unusable-hash placeholder.
+"app/config.py" = ["S105"]
+"app/seed/demo.py" = ["S105"]
+"app/api/routers/workspace.py" = ["S112"]
+
+[tool.coverage.run]
+source = ["app"]
+omit = ["app/models/*"]
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = true
+fail_under = 99
+exclude_also = ["if __name__ == .__main__.:", "raise NotImplementedError"]

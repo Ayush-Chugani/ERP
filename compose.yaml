@@ -1,20 +1,78 @@
+# `docker compose up -d --wait`                       local PostgreSQL only (for development and tests)
+# `docker compose --profile app up -d --build`        the whole stack: migrate -> api + worker + web (http://localhost:8080)
+# Using Supabase instead of the local database? Put its URL in backend/.env and run:
+#   docker compose --profile app up -d --build migrate api worker web
 services:
-  mysql:
-    image: mysql:8.4
+  db:
+    image: postgres:17
+    restart: unless-stopped
     environment:
-      MYSQL_ROOT_PASSWORD: ${SIMS_DB_PASSWORD:?Set SIMS_DB_PASSWORD}
-      MYSQL_ROOT_HOST: "%"
-      MYSQL_DATABASE: sims_reference_dev
-    command: ["--character-set-server=utf8mb4", "--collation-server=utf8mb4_0900_ai_ci", "--default-time-zone=+00:00", "--sql-mode=STRICT_TRANS_TABLES,NO_ENGINE_SUBSTITUTION"]
+      POSTGRES_USER: sims
+      POSTGRES_PASSWORD: ${SIMS_DB_PASSWORD:-sims_dev_password}
+      POSTGRES_DB: sims
     ports:
-      - "127.0.0.1:3307:3306"
+      - "127.0.0.1:54329:5432"
     volumes:
-      - sims_reference_mysql:/var/lib/mysql
+      - sims_pg:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "MYSQL_PWD=$$MYSQL_ROOT_PASSWORD mysql -h 127.0.0.1 -u root -D sims_reference_dev -e 'SELECT 1' >/dev/null 2>&1"]
-      interval: 10s
+      test: ["CMD-SHELL", "pg_isready -U sims -d sims"]
+      interval: 5s
       timeout: 5s
-      retries: 15
-      start_period: 30s
+      retries: 20
+
+  migrate:
+    profiles: ["app"]
+    build: ./backend
+    env_file: ./backend/.env
+    command: ["sh", "-c", "python -m app.cli migrate && python -m app.cli bootstrap"]
+    restart: "no"
+
+  api:
+    profiles: ["app"]
+    build: ./backend
+    env_file: ./backend/.env
+    restart: unless-stopped
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    environment:
+      WEB_CONCURRENCY: ${WEB_CONCURRENCY:-2}
+      FORWARDED_ALLOW_IPS: "*"   # the api is only reachable from the web container on the private compose network
+    volumes:
+      - sims_files:/app/var
+    read_only: true
+    tmpfs: ["/tmp"]
+    security_opt: ["no-new-privileges:true"]
+    cap_drop: ["ALL"]
+
+  worker:
+    profiles: ["app"]
+    build: ./backend
+    env_file: ./backend/.env
+    command: ["python", "-m", "app.cli", "worker"]
+    restart: unless-stopped
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    volumes:
+      - sims_files:/app/var
+    read_only: true
+    tmpfs: ["/tmp"]
+    security_opt: ["no-new-privileges:true"]
+    cap_drop: ["ALL"]
+
+  web:
+    profiles: ["app"]
+    build: ./frontend
+    restart: unless-stopped
+    depends_on: [api]
+    ports:
+      - "${SIMS_WEB_PORT:-8080}:8080"
+    read_only: true
+    tmpfs: ["/tmp", "/var/cache/nginx", "/var/run"]
+    security_opt: ["no-new-privileges:true"]
+    cap_drop: ["ALL"]
+
 volumes:
-  sims_reference_mysql:
+  sims_pg:
+  sims_files:

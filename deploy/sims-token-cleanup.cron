@@ -1,2 +1,0 @@
-# Install for the application service user on Linux; supply the same production environment.
-17 3 * * * cd /srv/sims/backend && .venv/bin/python manage.py flushexpiredtokens --settings=config.settings.production

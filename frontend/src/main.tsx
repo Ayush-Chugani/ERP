@@ -1,9 +1,11 @@
-import React from 'react';
-import ReactDOM from 'react-dom/client';
-import { App } from './app/App';
+import { StrictMode } from 'react';
+import { createRoot } from 'react-dom/client';
+import InitColorSchemeScript from '@mui/material/InitColorSchemeScript';
+import { App } from './App';
 
-ReactDOM.createRoot(document.getElementById('root')!).render(
-  <React.StrictMode>
+createRoot(document.getElementById('root')!).render(
+  <StrictMode>
+    <InitColorSchemeScript attribute="class" defaultMode="system" />
     <App />
-  </React.StrictMode>,
+  </StrictMode>,
 );

@@ -1,5 +1,0 @@
-DDL = [
-    "CREATE TABLE organizer (\n    organizer_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,\n    organization_id BIGINT UNSIGNED NOT NULL UNIQUE,\n    is_active BOOLEAN NOT NULL DEFAULT TRUE,\n    CONSTRAINT fk_organizer_organization FOREIGN KEY (organization_id)\n        REFERENCES external_organization(organization_id)\n) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;",
-    "CREATE TABLE event_mode (\n    event_mode_id TINYINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,\n    mode_code VARCHAR(20) NOT NULL UNIQUE,\n    mode_name VARCHAR(60) NOT NULL UNIQUE,\n    is_active BOOLEAN NOT NULL DEFAULT TRUE\n) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;",
-    "CREATE TABLE conference_contribution_type (\n    conference_contribution_type_id TINYINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,\n    type_code VARCHAR(40) NOT NULL UNIQUE,\n    type_name VARCHAR(120) NOT NULL UNIQUE,\n    is_active BOOLEAN NOT NULL DEFAULT TRUE\n) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;",
-]

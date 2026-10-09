@@ -1,0 +1,54 @@
+name: CI
+on:
+  push:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17
+        env: { POSTGRES_USER: sims, POSTGRES_PASSWORD: sims_dev_password, POSTGRES_DB: sims_test }
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U sims" --health-interval 5s --health-timeout 5s --health-retries 20
+    env:
+      SIMS_TEST_DATABASE_URL: postgresql+psycopg://sims:sims_dev_password@127.0.0.1:5432/sims_test
+    defaults: { run: { working-directory: backend } }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with: { enable-cache: true }
+      - run: uv sync --frozen
+      - run: uv run ruff check app tests tools
+      - run: uv run pytest -q --cov=app --cov-report=term-missing:skip-covered
+      - name: Dependency audit
+        run: uv export --frozen --no-dev --no-hashes -o /tmp/req.txt && uvx pip-audit -r /tmp/req.txt --no-deps
+  frontend:
+    runs-on: ubuntu-latest
+    defaults: { run: { working-directory: frontend } }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 24, cache: npm, cache-dependency-path: frontend/package-lock.json }
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
+      - run: npm audit --omit=dev --audit-level=high
+  docker:
+    runs-on: ubuntu-latest
+    needs: [backend, frontend]
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker build ./backend -t sims-api
+      - run: docker build ./frontend -t sims-web
+  secrets-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - uses: gitleaks/gitleaks-action@v2
+        env: { GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}" }

@@ -23,7 +23,7 @@ PERSONA_ROLE = {
 # ------------------------------------------------------------------------ (1) grants held by each role in the database
 MUST = {
     "FACULTY": ["ATTENDANCE.STUDENT_ATTENDANCE.CREATE", "ATTENDANCE.CLASS_SESSION.UPDATE", "ASSESSMENT.STUDENT_ASSESSMENT_MARK.UPDATE",
-                "MENTORING.COUNSELLING_SESSION.CREATE", "TIMETABLE.ALL.READ", "CURRICULUM.ALL.READ", "STUDENT.ALL.READ"],
+                "MENTORING.COUNSELLING_SESSION.CREATE", "TIMETABLE.ALL.READ", "CURRICULUM.ALL.READ", "STUDENT.STUDENT.READ"],
     "REGISTRAR": ["STUDENT.ALL.CREATE", "ADMISSION.ALL.APPROVE", "DOCUMENT.ALL.PUBLISH", "CURRICULUM.ALL.PUBLISH", "ACADEMIC_CALENDAR.ALL.PUBLISH"],
     "CONTROLLER_EXAMINATIONS": ["ASSESSMENT.ALL.PUBLISH", "RESULT.ALL.PUBLISH", "RESULT.ALL.VERIFY", "DOCUMENT.ALL.PUBLISH"],
     "EXAMINATION_OFFICER": ["RESULT.STUDENT_COURSE_RESULT.CREATE", "RESULT.STUDENT_TERM_RESULT.UPDATE", "ASSESSMENT.ALL.CREATE"],
@@ -47,8 +47,8 @@ MUST_NOT = {
     "FACULTY": ["RESULT.ALL.READ", "RESULT.ALL.CREATE", "ASSESSMENT.ALL.APPROVE", "ASSESSMENT.ALL.PUBLISH", "ASSESSMENT.ALL.VERIFY",
                 "ACADEMIC_CALENDAR.ALL.CREATE", "CURRICULUM.ALL.CREATE", "CURRICULUM.ALL.APPROVE", "REGISTRATION.ALL.CREATE",
                 "REGISTRATION.ALL.APPROVE", "STUDENT.ALL.CREATE", "STUDENT.ALL.UPDATE", "STUDENT.ALL.APPROVE", "ATTENDANCE.ALL.APPROVE",
-                "EMPLOYEE.ALL.READ", "ADMISSION.ALL.READ", "GRIEVANCE.ALL.READ"],
-    "LAB_INSTRUCTOR": ["RESULT.ALL.READ", "ASSESSMENT.ALL.PUBLISH", "CURRICULUM.ALL.CREATE", "STUDENT.ALL.UPDATE"],
+                "EMPLOYEE.ALL.READ", "ADMISSION.ALL.READ", "GRIEVANCE.ALL.READ", "STUDENT.ALL.READ", "FEEDBACK.ALL.READ"],
+    "LAB_INSTRUCTOR": ["RESULT.ALL.READ", "ASSESSMENT.ALL.PUBLISH", "CURRICULUM.ALL.CREATE", "STUDENT.ALL.UPDATE", "STUDENT.ALL.READ", "FEEDBACK.ALL.READ"],
     "MENTOR": ["ATTENDANCE.ALL.CREATE", "ASSESSMENT.ALL.CREATE", "RESULT.ALL.CREATE", "STUDENT.ALL.UPDATE", "CURRICULUM.ALL.CREATE"],
     "FACULTY_ADVISOR": ["ATTENDANCE.ALL.CREATE", "ASSESSMENT.ALL.CREATE", "RESULT.ALL.CREATE", "REGISTRATION.ALL.CREATE"],
     "COURSE_COORDINATOR": ["RESULT.ALL.READ", "ASSESSMENT.ALL.PUBLISH", "CURRICULUM.ALL.CREATE", "REGISTRATION.ALL.CREATE"],
@@ -67,10 +67,10 @@ MUST_NOT = {
     "ADMISSION_OFFICER": ["RESULT.ALL.READ", "STUDENT.ALL.CREATE", "STUDENT.ALL.UPDATE", "REGISTRATION.ALL.READ"],
     "DOCUMENT_VERIFIER": ["DOCUMENT.ALL.CREATE", "DOCUMENT.ALL.UPDATE", "DOCUMENT.ALL.PUBLISH", "STUDENT.ALL.UPDATE"],
     "STUDENT_SECTION_OFFICER": ["RESULT.ALL.READ", "ADMISSION.ALL.CREATE", "REGISTRATION.ALL.PUBLISH"],
-    "CONTROLLER_EXAMINATIONS": ["STUDENT.ALL.UPDATE", "ADMISSION.ALL.READ", "CURRICULUM.ALL.CREATE"],
+    "CONTROLLER_EXAMINATIONS": ["STUDENT.ALL.UPDATE", "ADMISSION.ALL.READ", "CURRICULUM.ALL.CREATE", "STUDENT.ALL.READ"],
     "PROGRAMME_COORDINATOR": ["RESULT.ALL.CREATE", "ATTENDANCE.ALL.CREATE", "CURRICULUM.ALL.APPROVE", "CURRICULUM.ALL.PUBLISH"],
     "TIMETABLE_COORDINATOR": ["RESULT.ALL.READ", "STUDENT.ALL.READ", "ATTENDANCE.ALL.CREATE", "TIMETABLE.ALL.PUBLISH"],
-    "GRIEVANCE_OFFICER": ["STUDENT.ALL.UPDATE", "RESULT.ALL.READ", "ADMISSION.ALL.READ", "GRIEVANCE.ALL.DELETE"],
+    "GRIEVANCE_OFFICER": ["STUDENT.ALL.UPDATE", "RESULT.ALL.READ", "ADMISSION.ALL.READ", "GRIEVANCE.ALL.DELETE", "STUDENT.ALL.READ"],
     "FINANCE_OFFICER": ["STUDENT.ALL.READ", "RESULT.ALL.READ", "ADMISSION.ALL.CREATE", "ADMISSION.ALL.APPROVE", "ADMISSION.ALL.UPDATE"],
     "INTERNAL_AUDITOR": ["STUDENT.ALL.CREATE", "STUDENT.ALL.UPDATE", "RESULT.ALL.CREATE", "ADMISSION.ALL.APPROVE", "DOCUMENT.ALL.PUBLISH",
                          "CURRICULUM.ALL.CREATE", "IAM.ALL.READ"],
@@ -286,3 +286,172 @@ def test_engine_agrees_with_the_database_for_every_persona(db):
         p = load_principal(db, db.scalar(select(UserAccount).where(UserAccount.username == who)))
         assert role in p.role_codes, who
         assert not (set(MUST_NOT.get(role, [])) & set(p.allowed_codes())), who
+
+
+# ------------------------------------------------------------- (4) teaching roles reach only what they are assigned to
+def section_of(db, username):
+    return db.execute(text(
+        "SELECT fa.course_offering_section_id FROM faculty_course_assignment fa JOIN person_account_link l ON l.employee_id = fa.employee_id "
+        "JOIN user_account u ON u.user_id = l.user_id WHERE u.username = :u AND fa.assignment_status = 'ACTIVE' ORDER BY 1 LIMIT 1"), {"u": username}).scalar()
+
+
+def test_a_teacher_sees_only_the_classes_they_are_assigned_to(as_user, db):
+    mine = section_of(db, "teacher")
+    t, hod = as_user("teacher"), as_user("hod")
+    sessions = t.get("/attendance/class-session?page_size=100").json()["results"]
+    assert sessions and {s["course_offering_section_id"] for s in sessions} == {mine}
+    everyone = hod.get("/attendance/class-session?page_size=100").json()["results"]
+    foreign = next(s for s in everyone if s["course_offering_section_id"] != mine)
+    assert t.get(f"/attendance/class-session/{foreign['class_session_id']}").status_code == 404
+    assert t.get(f"/attendance/sessions/{foreign['class_session_id']}/roster").status_code == 404
+    assert t.post(f"/attendance/class-session/{foreign['class_session_id']}/actions/open_register").status_code == 404
+    own = sessions[0]["class_session_id"]
+    assert t.get(f"/attendance/sessions/{own}/roster").status_code == 200
+
+
+def test_marks_and_papers_are_limited_to_assigned_offerings(as_user, db):
+    t = as_user("teacher")
+    mine = db.execute(text("SELECT s.course_offering_id FROM course_offering_section s WHERE s.course_offering_section_id = :s"),
+                      {"s": section_of(db, "teacher")}).scalar()
+    events = t.get("/assessments/assessment-event?page_size=100").json()["results"]
+    assert events and {e["course_offering_id"] for e in events} == {mine}
+    other = db.execute(text("SELECT assessment_event_id FROM assessment_event WHERE course_offering_id <> :o LIMIT 1"), {"o": mine}).scalar()
+    assert t.get(f"/assessments/events/{other}/roster").status_code in (403, 404)
+    assert t.put(f"/assessments/events/{other}/marks", json={"marks": []}).status_code in (403, 404, 422)
+    marks = t.get("/assessments/student-assessment-mark?page_size=100").json()["results"]
+    assert marks and all(m["assessment_event_id"] in {e["assessment_event_id"] for e in events} for m in marks)
+
+
+def test_an_evaluator_enters_marks_only_for_assigned_papers(as_user, db):
+    ev = as_user("evaluator")
+    sec = section_of(db, "evaluator")
+    off = db.execute(text("SELECT course_offering_id FROM course_offering_section WHERE course_offering_section_id = :s"), {"s": sec}).scalar()
+    events = ev.get("/assessments/assessment-event?page_size=100").json()["results"]
+    assert {e["course_offering_id"] for e in events} <= {off}
+    assert ev.get("/attendance/class-session").status_code == 403 or ev.get("/attendance/class-session").json()["count"] == 0
+
+
+def test_a_wider_role_lifts_the_restriction(as_user, db):
+    hod_sections = {s["course_offering_section_id"] for s in as_user("hod").get("/attendance/class-session?page_size=100").json()["results"]}
+    assert len(hod_sections) > 1                       # the head of department sees every class of the department
+    assert len({s["course_offering_section_id"] for s in as_user("registrar").get("/attendance/class-session?page_size=100").json()["results"]}) > 1
+
+
+def test_mentors_see_only_their_mentees(as_user, db):
+    mentor_emp = db.execute(text("SELECT l.employee_id FROM person_account_link l JOIN user_account u ON u.user_id = l.user_id WHERE u.username = 'mentor'")).scalar()
+    programme = db.execute(text("SELECT a.programme_id FROM user_role_assignment a JOIN user_account u ON u.user_id = a.user_id "
+                                "WHERE u.username = 'mentor' AND a.scope_type = 'PROGRAMME'")).scalar()
+    students = [s for (s,) in db.execute(text("SELECT DISTINCT student_id FROM student_programme_enrolment WHERE programme_id = :p ORDER BY 1 LIMIT 3"),
+                                         {"p": programme})]
+    assert len(students) >= 2
+    db.execute(text("DELETE FROM mentor_assignment WHERE employee_id = :e"), {"e": mentor_emp})
+    db.execute(text("INSERT INTO mentor_assignment (student_id, employee_id, start_date, assignment_status) VALUES (:s, :e, current_date, 'ACTIVE')"),
+               {"s": students[0], "e": mentor_emp})
+    db.commit()
+    m = as_user("mentor")
+    listed = m.get("/people/student?page_size=100").json()
+    assert listed["count"] == 1 and listed["results"][0]["student_id"] == students[0]
+    assert m.get(f"/people/student/{students[1]}").status_code == 404
+    assert m.get("/support/mentor-assignment").json()["count"] == 1
+    # a teacher keeps the department-wide student list (read-only) and sees only their own mentoring
+    t = as_user("teacher")
+    assert t.get("/people/student").json()["count"] > 3
+    teacher_emp = db.execute(text("SELECT l.employee_id FROM person_account_link l JOIN user_account u ON u.user_id = l.user_id WHERE u.username = 'teacher'")).scalar()
+    own = db.execute(text("SELECT count(*) FROM mentor_assignment WHERE employee_id = :e"), {"e": teacher_emp}).scalar()
+    assert t.get("/support/mentor-assignment").json()["count"] == own
+    assert as_user("hod").get("/support/mentor-assignment").json()["count"] >= 1
+
+
+def test_students_see_only_their_own_class_data(as_user):
+    s = as_user("student")
+    mine = s.get("/attendance/student-attendance?page_size=100").json()
+    assert all(r["student_id"] == s.get("/auth/me").json()["student_ids"][0] for r in mine["results"])
+
+
+# ------------------------------------------------------------------------ (5) holes found in the security review
+def test_students_cannot_choose_the_workflow_state_of_their_own_requests(as_user, db):
+    s = as_user("student")
+    sid = s.get("/auth/me").json()["student_ids"][0]
+    ctype = db.execute(text("SELECT certificate_type_id FROM certificate_type LIMIT 1")).scalar()
+    r = s.post("/documents/certificate-request", json={"certificate_type_id": ctype, "student_id": sid, "request_status": "ISSUED"})
+    assert r.status_code == 403 and "review process" in r.json()["error"]["message"]
+    ok = s.post("/documents/certificate-request", json={"certificate_type_id": ctype, "student_id": sid, "purpose": "bank"})
+    assert ok.status_code == 201 and ok.json()["request_status"] != "ISSUED"
+    cat = db.execute(text("SELECT grievance_category_id FROM grievance_category LIMIT 1")).scalar()
+    assert s.post("/support/grievance", json={"grievance_category_id": cat, "student_id": sid, "subject": "x", "description": "y", "status": "RESOLVED"}).status_code == 403
+
+
+def test_a_student_cannot_attach_someone_elses_file(as_user, db):
+    from tests.test_files import pdf_bytes, upload
+
+    other = upload(as_user("student2"), "private.pdf", pdf_bytes()).json()["file_object_id"]
+    s = as_user("student")
+    sid = s.get("/auth/me").json()["student_ids"][0]
+    dtype = db.execute(text("SELECT document_type_id FROM document_type LIMIT 1")).scalar()
+    r = s.post("/documents/student-document", json={"student_id": sid, "document_type_id": dtype, "file_object_id": other})
+    assert r.status_code in (403, 422), r.text
+    assert as_user("student").get(f"/files/{other}").status_code == 404
+
+
+def test_mentors_cannot_hand_themselves_mentees_or_read_raw_feedback(as_user):
+    m = as_user("mentor")
+    meta = m.get("/meta/support/mentor-assignment")
+    assert meta.status_code == 200 and not meta.json()["can"]["create"] and not meta.json()["can"]["update"]
+    assert m.get("/meta/support/counselling-session").json()["can"]["create"]
+    for who in ("teacher", "mentor", "evaluator"):
+        assert as_user(who).get("/feedback/feedback-response").status_code == 403
+
+
+def test_organisation_admins_cannot_manage_peers_or_misuse_self_roles(as_user, app, db):
+    from tests.test_organisations import ORG, first_sign_in
+
+    sa = as_user("demoadmin")
+    made = sa.post("/security/organisations", json={**ORG, "code": "PEER", "admin_username": "peer.one", "admin_email": "a@peer.edu"}).json()
+    inst = made["institution"]["institution_id"]
+    one = first_sign_in(app, "peer.one", made["administrator"]["temporary_password"])
+    second = sa.post("/security/users", json={"username": "peer.two", "email": "b@peer.edu", "institution_id": inst,
+                                              "role_code": "INSTITUTION_ADMIN", "scope_type": "INSTITUTION"}).json()
+    assert one.post(f"/security/users/{second['user_id']}/reset-password").status_code == 403
+    assert one.patch(f"/security/users/{second['user_id']}", json={"is_active": False}).status_code == 403
+    staff = one.post("/security/users", json={"username": "peer.staff", "email": "c@peer.edu"}).json()["user_id"]
+    bad = one.post("/security/role-assignments", json={"user_id": staff, "role_code": "STUDENT", "scope_type": "INSTITUTION", "scope_id": inst})
+    assert bad.status_code == 422
+    assert one.post("/security/role-assignments", json={"user_id": staff, "role_code": "STUDENT", "scope_type": "SELF"}).status_code == 201
+
+
+def test_teachers_cannot_write_into_another_teachers_section(as_user, db):
+    t = as_user("teacher")
+    mine = section_of(db, "teacher")
+    foreign = db.execute(text("SELECT class_session_id FROM class_session WHERE course_offering_section_id <> :s LIMIT 1"), {"s": mine}).scalar()
+    assert t.patch(f"/attendance/class-session/{foreign}", json={}).status_code in (403, 404)
+
+
+def test_support_and_exam_roles_do_not_read_guardian_or_address_details(as_user):
+    for who in ("support", "examofficer", "examcell", "resultapprover", "docverifier", "teacher"):
+        c = as_user(who)
+        assert c.get("/people/student-parent-guardian").status_code == 403, who
+        assert c.get("/people/student-residence").status_code == 403, who
+    assert as_user("registrar").get("/people/student-parent-guardian").status_code == 200
+
+
+def test_department_heads_see_their_staff(as_user, db):
+    assert as_user("hod").get("/people/employee").json()["count"] > 0
+    assert as_user("campusadm").get("/people/employee").json()["count"] > 0
+
+
+def test_audit_trail_names_the_actor(as_user):
+    admin = as_user("demoadmin")
+    admin.post("/security/users", json={"username": "audit.probe", "email": "ap@example.org"})
+    rows = admin.get("/security/audit?page_size=5").json()["results"]
+    assert rows and rows[0]["actor"] == "demoadmin"
+
+
+def test_everyone_reads_the_announcements_meant_for_them(as_user, db):
+    db.execute(text("UPDATE announcement SET approval_status='APPROVED', audience_type='ALL', publish_from = now() - interval '1 day' "
+                    "WHERE announcement_id = (SELECT min(announcement_id) FROM announcement)"))
+    inst = db.execute(text("SELECT institution_id FROM announcement ORDER BY announcement_id LIMIT 1")).scalar()
+    if inst is None:
+        pytest.skip("no announcements in the demo data")
+    db.commit()
+    for who in ("student", "teacher", "parent"):
+        assert as_user(who).get("/communication/announcement").json()["count"] >= 1, who

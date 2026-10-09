@@ -1,11 +1,11 @@
 import { useState } from 'react';
-import { useNavigate, useParams } from 'react-router';
-import { Alert, Box, Button, Chip, Divider, LinearProgress, Paper, Stack, Typography } from '@mui/material';
+import { Navigate, useNavigate, useParams } from 'react-router';
+import { Box, Button, Chip, Divider, LinearProgress, Paper, Stack, Typography } from '@mui/material';
 import Grid from '@mui/material/Grid';
 import DeleteIcon from '@mui/icons-material/DeleteOutlined';
 import EditIcon from '@mui/icons-material/EditOutlined';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { api, errorMessage } from '../api/client';
+import { api } from '../api/client';
 import { useResourceMeta } from '../api/hooks';
 import type { ActionInfo, Row } from '../api/types';
 import { ActionDialog } from '../components/ActionDialog';
@@ -49,9 +49,7 @@ export function ResourceDetailPage() {
   });
 
   if (meta.isLoading || row.isLoading) return <LinearProgress />;
-  if (meta.error || row.error || !meta.data || !row.data) {
-    return <Alert severity="error">{errorMessage(row.error ?? meta.error ?? 'Not found')}</Alert>;
-  }
+  if (meta.error || row.error || !meta.data || !row.data) return <Navigate to="/" replace />;
   const m = meta.data;
   const r = row.data;
   const ws = WORKSPACES.find((w) => w.key === workspaceOf(m));

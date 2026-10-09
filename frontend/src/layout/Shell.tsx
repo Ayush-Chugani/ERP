@@ -29,7 +29,7 @@ import { AiAssistant } from '../ai/AiAssistant';
 import { ColorModeToggle } from '../components/ColorModeToggle';
 import { formatDateTime } from '../components/format';
 import { CommandPalette } from './CommandPalette';
-import { HomeIcon, WORKSPACES, iconForResource, isSetup, workspaceOf, type Icon } from './navConfig';
+import { HomeIcon, WORKSPACES, iconForResource, isSetup, navResources, workspaceOf, type Icon } from './navConfig';
 
 const FULL = 272;
 const RAIL = 76;
@@ -125,12 +125,10 @@ export function Shell() {
   // Only areas and pages the API says this user can read (role-based access decides what exists here).
   const areas = useMemo(() => {
     const byKey = new Map<string, { path: string; title: string; icon: Icon; setup: boolean }[]>();
-    for (const g of meta.data?.groups ?? []) {
-      for (const r of g.resources) {
-        const k = workspaceOf(r);
-        if (!byKey.has(k)) byKey.set(k, []);
-        byKey.get(k)!.push({ path: r.path, title: r.title, icon: iconForResource(r), setup: isSetup(r) });
-      }
+    for (const r of navResources(meta.data?.groups)) {
+      const k = workspaceOf(r);
+      if (!byKey.has(k)) byKey.set(k, []);
+      byKey.get(k)!.push({ path: r.path, title: r.title, icon: iconForResource(r), setup: isSetup(r) });
     }
     return WORKSPACES.filter((w) => byKey.has(w.key)).map((w) => ({ ...w, items: byKey.get(w.key)!.sort((a, b) => a.title.localeCompare(b.title)) }));
   }, [meta.data]);
@@ -143,7 +141,7 @@ export function Shell() {
     if (hit) setOpenWs(hit.key);
   }, [location.pathname, areas]);
 
-  const mine = [(user?.student_ids.length ?? 0) > 0 && { to: '/feedback', label: 'Course feedback', icon: FeedbackIcon }].filter(Boolean) as { to: string; label: string; icon: Icon }[];
+  const mine = [(user?.student_ids.length ?? 0) > 0 && can(user, 'FEEDBACK.FEEDBACK_RESPONSE.CREATE') && { to: '/feedback', label: 'Course feedback', icon: FeedbackIcon }].filter(Boolean) as { to: string; label: string; icon: Icon }[];
   const admin = [
     user?.is_superuser && { to: '/owner', label: 'Owner dashboard', icon: AuditIcon },
     can(user, 'IAM.USERS.READ') && { to: '/admin/organisations', label: user?.is_superuser ? 'Organisations' : 'My organisation', icon: OrgIcon },

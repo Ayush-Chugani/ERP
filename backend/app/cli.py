@@ -4,6 +4,7 @@
     bootstrap                  sync permission catalogue / roles / schedules (safe to repeat)
     create-admin               create or reset a super administrator (password from SIMS_BOOTSTRAP_ADMIN_PASSWORD
                                or an interactive prompt)
+    seed-content               fill every section with sample rows for the demo personas (repeatable)
     seed-demo                  load the demo campus (students, staff, timetable, …) and demo personas
     worker                     run the background job worker
 """
@@ -75,6 +76,14 @@ def cmd_seed_demo(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_seed_content(_: argparse.Namespace) -> int:
+    from app.seed.demo import ensure_demo_content
+
+    added = ensure_demo_content()
+    print(f"Demo content ready ({sum(added.values())} rows added across {len(added)} tables).")
+    return 0
+
+
 def cmd_worker(_: argparse.Namespace) -> int:
     from app.worker.runner import run_forever
 
@@ -95,6 +104,7 @@ def main(argv: list[str] | None = None) -> int:
     d = sub.add_parser("seed-demo")
     d.add_argument("--force", action="store_true", help="load even if the database already has people")
     d.set_defaults(fn=cmd_seed_demo)
+    sub.add_parser("seed-content").set_defaults(fn=cmd_seed_content)
     sub.add_parser("worker").set_defaults(fn=cmd_worker)
     args = p.parse_args(argv)
     return args.fn(args)

@@ -115,3 +115,17 @@ def ensure_demo_personas() -> None:
                            {"p": pool.pop(0), "u": uid})
                 if person == "employee":
                     catalogue.ensure_staff_self(db, uid)
+
+
+def ensure_demo_content() -> dict[str, int]:
+    """Fill every section with sample rows for the demo personas (idempotent; safe on any already-seeded database)."""
+    from app.seed.content_academic import ensure_academic_content
+    from app.seed.content_services import ensure_service_content
+
+    ensure_demo_org_admin()
+    ensure_demo_personas()
+    with db_session() as db:
+        added = {**ensure_academic_content(db)}
+        for table, n in ensure_service_content(db).items():
+            added[table] = added.get(table, 0) + n
+    return added

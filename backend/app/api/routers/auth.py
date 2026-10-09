@@ -79,7 +79,8 @@ def check_csrf(request: Request) -> None:
         s = get_settings()
         host = request.headers.get("host", "")
         same_host = origin.split("://", 1)[-1] == host
-        if not same_host and origin not in s.cors_origins:
+        local_dev = s.env != "production" and origin.split("://", 1)[-1].split(":")[0] in ("localhost", "127.0.0.1")
+        if not same_host and not local_dev and origin not in s.cors_origins:
             raise Forbidden("Cross-origin request rejected.")
 
 

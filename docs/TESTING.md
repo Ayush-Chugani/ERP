@@ -2,8 +2,8 @@
 
 | Layer | Command | What it proves |
 |---|---|---|
-| Backend unit + API + journeys | `make test-api` | ~650 tests against a throw-away PostgreSQL DB (`*_test` only; the suite refuses any other name) |
-| Coverage gate | `cd backend && uv run pytest --cov=app` | `fail_under = 99` (currently ≈99.3 %); remaining lines are defensive branches |
+| Backend unit + API + journeys | `make test-api` | ~1,090 tests against a throw-away PostgreSQL DB (`*_test` only; the suite refuses any other name) |
+| Coverage gate | `cd backend && uv run pytest --cov=app` | `fail_under = 98` (currently ≈98 %; demo-data seeders are the least covered code); remaining lines are defensive branches |
 | RBAC matrix | `tests/test_resources.py`, `test_admin.py`, `test_journeys.py` | every persona sees only its scope; DENY beats ALLOW; self-service whitelists |
 | Schema quality | `tests/test_schema_quality.py` | naming, FKs, indexes, audit columns, RLS on every table |
 | API contract | `tests/test_api_contract.py` | OpenAPI operation IDs unique, errors use one envelope |

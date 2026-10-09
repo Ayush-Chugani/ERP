@@ -6,6 +6,7 @@ Composite resources (a subtype table plus its shared ``staff_activity`` parent) 
 import csv
 import io
 import operator
+import re
 from datetime import UTC, date, datetime, time
 from decimal import Decimal, InvalidOperation
 from typing import Any
@@ -89,11 +90,14 @@ def assignment_clause(spec: ResourceSpec, principal: Principal, action: str):
         if roles & CLASS_ROLES and emps:
             mine = select(fca.c.course_offering_section_id).where(fca.c.employee_id.in_(emps), fca.c.assignment_status == "ACTIVE")
             sec_exprs = attr_exprs(spec.model, "course_offering_section")
+            if sec_exprs and action != "READ":
+                sec_exprs = sec_exprs[:1]       # writes: the row's own section column, not every FK path that leads to one
             if sec_exprs:
                 conds.extend(e.in_(mine) for e in sec_exprs)
             else:
                 offerings = select(section.c.course_offering_id).where(section.c.course_offering_section_id.in_(mine))
-                conds.extend(e.in_(offerings) for e in attr_exprs(spec.model, "course_offering"))
+                off_exprs = attr_exprs(spec.model, "course_offering")
+                conds.extend(e.in_(offerings) for e in (off_exprs[:1] if action != "READ" else off_exprs))
         if table in MENTEE_SCOPED and roles & MENTOR_ROLES and emps:
             conds.extend(e.in_(mentees) for e in attr_exprs(spec.model, "student"))
     elif table in MENTEE_SCOPED and roles <= MENTOR_ROLES:
@@ -113,9 +117,38 @@ def assignment_clause(spec: ResourceSpec, principal: Principal, action: str):
     return or_(*conds) if conds else false()
 
 
+def audience_clause(spec: ResourceSpec, principal: Principal):
+    """Approved, published announcements aimed at the person's own audience (students, staff, everyone) and institution."""
+    from sqlalchemy import and_
+    from sqlalchemy.sql import union_all
+
+    from app.rbac.scope import _classes
+
+    t = spec.model.__table__
+    classes = _classes()
+    audiences, insts = ["ALL"], []
+    if principal.student_ids:
+        audiences.append("STUDENTS")
+        s = classes["student"].__table__
+        insts.append(select(s.c.institution_id).where(s.c.student_id.in_(list(principal.student_ids))))
+    if principal.employee_ids:
+        audiences.append("STAFF")
+        e = classes["employee"].__table__
+        insts.append(select(e.c.institution_id).where(e.c.employee_id.in_(list(principal.employee_ids))))
+    if not insts:
+        return None
+    mine = union_all(*insts).subquery()
+    return and_(t.c.approval_status == "APPROVED", t.c.audience_type.in_(audiences), t.c.publish_from <= func.now(),
+                t.c.institution_id.in_(select(mine.c.institution_id)))
+
+
 def scoped(spec: ResourceSpec, principal: Principal, action: str):
     scope = scope_for(spec, principal, action)
     clause = scope_clause(spec.model, scope, principal)
+    if spec.table == "announcement" and action == "READ" and clause is not None and not principal.is_superuser:
+        audience = audience_clause(spec, principal)
+        if audience is not None:
+            clause = or_(clause, audience)
     q = spec.base_select()
     if clause is not None:
         q = q.where(clause)
@@ -329,6 +362,22 @@ def _clean(spec: ResourceSpec, data: dict, creating: bool) -> dict:
     return out
 
 
+_WORKFLOW_COLUMN = re.compile(r"(status|verif|approv|review|issued|resolv|assign|decision|publish|withh)", re.I)
+
+
+def _guard_self_create(db: Session, spec: ResourceSpec, principal: Principal, data: dict) -> None:
+    """A person creating their own record may not choose its workflow state or point it at someone else's file."""
+    for name, value in data.items():
+        if value is None or name in spec.self_fields or re.match(r"(old|requested|new)_", name):
+            continue                       # descriptive fields (e.g. the status a student asks to change to) are theirs to give
+        if name == spec.status_col or _WORKFLOW_COLUMN.search(name):
+            raise Forbidden(f"You cannot set {spec.columns[name].label.lower()} yourself; it follows the review process.")
+    file_id = data.get("file_object_id")
+    if file_id is not None and not db.execute(text("SELECT 1 FROM file_object WHERE file_object_id = :f AND uploaded_by_user_id = :u"),
+                                              {"f": file_id, "u": principal.user_id}).first():
+        raise Invalid("Attach a file you uploaded yourself.", details={"file_object_id": ["Unknown file."]})
+
+
 def create_row(db: Session, spec: ResourceSpec, principal: Principal, body, ctx: dict) -> Any:
     if spec.read_only:
         raise Forbidden("This resource is read-only.")
@@ -337,6 +386,8 @@ def create_row(db: Session, spec: ResourceSpec, principal: Principal, body, ctx:
         raise Forbidden("You can only create records through your organisation's administrators.")
     data = _clean(spec, body.model_dump(exclude_unset=True), True)
     cols = spec.columns
+    if self_only(spec, principal, "CREATE"):
+        _guard_self_create(db, spec, principal, data)
     if spec.parent_model is not None:
         from app.resources.activity import prepare_activity_create
 

@@ -4,7 +4,7 @@ import { Box, Dialog, InputAdornment, List, ListItemButton, ListItemIcon, ListIt
 import SearchIcon from '@mui/icons-material/Search';
 import { useAuth, can } from '../api/auth';
 import { useMeta } from '../api/hooks';
-import { HomeIcon, WORKSPACES, iconForResource, workspaceOf, type Icon } from './navConfig';
+import { HomeIcon, WORKSPACES, iconForResource, navResources, workspaceOf, type Icon } from './navConfig';
 import AccountIcon from '@mui/icons-material/ManageAccountsOutlined';
 
 type Entry = { label: string; hint: string; to: string; icon: Icon };
@@ -23,12 +23,10 @@ export function CommandPalette({ open, onClose }: { open: boolean; onClose: () =
       { label: 'Account and security', hint: 'Profile, password, devices', to: '/account', icon: AccountIcon },
     ];
     const visible = new Set<string>();
-    for (const g of meta.data?.groups ?? []) {
-      for (const r of g.resources) {
-        const ws = workspaceOf(r);
-        visible.add(ws);
-        list.push({ label: r.title, hint: WORKSPACES.find((w) => w.key === ws)?.title ?? g.title, to: `/r/${r.path}`, icon: iconForResource(r) });
-      }
+    for (const r of navResources(meta.data?.groups)) {
+      const ws = workspaceOf(r);
+      visible.add(ws);
+      list.push({ label: r.title, hint: WORKSPACES.find((w) => w.key === ws)?.title ?? 'Page', to: `/r/${r.path}`, icon: iconForResource(r) });
     }
     for (const w of WORKSPACES) if (visible.has(w.key)) list.push({ label: w.title, hint: 'Area', to: `/w/${w.key}`, icon: w.icon });
     if (can(user, 'IAM.USERS.READ')) list.push({ label: 'Users', hint: 'Administration', to: '/admin/users', icon: AccountIcon });

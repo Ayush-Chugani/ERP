@@ -1,11 +1,11 @@
 import { useMemo, useState } from 'react';
-import { Link as RouterLink, useParams } from 'react-router';
-import { Alert, Box, Card, CardActionArea, Chip, InputAdornment, LinearProgress, Stack, TextField, Typography } from '@mui/material';
+import { Link as RouterLink, Navigate, useParams } from 'react-router';
+import { Box, Card, CardActionArea, Chip, InputAdornment, LinearProgress, Stack, TextField, Typography } from '@mui/material';
 import Grid from '@mui/material/Grid';
 import SearchIcon from '@mui/icons-material/Search';
 import { useMeta } from '../api/hooks';
 import { PageHeader } from '../components/PageHeader';
-import { WORKSPACES, iconForResource, isSetup, workspaceOf } from '../layout/navConfig';
+import { WORKSPACES, iconForResource, isSetup, navResources, workspaceOf } from '../layout/navConfig';
 import type { ResourceSummary } from '../api/types';
 
 function Section({ title, items, muted }: { title: string; items: ResourceSummary[]; muted?: boolean }) {
@@ -47,16 +47,15 @@ export function WorkspacePage() {
   const [q, setQ] = useState('');
   const ws = WORKSPACES.find((w) => w.key === key);
   const items = useMemo(() => {
-    const all = (meta.data?.groups ?? []).flatMap((g) => g.resources).filter((r) => workspaceOf(r) === key);
+    const all = navResources(meta.data?.groups).filter((r) => workspaceOf(r) === key);
     const t = q.trim().toLowerCase();
     return all.filter((r) => !t || r.title.toLowerCase().includes(t)).sort((a, b) => a.title.localeCompare(b.title));
   }, [meta.data, key, q]);
   if (meta.isLoading) return <LinearProgress />;
-  if (!ws) return <Alert severity="warning">That area does not exist.</Alert>;
+  if (!ws || (items.length === 0 && !q)) return <Navigate to="/" replace />;       // nothing here for this role: go Home quietly
   return (
     <Box>
       <PageHeader title={ws.title} subtitle={ws.blurb} icon={ws.icon} crumbs={[{ label: 'Home', to: '/' }, { label: ws.title }]} />
-      {items.length === 0 && !q && <Alert severity="info">You do not have access to anything in this area yet. Ask an administrator to assign you a role.</Alert>}
       <TextField placeholder={`Search in ${ws.title}…`} value={q} onChange={(e) => setQ(e.target.value)} sx={{ maxWidth: 420, mb: 3 }}
         slotProps={{ input: { startAdornment: <InputAdornment position="start"><SearchIcon fontSize="small" /></InputAdornment> } }} />
       <Section title="Pages" items={items.filter((r) => !isSetup(r))} />

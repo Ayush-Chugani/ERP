@@ -138,13 +138,18 @@ def test_assignment_rules(as_user, delegate, db):
     # delegate: privileged role, global scope, other organisation, permissions it does not hold
     assert delegate.post("/security/role-assignments", json={**body, "role_code": "SYSTEM_ADMIN", "scope_type": "GLOBAL", "scope_id": None}).status_code == 403
     assert delegate.post("/security/role-assignments", json={**body, "scope_id": 2}).status_code == 403
-    r = delegate.post("/security/role-assignments", json=body)
+    assert delegate.post("/security/role-assignments", json=body).status_code == 403   # target holds a platform role: off limits
+    uid2 = a.post("/security/users", json={"username": "assign.target2", "email": "at2@example.org"}).json()["user_id"]
+    db.execute(text("UPDATE user_account SET institution_id = 1 WHERE user_id = :u"), {"u": uid2})
+    db.commit()
+    body2 = {**body, "user_id": uid2}
+    r = delegate.post("/security/role-assignments", json=body2)
     assert r.status_code == 403 and "do not hold" in r.json()["error"]["message"]
     # a role the delegate fully covers can be assigned at its own institution
     db.execute(text("INSERT INTO role (role_code, role_name, role_category, role_level, is_assignable, is_active) VALUES ('READER', 'Reader', 'AUDIT', 'INSTITUTION', true, true)"))
     db.execute(text("INSERT INTO role_permission (role_id, permission_id, permission_effect) SELECT r.role_id, p.permission_id, 'ALLOW' FROM role r, permission p WHERE r.role_code='READER' AND p.permission_code='IAM.ALL.READ'"))
     db.commit()
-    ok = delegate.post("/security/role-assignments", json={**body, "role_code": "READER"})
+    ok = delegate.post("/security/role-assignments", json={**body2, "role_code": "READER"})
     assert ok.status_code == 201
     # revoke rules
     aid = ok.json()["assignment_id"]

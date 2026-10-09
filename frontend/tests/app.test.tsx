@@ -178,3 +178,49 @@ describe('owner dashboard', () => {
     expect(screen.getByText('Qwen')).toBeInTheDocument();
   });
 });
+
+describe('route guards and self-service labels', () => {
+  const base = { ...authRoutes, 'GET /meta': { body: { groups: [] } }, 'GET /dashboard': { body: { tiles: [], unread_notifications: 0 } } };
+  const student = { ...ME, username: 'student', full_name: 'Sam Student', roles: ['STUDENT'], permissions: ['STUDENT.OWN.READ'], student_ids: [7] };
+
+  it('quietly sends a student who opens /admin/users back Home (no error screen)', async () => {
+    mockApi({ ...base, 'GET /auth/me': { body: student } });
+    renderApp(<AppRoutes />, '/admin/users');
+    expect(await screen.findByText(/sam student/i, { selector: 'h1' })).toBeInTheDocument();
+    expect(screen.queryByText(/not found|no access|not have access|permission/i)).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /new user/i })).not.toBeInTheDocument();
+  });
+
+  it('sends non-owners away from /owner and unknown addresses without a message', async () => {
+    mockApi(base);
+    renderApp(<AppRoutes />, '/owner');
+    expect(await screen.findByText(/at a glance|good (morning|afternoon|evening)/i)).toBeInTheDocument();
+    expect(screen.queryByText(/not found|no access/i)).not.toBeInTheDocument();
+  });
+
+  it('lets a user with the permission open /admin/users', async () => {
+    mockApi({ ...base, 'GET /admin/users': { body: { count: 0, page: 1, page_size: 25, next: null, previous: null, results: [] } } });
+    renderApp(<AppRoutes />, '/admin/users');
+    await waitFor(() => expect(screen.getByRole('heading', { name: /users/i })).toBeInTheDocument());
+  });
+
+  it('words dashboard tiles in the first person for self-service students', async () => {
+    mockApi({
+      ...base, 'GET /auth/me': { body: student },
+      'GET /dashboard': { body: { tiles: [
+        { label: 'Certificate requests to review', value: 1, link: 'a/b' }, { label: 'Open grievances', value: 2, link: 'a/c' }, { label: 'Active mentor assignments', value: 3, link: 'a/d' },
+      ], unread_notifications: 0 } },
+    });
+    renderApp(<AppRoutes />, '/');
+    expect(await screen.findByText('My certificate requests')).toBeInTheDocument();
+    expect(screen.getByText('My open grievances')).toBeInTheDocument();
+    expect(screen.getByText('My mentors')).toBeInTheDocument();
+    expect(screen.queryByText('Certificate requests to review')).not.toBeInTheDocument();
+  });
+
+  it('keeps staff tile labels unchanged', async () => {
+    mockApi({ ...base, 'GET /dashboard': { body: { tiles: [{ label: 'Open grievances', value: 2, link: 'a/c' }], unread_notifications: 0 } } });
+    renderApp(<AppRoutes />, '/');
+    expect(await screen.findByText('Open grievances')).toBeInTheDocument();
+  });
+});

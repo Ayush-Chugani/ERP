@@ -124,7 +124,7 @@ export function LoginPage() {
               <Button size="small" color="inherit" startIcon={<ArrowBack fontSize="small" />} onClick={() => setParams({})} sx={{ mb: 1, ml: -1 }}>All portals</Button>
               <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center' }}>
                 <Box sx={{ width: 44, height: 44, borderRadius: 2, display: 'grid', placeItems: 'center', bgcolor: 'primary.light', color: 'primary.main' }}><portal.icon /></Box>
-                <Box><Typography variant="h4" component="h1">{portal.title} sign in</Typography><Typography color="text.secondary">{portal.blurb}</Typography></Box>
+                <Box sx={{ minWidth: 0 }}><Typography variant="h4" component="h1" sx={{ fontSize: { xs: '1.5rem', sm: '1.75rem' }, lineHeight: 1.2 }}>{portal.title} sign in</Typography><Typography color="text.secondary">{portal.blurb}</Typography></Box>
               </Stack>
             </Box>
             {notice && <Alert severity="info">{notice}</Alert>}

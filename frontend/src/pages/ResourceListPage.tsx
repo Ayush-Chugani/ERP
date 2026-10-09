@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate, useParams, useSearchParams } from 'react-router';
+import { Navigate, useNavigate, useParams, useSearchParams } from 'react-router';
 import {
   Alert, Box, Button, Chip, InputAdornment, LinearProgress, MenuItem, Paper, Stack, Table, TableBody, TableCell,
   TableContainer, TableHead, TablePagination, TableRow, TableSortLabel, TextField, Typography,
@@ -46,7 +46,7 @@ export function ResourceListPage() {
   });
 
   if (meta.isLoading) return <LinearProgress />;
-  if (meta.error || !meta.data) return <Alert severity="error">{errorMessage(meta.error ?? 'Not found')}</Alert>;
+  if (meta.error || !meta.data) return <Navigate to="/" replace />;       // a page this role cannot open simply is not there
   const m = meta.data;
   const ws = WORKSPACES.find((w) => w.key === workspaceOf(m));
   const cols = m.list_columns.map((n) => m.columns.find((c) => c.name === n)).filter(Boolean) as typeof m.columns;

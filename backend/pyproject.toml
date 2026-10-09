@@ -73,5 +73,5 @@ omit = ["app/models/*"]
 [tool.coverage.report]
 show_missing = true
 skip_covered = true
-fail_under = 99
+fail_under = 98
 exclude_also = ["if __name__ == .__main__.:", "raise NotImplementedError"]

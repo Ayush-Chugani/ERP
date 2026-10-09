@@ -31,6 +31,17 @@
 * Administrators cannot grant permissions they do not hold themselves, cannot assign privileged roles unless they are
   super administrators, and cannot remove their own super-admin role or deactivate themselves.
 
+### Access control (least privilege)
+* Built-in roles are defined in `backend/app/rbac/matrix.py` and `python -m app.cli bootstrap` reconciles the database to
+  it (missing grants added, extra grants removed); customise by creating a new role, not by editing a built-in one.
+* Segregation of duties: entering, verifying/approving and publishing results are held by different roles; students see
+  results only after publication; submitted records are locked.
+* Teaching roles (faculty, lab instructor, evaluator, course coordinator) are row-limited to assigned classes/papers and
+  mentors/advisors to their mentees, unless the person also holds a wider role such as head of department.
+* Each audience signs in through its own portal (`backend/app/rbac/portals.py`); an account cannot use another entrance.
+* Known gaps: no fees/library/hostel/transport/placement modules, lab instructors are not limited to lab sections, and
+  there is no field-level restriction for the document verifier. See `docs/ROLES.md`.
+
 ## Data integrity and audit
 * Optimistic concurrency (`version`) on editable records, idempotency keys on creates and workflow actions.
 * Every mutation writes an immutable `audit_log` entry (before/after, actor, request id, IP); workflow changes also write

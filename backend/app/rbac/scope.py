@@ -82,6 +82,21 @@ def scope_clause(model, scope: ScopeSet, principal: Principal) -> ColumnElement 
         ids = scope.for_level(level)
         if ids:
             conds.extend(e.in_(ids) for e in exprs)
+    if scope.programmes:
+        # A student belongs to a programme through the enrolment that points at them (there is no forward key to follow).
+        enrol = _classes()["student_programme_enrolment"].__table__
+        in_programmes = select(enrol.c.student_id).where(enrol.c.programme_id.in_(scope.programmes))
+        conds.extend(e.in_(in_programmes) for e in attr_exprs(model, "student"))
+    if scope.campuses or scope.departments:
+        # Staff belong to a campus / department through their current assignment (again a reverse key).
+        assign = _classes()["employee_assignment"].__table__
+        cond = []
+        if scope.campuses:
+            cond.append(assign.c.campus_id.in_(scope.campuses))
+        if scope.departments:
+            cond.append(assign.c.department_id.in_(scope.departments))
+        in_units = select(assign.c.employee_id).where(assign.c.end_date.is_(None), or_(*cond))
+        conds.extend(e.in_(in_units) for e in attr_exprs(model, "employee"))
     if not org_attrs and scope.organisational:
         return None  # global master data: any organisational grant may use it
     if scope.own:

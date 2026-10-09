@@ -64,6 +64,17 @@ def _actor_may_manage(principal: Principal, target: UserAccount) -> None:
     mine = _my_institutions(principal)
     if mine is not None and (target.is_superuser or target.institution_id not in mine):
         raise NotFound()        # someone else's organisation (or the platform owner): indistinguishable from "does not exist"
+    if mine is not None and _holds_privileged_role(target):
+        raise Forbidden("Only a super administrator can manage this account.")
+
+
+def _holds_privileged_role(user: UserAccount) -> bool:
+    from sqlalchemy.orm import object_session
+
+    db = object_session(user)
+    return bool(db and db.execute(text(
+        "SELECT 1 FROM v_active_user_role WHERE user_id = :u AND role_code = ANY(:r) LIMIT 1"),
+        {"u": user.user_id, "r": sorted(PRIVILEGED_ROLES)}).first())
 
 
 def _load_user(db: Session, principal: Principal, user_id: int) -> UserAccount:
@@ -381,7 +392,7 @@ def _assign(db: Session, principal: Principal, user: UserAccount, role_code: str
         raise Invalid("This role cannot be assigned directly.")
     if role.role_code in PRIVILEGED_ROLES and not principal.is_superuser:
         raise Forbidden("Only a super administrator can assign this role.")
-    if role.role_level != "GLOBAL" and scope_type != role.role_level and role.role_level != "SELF":
+    if role.role_level != "GLOBAL" and scope_type != role.role_level:
         raise Invalid(f"{role.role_code} must be assigned at {role.role_level} level.")
     needs_id = scope_type not in ("GLOBAL", "SELF")
     if needs_id and not scope_id:
@@ -477,10 +488,14 @@ def audit_trail(module: str | None = None, resource: str | None = None, record_i
             q = q.where(col == val)
     total = db.scalar(select(func.count()).select_from(q.subquery()))
     rows = db.scalars(q.order_by(AuditLog.audit_id.desc()).limit(page_size).offset((page - 1) * page_size)).all()
+    actor_ids = {r.actor_user_id for r in rows if r.actor_user_id}
+    names = {uid: name for uid, name in db.execute(select(UserAccount.user_id, UserAccount.username).where(
+        UserAccount.user_id.in_(actor_ids)))} if actor_ids else {}
     return {"count": total, "page": page, "page_size": page_size, "results": [{
         "audit_id": r.audit_id, "occurred_at": r.occurred_at, "actor_user_id": r.actor_user_id, "action": r.action,
         "module": r.module, "resource": r.resource, "record_id": r.record_id, "before": r.before, "after": r.after,
-        "reason": r.reason, "ip_address": r.ip_address, "request_id": r.request_id} for r in rows]}
+        "reason": r.reason, "ip_address": r.ip_address, "request_id": r.request_id,
+        "actor": names.get(r.actor_user_id)} for r in rows]}
 
 
 # ------------------------------------------------------------------------------------------------- organisations

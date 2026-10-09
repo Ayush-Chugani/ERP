@@ -7,20 +7,29 @@ import { useAuth } from '../api/auth';
 import { api, errorMessage } from '../api/client';
 import { useMeta } from '../api/hooks';
 import type { Dashboard } from '../api/types';
-import { WORKSPACES, iconForResource, workspaceOf } from '../layout/navConfig';
+import { WORKSPACES, iconForResource, navResources, workspaceOf } from '../layout/navConfig';
 
 function greeting(): string {
   const h = new Date().getHours();
   return h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening';
 }
 
+/** People who only see their own records get first-person tile labels. */
+const SELF_SERVICE_LABELS: Record<string, string> = {
+  'Certificate requests to review': 'My certificate requests',
+  'Open grievances': 'My open grievances',
+  'Active mentor assignments': 'My mentors',
+};
+export const tileLabel = (label: string, selfService: boolean): string => (selfService ? SELF_SERVICE_LABELS[label] ?? label : label);
+
 export function DashboardPage() {
   const { user } = useAuth();
   const meta = useMeta();
   const q = useQuery({ queryKey: ['dashboard'], queryFn: () => api<Dashboard>('/dashboard') });
-  const resources = (meta.data?.groups ?? []).flatMap((g) => g.resources);
+  const resources = navResources(meta.data?.groups);
   const byPath = new Map(resources.map((r) => [r.path, r]));
   const areas = WORKSPACES.filter((w) => resources.some((r) => workspaceOf(r) === w.key));
+  const selfService = (user?.student_ids.length ?? 0) > 0;
   const role = user?.roles.length ? user.roles.map((r) => r.replaceAll('_', ' ').toLowerCase()).join(' · ') : user?.is_superuser ? 'super administrator' : '';
 
   return (
@@ -51,7 +60,7 @@ export function DashboardPage() {
                       <Stack direction="row" sx={{ justifyContent: 'space-between', alignItems: 'flex-start' }}>
                         <Box>
                           <Typography variant="h3" sx={{ fontWeight: 800, color: 'primary.main', lineHeight: 1 }}>{t.value}</Typography>
-                          <Typography color="text.secondary" sx={{ mt: 1 }}>{t.label}</Typography>
+                          <Typography color="text.secondary" sx={{ mt: 1 }}>{tileLabel(t.label, selfService)}</Typography>
                         </Box>
                         {IconCmp && <Box sx={{ width: 44, height: 44, borderRadius: 2.5, display: 'grid', placeItems: 'center', bgcolor: 'action.selected', color: 'primary.main' }}><IconCmp /></Box>}
                       </Stack>

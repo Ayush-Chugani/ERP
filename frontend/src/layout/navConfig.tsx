@@ -95,5 +95,10 @@ export function iconForResource(r: Pick<ResourceSummary, 'module' | 'table'>): I
 const SETUP = /(_status|_type|_types|_category|_level|_policy|_scale|_rule|_source|_mode|_agency|_body|_organization|_institution|_tag|_group)$|^(blood_group|gender|religion|caste|sub_caste|country|state|designation|participation_level|time_slot|building|room|semester|document_type|certificate_type|announcement_type|approval_status|verification_status|attendance_status|confidentiality_level|research_status|funding_type|funding_agency|journal|publisher|indexing_agency|metric_type|organizer|qualification_level|role_type|study_mode|university)$/;
 export const isSetup = (r: Pick<ResourceSummary, 'table'>): boolean => SETUP.test(r.table);
 
+/** What the menu, the palette and the area pages list: everyday pages, plus set-up pages only for people who maintain them. */
+export function navResources<T extends Pick<ResourceSummary, 'table'> & { can: { create: boolean; update: boolean } }>(groups: { resources: T[] }[] | undefined): T[] {
+  return (groups ?? []).flatMap((g) => g.resources).filter((r) => !isSetup(r) || r.can.create || r.can.update);
+}
+
 export const HomeIcon = Dashboard;
 export const AllIcon = Workspaces;

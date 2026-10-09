@@ -20,10 +20,16 @@ def make_engine(url: str | None = None) -> Engine:
         connect_args.pop("options")
     if s.db_ssl_mode:
         connect_args["sslmode"] = s.db_ssl_mode
+    target = url or s.database_url
+    pool_size, overflow = s.db_pool_size, s.db_max_overflow
+    if "pooler.supabase.com" in target and ":5432" in target:
+        # Supabase's session-mode pooler allows only ~15 clients in total (API + worker + tools share them); a larger
+        # pool makes sign-ins fail with "max clients reached". Cap it; use the transaction pooler (6543) to scale out.
+        pool_size, overflow = min(pool_size, 4), min(overflow, 2)
     return create_engine(
-        url or s.database_url,
-        pool_size=s.db_pool_size,
-        max_overflow=s.db_max_overflow,
+        target,
+        pool_size=pool_size,
+        max_overflow=overflow,
         pool_pre_ping=True,
         pool_recycle=1800,
         connect_args=connect_args,
